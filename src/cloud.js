@@ -69,7 +69,18 @@ async function sbLoadState() {
     Store.offline = true; return local ? local.state : null; // offline: keep playing, sync later
   }
 }
+// true when another device saved after our last sync
+const newerElsewhere = row => !!row && row.device !== SB.device && new Date(row.saved_at).getTime() > (Store.syncAt || 0) + 1000;
+function applyServer(row) {
+  const at = new Date(row.saved_at).getTime();
+  Store.syncAt = at; Store.dirty = false; S = normalize(row.state); startWorld(); resize(); closeModal();
+  try { localStorage.setItem(acctKey(), JSON.stringify({state: S, at, pending: false})); } catch (e) {}
+  toast('Đã tải tiến độ mới nhất từ thiết bị khác.');
+}
 async function sbSave(force) {
+  // never overwrite newer progress made on another device: take it instead
+  const meta = await sbApi(`/rest/v1/saves?user_id=eq.${Store.uid}&select=saved_at,device`);
+  if (meta && meta[0] && newerElsewhere(meta[0])) { const row = await sbFetchSave(); if (row && newerElsewhere(row)) return applyServer(row); }
   const at = Date.now();
   try { localStorage.setItem(acctKey(), JSON.stringify({state: S, at, pending: true})); } catch (e) {}
   const iso = new Date(at).toISOString();
@@ -92,11 +103,8 @@ async function sbPull(quiet) {
   try {
     const row = await sbFetchSave(); if (!row) return;
     const at = new Date(row.saved_at).getTime();
-    if (row.device !== SB.device && at > (Store.syncAt || 0) + 1000) {
-      Store.syncAt = at; S = normalize(row.state); startWorld(); resize(); closeModal();
-      try { localStorage.setItem(acctKey(), JSON.stringify({state: S, at, pending: false})); } catch (e) {}
-      toast('Đã tải tiến độ mới nhất từ thiết bị khác.');
-    } else if (!quiet) toast('Tiến độ đã khớp với tài khoản.');
+    if (newerElsewhere(row)) applyServer(row);
+    else if (!quiet) toast('Tiến độ đã khớp với tài khoản.');
   } catch (e) { if (!quiet) toast('Chưa đồng bộ được, kiểm tra mạng.'); }
 }
 document.addEventListener('visibilitychange', () => { if (!document.hidden) sbPull(true); });
