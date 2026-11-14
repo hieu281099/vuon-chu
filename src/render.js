@@ -39,7 +39,9 @@ function drawAnimal(g, a, tnow, pxs) {
 function resize() {
   const st = $('#stage'), w = st.clientWidth || 800, h = st.clientHeight || 500;
   const dpr = Math.min(2, window.devicePixelRatio || 1);
-  const s = Math.round(clamp(Math.min(w / (13 * TS), h / (8.5 * TS)), 1.5, 3) * 2) / 2;
+  // phones in portrait show about 9.5 tiles across (zoom 1.1-1.5); larger screens keep the 13 x 8.5 tile view
+  const s = w < 600 && h > w ? Math.round(clamp(w / (9.5 * TS), 1.1, 1.5) * 4) / 4
+    : Math.round(clamp(Math.min(w / (13 * TS), h / (8.5 * TS)), h < 480 ? 1.1 : 1.5, 3) * 4) / 4;
   cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
   view = Object.assign(view, {cssW: w, cssH: h, s, dpr});
 }

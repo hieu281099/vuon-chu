@@ -49,6 +49,14 @@ function newGame() {
     study: {track: 'general', level: 'A1', unlocked: ['A1']}, sound: true, last: now, caught: false};
 }
 async function initStore() {
+  sbInit();
+  // 1. a Vườn Chữ account session (web, app, or the Claude page after logging in)
+  if (SB.sess) { try { return await sbLoadState(); } catch (e) { console.warn(e); sbSetSess(null); Store.mode = 'local'; } }
+  // 2. on the web / in the app: ask to log in or create an account first
+  if (!inClaude()) {
+    if ((await authGate()) === 'supa') { try { const st = await sbLoadState(); if (st) return st; Store.dirty = true; } catch (e) { console.warn(e); Store.mode = 'local'; } }
+    try { const raw = localStorage.getItem(LOCAL_KEY); return raw ? JSON.parse(raw) : null; } catch (e) { return null; }
+  }
   try {
     const c = window.claude;
     if (c && c.use) {
@@ -72,6 +80,13 @@ async function saveNow(force) {
   if (!S || (!Store.dirty && !force)) return;
   if (P) { S.px = P.x; S.py = P.y; }
   Store.dirty = false;
+  if (Store.mode === 'supa') {
+    if (Store.saving) { Store.dirty = true; return; }
+    Store.saving = true;
+    try { await sbSave(force); setSaveBadge('ok'); } catch (e) { console.warn(e); Store.offline = true; Store.dirty = true; setSaveBadge('err'); if (e && e.status === 401) { sbSetSess(null); Store.mode = 'local'; toast('Phiên đăng nhập đã hết, hãy đăng nhập lại trong Cài đặt.'); } }
+    finally { Store.saving = false; }
+    return;
+  }
   try { localStorage.setItem(LOCAL_KEY, JSON.stringify(S)); } catch (e) {}
   if (Store.mode !== 'cloud' || Store.saving) { if (Store.saving) Store.dirty = true; return; }
   Store.saving = true;
@@ -94,7 +109,7 @@ async function publishProfile() {
 function setSaveBadge(s) {
   const b = $('#savebadge'); if (!b) return;
   b.dataset.state = s;
-  b.textContent = Store.mode === 'cloud' ? (s === 'err' ? 'Chưa lưu được, sẽ thử lại' : 'Đã lưu vào tài khoản') : (s === 'denied' ? 'Chỉ lưu trên máy này' : 'Lưu trên máy này');
+  b.textContent = Store.mode === 'supa' ? (s === 'err' ? 'Chưa gửi được lên máy chủ, sẽ tự thử lại' : 'Đã đồng bộ với tài khoản') : Store.mode === 'cloud' ? (s === 'err' ? 'Chưa lưu được, sẽ thử lại' : 'Đã lưu vào tài khoản') : (s === 'denied' ? 'Chỉ lưu trên máy này' : 'Lưu trên máy này');
 }
 
 /* ===================== SOUND & SPEECH ===================== */
@@ -661,16 +676,17 @@ function openWardrobe() {
 }
 async function openBoard() {
   let rows = [];
-  if (Store.mode === 'cloud') {
+  if (Store.mode === 'supa' || !inClaude()) { try { rows = await sbBoard(); } catch (e) { console.warn(e); } }
+  else if (Store.mode === 'cloud') {
     try { const snap = await Store.db.collection('players').orderBy('lvl', 'desc').limit(20).get(); rows = snap.docs.map(d => Object.assign({id: d.id}, d.data())); } catch (e) { console.warn(e); }
   }
-  openModal(`<h2 class="ptitle">Bảng tin làng</h2><p class="psub">Những người chơi chăm chỉ nhất. Mỗi người là một tài khoản Claude đã vào chơi game này.</p>
+  openModal(`<h2 class="ptitle">Bảng tin làng</h2><p class="psub">Những người chơi chăm chỉ nhất. Bảng xếp hạng chung của mọi người chơi trên web và app.</p>
     ${rows.length ? `<ol class="board">${rows.map((r, i) => `<li class="${r.id === Store.uid ? 'me' : ''}"><span class="rank">${i + 1}</span><img class="portrait xs" ${pimg(fullLook(r.look))} alt=""><span class="ri-main"><b class="pname"></b><small>${esc((TRACKS[r.track] || TRACKS.general).vi)} · ${esc(r.level || 'A1')} · thuộc ${r.words || 0} từ</small></span><span class="lv">Cấp ${r.lvl}</span></li>`).join('')}</ol>` : `<p class="empty">${Store.mode === 'cloud' ? 'Chưa có ai trên bảng. Chơi thêm một lúc rồi quay lại nhé.' : 'Bảng xếp hạng cần đăng nhập Claude. Bạn đang chơi chế độ lưu trên máy.'}</p>`}`, {label: 'Bảng tin'});
   document.querySelectorAll('.board .pname').forEach((el, i) => { el.textContent = rows[i].name || 'Người chơi'; });
 }
 function openSettings() {
   openModal(`<h2 class="ptitle">Cài đặt</h2>
-    <div class="acct"><b>Tài khoản</b><p class="note">${Store.mode === 'cloud' ? 'Bạn đang đăng nhập bằng tài khoản Claude. Tiến độ, đồ đạc, vật nuôi được lưu lên máy chủ, mở trên máy khác vẫn còn.' : 'Bạn chưa đăng nhập hoặc trang chưa được cấp quyền lưu. Tiến độ chỉ lưu trên trình duyệt này.'}</p><p class="note" id="savebadge" data-state="ok"></p></div>
+    ${acctHTML()}
     <div class="row-btns"><button class="btn ghost" data-act="sound">${S.sound ? 'Tắt âm thanh' : 'Bật âm thanh'}</button><button class="btn ghost" data-act="credits">Ghi công hình ảnh</button><button class="btn ghost" data-act="help">Cách chơi</button></div>
     <div class="row-btns"><button class="btn ghost danger" data-act="reset" id="reset-btn">Chơi lại từ đầu</button></div>`, {label: 'Cài đặt'});
   setSaveBadge('ok');

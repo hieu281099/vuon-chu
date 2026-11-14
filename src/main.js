@@ -97,6 +97,10 @@ document.addEventListener('click', e => {
     case 'unlock': return unlock(+d.p);
     case 'buyanimal': return buyAnimal(+d.s, d.a);
     case 'farmshop': return openFarmShop(d.t);
+    case 'login': return openAuthInGame('login');
+    case 'register': return openAuthInGame('register');
+    case 'logout': if (t.dataset.armed) { saveNow(true).finally(() => sbLogout().then(() => location.reload())); } else { t.dataset.armed = 1; t.textContent = 'Bấm lần nữa để đăng xuất'; } return;
+    case 'sync': saveNow(true).then(() => sbPull(false)); return;
     case 'fs-tab': return openFarmShop(d.t);
     case 'fs-seed': return buySeedPack(d.crop, +d.n);
     case 'fs-animal': return farmBuyAnimal(d.a);

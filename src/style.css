@@ -353,8 +353,8 @@ textarea.field{resize:vertical;line-height:1.5}
 .lvbars{display:flex;flex-direction:column;gap:5px;margin:8px 0 10px}
 .lvbars div{display:grid;grid-template-columns:34px 1fr 40px;gap:8px;align-items:center;font-weight:800;font-size:13px}
 .lvbars i{height:10px;border-radius:99px;background:linear-gradient(90deg,var(--violet) var(--w),var(--surface-3) var(--w))}
-.loadbar{height:10px;background:var(--surface-3);border-radius:99px;overflow:hidden;margin:14px 0}
-.loadbar i{display:block;height:100%;background:var(--grad);animation:lb 1.6s ease-in-out infinite alternate}
+.panel .loadbar{height:10px;background:var(--surface-3);border-radius:99px;overflow:hidden;margin:14px 0}
+.panel .loadbar i{display:block;height:100%;background:var(--grad);animation:lb 1.6s ease-in-out infinite alternate}
 @keyframes lb{from{width:15%}to{width:90%}}
 .road{list-style:none;padding:0;margin:10px 0;display:flex;flex-direction:column;gap:10px}
 .road>li{border:1.5px solid var(--line);border-radius:20px;padding:12px 14px}
@@ -399,3 +399,111 @@ textarea.field{resize:vertical;line-height:1.5}
 .loot.r4 .ptitle{background:linear-gradient(90deg,#ff3552,#ffc83d,#3ddc84,#4d8bff,#b05cff);-webkit-background-clip:text;background-clip:text;color:transparent;font-size:34px}
 .lootico{margin:10px auto}.lootico .ico{width:64px;height:64px;display:inline-block}
 .loot .row-btns{justify-content:center}
+
+/* ---------- account screen ---------- */
+.authbox{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:16px;background:radial-gradient(circle at 30% 20%,#3a2b8a,#1b1640 60%);overflow:auto}
+.authbox[hidden]{display:none}
+.authcard{width:min(400px,100%);background:var(--surface);border-radius:28px;padding:24px 22px;box-shadow:var(--shadow);text-align:center}
+.authcard .logo{color:var(--ink);margin-bottom:12px}
+.auth-seg{justify-content:center;margin-bottom:12px}
+#authform{display:flex;flex-direction:column;gap:10px;text-align:left}
+#authform label{font-weight:800;font-size:13.5px;display:flex;flex-direction:column;gap:4px}
+#authform .btn{width:100%}
+.autherr{color:var(--bad);font-weight:700;font-size:13.5px;min-height:1em;margin:0}
+.authcard .note{margin:10px 0 6px}
+.authcard .linkbtn{margin-top:4px;font-size:13.5px}
+
+/* ===================== PHONE LAYOUT (portrait phones and small tablets) ===================== */
+.dk span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+@media (max-width:600px){
+  /* bottom bar: full width, every button visible */
+  .dock{left:8px;right:8px;transform:none;justify-content:space-between;gap:0;padding:5px 4px calc(5px + env(safe-area-inset-bottom,0px));bottom:0;border-radius:22px 22px 0 0}
+  .dk{flex:1 1 0;width:auto;min-width:0;padding:6px 0 3px;font-size:10px;border-radius:14px}
+  .dk svg{width:21px;height:21px}
+  .dk.main{flex:1.15 1 0;width:auto;margin-top:-16px;padding:9px 0 5px;border-radius:18px}
+  .dk .dot{right:calc(50% - 16px)}
+  /* chat: slim line above the bar */
+  .chat{left:10px;right:10px;bottom:calc(66px + env(safe-area-inset-bottom,0px));padding:3px 3px 3px 12px}
+  .chat input{font-size:14px;height:34px}
+  .chat button{width:34px;height:34px}
+  .hint{bottom:calc(112px + env(safe-area-inset-bottom,0px));font-size:12.5px;padding:6px 12px;line-height:1.35;max-width:calc(100% - 40px)}
+  /* top HUD: compact */
+  .hud-left{top:calc(8px + env(safe-area-inset-top,0px));left:8px;padding:4px 12px 4px 4px;gap:6px}
+  .ring{width:44px;height:44px}.hud-face{width:37px;height:37px}
+  .lvbadge{font-size:10.5px;min-width:20px;height:20px}
+  .hud-card{min-width:0;max-width:110px}.hud-card b{font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hud-card small{display:block;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hud-right{top:calc(8px + env(safe-area-inset-top,0px));right:8px;gap:4px;max-width:calc(100% - 190px)}
+  .pill{font-size:12.5px;padding:3px 8px 3px 4px;gap:4px}
+  .pill .ico{width:17px;height:17px}
+  .pill.streak{display:none}
+  .pill.auto b{font-size:11px}
+  .maplabel{top:calc(64px + env(safe-area-inset-top,0px));left:8px;font-size:11px;padding:3px 10px}
+  .banner b{font-size:38px}.banner span{font-size:14px}
+  .toasts{top:calc(92px + env(safe-area-inset-top,0px));padding:0 10px}
+  .toast{font-size:13px;padding:7px 12px;line-height:1.35}
+  /* sheets */
+  .panel{padding:18px 14px calc(18px + env(safe-area-inset-bottom,0px));border-radius:24px 24px 0 0}
+  .pclose{top:10px;right:10px;width:34px;height:34px}
+  .ptitle{font-size:23px}
+  .seg{flex-wrap:nowrap;scrollbar-width:none;margin:4px -2px 10px}.seg::-webkit-scrollbar{display:none}
+  .segb{padding:7px 10px;font-size:12.5px}
+  .cards{grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px}
+  .card{padding:8px 6px;border-radius:16px}.card b{font-size:12.5px}.card small{font-size:11px}
+  .pv{width:78px;height:78px}.pv.big{width:130px;height:130px}
+  .row-item{padding:9px 11px;gap:9px}
+  .row-item .btn.sm{padding:6px 10px;font-size:12px}
+  .npc-head{gap:10px}.portrait{width:60px;height:60px;border-radius:18px}
+  .ward-prev{position:static}.stagebox{width:180px;height:196px}
+  .q-word{font-size:30px}.q-word.vi{font-size:25px}.q-sent{font-size:16px;padding:10px 12px}
+  .opt{padding:10px 12px}
+  .stats3 div{padding:8px 10px}.stats3 b{font-size:21px}
+  /* exams */
+  .panel.exam{padding-top:14px}
+  .exam-top{flex-wrap:nowrap}.exam-top .note{font-size:12px}
+  .clock{padding:4px 10px}.clock b{font-size:18px}
+  .passage{max-height:46vh;font-size:14px;padding:10px 12px}
+  .eq{padding:9px 10px}.eqq{font-size:14px}.eopt{font-size:13.5px;padding:7px 9px}
+  .exam-foot{flex-wrap:wrap;gap:6px}.exam-foot .btn{flex:1 1 auto;padding:9px 10px;font-size:13px}
+  .tcards,.rcards{grid-template-columns:1fr}
+  .score.big b{font-size:38px}
+  .hist li{grid-template-columns:76px 1fr;font-size:12.5px}.hist em{grid-column:2}
+  .barnbar .slots{grid-template-columns:repeat(9,12px)}.barnbar .slots i{width:12px;height:12px}
+  .barnsteps li{grid-template-columns:62px 52px 1fr;font-size:12.5px}
+  .chest{flex-direction:column;align-items:center;text-align:center}
+  .mythrow span{width:calc(33.3% - 6px)}
+  .rhead{flex-wrap:wrap}.rrew{margin-left:42px}
+  .authcard{padding:20px 16px}
+}
+@media (max-width:360px){.dk{font-size:9px}.dk svg{width:19px;height:19px}.pill{font-size:11.5px}.hud-card{max-width:84px}}
+/* landscape phones: thin bars so the farm stays visible */
+@media (max-height:480px) and (orientation:landscape){
+  .dock{padding:3px 6px;bottom:0}.dk{padding:4px 2px 2px;font-size:9.5px}.dk svg{width:19px;height:19px}.dk.main{margin-top:-8px;padding:6px 2px 3px}
+  .chat{bottom:calc(8px + env(safe-area-inset-bottom,0px));width:min(280px,32%);left:auto}
+  .hint{bottom:auto;top:calc(56px + env(safe-area-inset-top,0px))}
+  .hud-left{padding:3px 10px 3px 3px}.ring{width:40px;height:40px}.hud-face{width:34px;height:34px}
+  .maplabel{top:auto;bottom:calc(64px + env(safe-area-inset-bottom,0px))}
+  .panel{max-height:96%}
+  .overlay{place-items:center}
+}
+@media (max-width:600px){
+  .dk.main{flex:1 1 0}
+  .row-item.static .ri-main{flex:1 1 calc(100% - 60px)}
+  .row-item.static>.btn.sm{flex:1 1 40%;margin-left:0}
+  .row-item.static>.ri-side{margin-left:auto}
+}
+@media (max-width:600px){
+  .dk{letter-spacing:-.2px}
+  body:has(#modal .overlay) .toasts{top:auto;bottom:calc(16px + env(safe-area-inset-bottom,0px))}
+}
+@media (max-height:480px) and (orientation:landscape){
+  .dock{left:max(8px,env(safe-area-inset-left,0px));transform:none;border-radius:20px;bottom:6px}
+  .dk{width:52px}.dk.main{width:56px}
+  .chat{right:max(8px,env(safe-area-inset-right,0px));bottom:10px;width:min(260px,calc(100% - 470px))}
+  .toast{font-size:12.5px;padding:6px 12px;max-width:440px}
+  .toasts{top:calc(60px + env(safe-area-inset-top,0px))}
+}
+@media (min-width:601px) and (max-width:1120px) and (min-height:481px){
+  .chat{bottom:calc(96px + env(safe-area-inset-bottom,0px));left:auto;right:max(12px,env(safe-area-inset-right,0px));width:min(300px,40vw)}
+}
+@media (min-width:601px) and (max-width:820px) and (min-height:481px){.hint{bottom:calc(154px + env(safe-area-inset-bottom,0px))}}
