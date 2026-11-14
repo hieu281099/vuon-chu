@@ -1,0 +1,12 @@
+# downloaded toolchain and third-party packs (fetched locally, not redistributed here)
+toolchain/
+vendor/
+# build output
+dist/
+android/build/
+android/assets/
+# signing key: keep it private
+*.keystore
+*.idsig
+scratch/
+__pycache__/

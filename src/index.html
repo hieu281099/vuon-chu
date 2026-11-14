@@ -1,0 +1,61 @@
+<title>Vườn Chữ</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@500;600;700;800;900&display=swap">
+<style>
+{{CSS}}
+</style>
+
+<div id="loading" class="loading">
+  <div class="load-card">
+    <div class="logo">Vườn <span>Chữ</span></div>
+    <p>Đang mở cổng làng…</p>
+    <div class="loadbar" id="loadbar"><i></i></div>
+    <p class="loadmsg" id="loadmsg"></p>
+  </div>
+</div>
+
+<div id="app" class="app" hidden>
+  <div class="stage" id="stage">
+    <canvas id="world" aria-label="Thế giới trò chơi. Chạm để đi lại, chạm vào người hoặc đồ vật để tương tác."></canvas>
+
+    <div class="hud-left">
+      <div class="ring" id="hud-ring"><img id="hud-face" class="hud-face" alt=""><span class="lvbadge" id="hud-lvl">1</span></div>
+      <div class="hud-card" data-act="study" role="button" tabindex="0" title="Đổi trình độ, chuyên ngành">
+        <b id="hud-name">Bạn</b>
+        <span class="hud-xp"><i id="hud-xp"></i></span>
+        <small id="hud-study"></small>
+      </div>
+    </div>
+    <div class="hud-right">
+      <span class="pill" title="Xu"><i class="ico coin"></i><b id="hud-coins">0</b></span>
+      <span class="pill" title="Ngọc lục bảo"><i class="ico em"></i><b id="hud-em">0</b></span>
+      <span class="pill" title="Kim cương"><i class="ico di"></i><b id="hud-di">0</b></span>
+      <span class="pill auto" id="hud-auto" data-act="tests" role="button" title="Auto Farm" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="3.5" fill="currentColor"/></svg><b id="hud-auto-t">AUTO</b></span>
+      <span class="pill streak" title="Chuỗi câu đúng liên tiếp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c1 4 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-4-1-6 1-9z" fill="currentColor"/></svg><b id="hud-streak">0</b></span>
+    </div>
+    <div class="maplabel" id="maplabel"></div>
+    <div class="banner" id="banner"></div>
+    <div class="fade" id="fade"></div>
+    <div class="hint" id="hint" aria-live="polite"></div>
+
+    <nav class="dock" aria-label="Chức năng">
+      <button class="dk" id="bb-bag" data-act="bag" aria-label="Túi đồ"><svg viewBox="0 0 24 24"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8a3 3 0 0 1 6 0"/></svg><span>Túi đồ</span><i class="dot" hidden></i></button>
+      <button class="dk" data-act="wardrobe" aria-label="Tủ đồ"><svg viewBox="0 0 24 24"><path d="M8 3 4 6l2 4 2-1v12h8V9l2 1 2-4-4-3a4 4 0 0 1-8 0z"/></svg><span>Tủ đồ</span></button>
+      <button class="dk main" data-act="study" aria-label="Học tập"><svg viewBox="0 0 24 24"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M7 9v5c0 2 2.5 3 5 3s5-1 5-3V9"/><path d="M21 7v6"/></svg><span>Học tập</span></button>
+      <button class="dk" data-act="map" aria-label="Bản đồ"><svg viewBox="0 0 24 24"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg><span>Bản đồ</span></button>
+      <button class="dk" data-act="board" aria-label="Bảng xếp hạng"><svg viewBox="0 0 24 24"><path d="M8 21V11M12 21V5M16 21v-7"/><path d="M4 21h16"/></svg><span>Xếp hạng</span></button>
+      <button class="dk" data-act="emote" aria-label="Vẫy tay"><svg viewBox="0 0 24 24"><path d="M7 11V6a1.5 1.5 0 0 1 3 0v4M10 10V4.5a1.5 1.5 0 0 1 3 0V10M13 10V5.5a1.5 1.5 0 0 1 3 0V12M16 9a1.5 1.5 0 0 1 3 0v5a7 7 0 0 1-12.5 4.3L4 15a1.5 1.5 0 0 1 2.3-1.9L7 14v-3"/></svg><span>Vẫy tay</span></button>
+      <button class="dk" data-act="tests" aria-label="Thi"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4"/><path d="M9 12l2 2 4-4"/><path d="M9 17h6"/></svg><span>Thi</span></button>
+      <button class="dk" data-act="settings" aria-label="Cài đặt"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span>Cài đặt</span></button>
+    </nav>
+    <form class="chat" id="chatform" autocomplete="off"><label class="sr" for="chatinput">Nói tiếng Anh</label><input id="chatinput" maxlength="60" placeholder="Nói tiếng Anh… (Hello!)"><button class="send" type="submit" aria-label="Gửi"><svg viewBox="0 0 24 24"><path d="M4 12l16-8-6 16-2-6-8-2z"/></svg></button></form>
+  </div>
+</div>
+<div id="toasts" class="toasts" aria-live="polite"></div>
+<div id="modal"></div>
+
+<script>
+{{JS}}
+</script>
