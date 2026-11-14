@@ -501,7 +501,7 @@ function itemCard(f, L, act, extra = '') {
   const own = S.owned.includes(f.id), lock = (f.lvl || 1) > S.lvl, lv = (S.look.lv || {})[f.id] || 0;
   const tryL = Object.assign({}, L, slotPatch(f)); if (FACE_SLOTS.includes(f.slot)) Object.assign(tryL, {back: null, hand: null}); if (lv) tryL.lv = Object.assign({}, L.lv, {[f.id]: lv});
   const img = f.slot === 'pet' ? `<img class="pv pet" src="${svgURL(petSVG(f.id, lv, 0))}" alt="">` : f.slot === 'aura' ? `<span class="pv aura" style="--c:${f.col}"></span>` : `<img class="pv" src="${portraitSVG(tryL, {full: ['back', 'hand', 'shoes', 'bag', 'neck'].includes(f.slot), hand: true})}" alt="">`;
-  return `<button class="card r${f.rar || 0}" data-act="${act}" data-id="${f.id}" ${extra}><span class="rar">${RARITY[f.rar || 0].vi}</span>${lv ? `<span class="plus t${lv}">+${lv}</span>` : ''}${img}<b>${act === 'shop-pick' && !own ? '???' : esc(f.en)}</b><small>${esc(f.vi)}</small>${act === 'shop-pick' ? `<span class="price">${own ? 'Đã có' : lock ? needTag(f.lvl) : priceTag(f)}</span>` : ''}</button>`;
+  return `<button class="card r${f.rar || 0}" data-act="${act}" data-id="${f.id}" ${extra}><span class="rar">${RARITY[f.rar || 0].vi}</span>${lv ? `<span class="plus t${lv}">+${lv}</span>` : CAN_UPGRADE(f) ? '<span class="upg">Nâng cấp +6</span>' : ''}${img}<b>${act === 'shop-pick' && !own ? '???' : esc(f.en)}</b><small>${esc(f.vi)}</small>${act === 'shop-pick' ? `<span class="price">${own ? 'Đã có' : lock ? needTag(f.lvl) : priceTag(f)}</span>` : ''}</button>`;
 }
 function shopHTML() {
   const L = fullLook(S.look), list = FASHION.filter(f => f.slot === SHOPTAB && (f.price > 0 || f.chest)).sort((a, b) => (a.rar || 0) - (b.rar || 0) || (a.cur === 'gem') - (b.cur === 'gem') || a.price - b.price);
@@ -533,8 +533,9 @@ let FORGE = null;
 function forgeHTML() {
   if (FORGE && FORGE.ex) return exchangeHTML();
   const L = fullLook(S.look), own = id => S.owned.includes(id);
-  const all = FASHION.filter(f => UPGRADABLE(f.slot) && (f.price > 0 || f.chest || own(f.id)));
-  const slots = SLOTS.filter(([k]) => UPGRADABLE(k));
+  const all = FASHION.filter(f => CAN_UPGRADE(f) && (f.price > 0 || f.chest || own(f.id)));
+  const slots = SLOTS.filter(([k]) => all.some(m => m.slot === k));
+  if (FORGE && FASH[FORGE.id] && !CAN_UPGRADE(FASH[FORGE.id])) FORGE = null;
   if (!FORGE || !FASH[FORGE.id]) { const first = all.find(f => own(f.id)) || all[0]; FORGE = {id: first.id, tab: first.slot, quiz: null, res: null}; }
   if (!FORGE.tab) FORGE.tab = FASH[FORGE.id].slot;
   const list = all.filter(f => f.slot === FORGE.tab).sort((a, b) => (a.rar || 0) - (b.rar || 0) || (a.cur === 'gem') - (b.cur === 'gem') || a.price - b.price), mine = all.filter(f => own(f.id));
@@ -546,11 +547,11 @@ function forgeHTML() {
   const bonus = (FORGE.quiz === true ? 15 : 0) + (FORGE.shoe ? 10 : 0), chance = cost ? Math.min(100, cost.ch + bonus) : 0, enough = cost && S.em >= cost.em && S.di >= cost.di;
   const howGet = f.chest ? 'Món này chỉ rơi ra từ <b>Rương may mắn</b>.' : `Mua ở cửa hàng của <b>Cô Mai</b> trong Làng (${priceTag(f)}${(f.lvl || 1) > S.lvl ? ', ' + needTag(f.lvl) : ''}).`;
   return `<div class="forge">
-    <p class="note">Bạn có <b>${mine.length}/${all.length}</b> món nâng cấp được. Món <b class="ownmark">viền xanh, ghi “Đã có”</b> là của bạn, món mờ là chưa có. Bấm vào bất kỳ món nào để xem các cấp +1 đến +6.</p>
+    <p class="note">Chỉ đồ <b>Sử thi trở lên</b> mới nâng cấp được, mỗi cấp thêm hiệu ứng mới. Bạn có <b>${mine.length}/${all.length}</b> món nâng cấp được. Món <b class="ownmark">viền xanh, ghi “Đã có”</b> là của bạn, món mờ là chưa có. Bấm vào bất kỳ món nào để xem các cấp +1 đến +6.</p>
     <div class="seg">${slots.map(([k, l]) => { const n = all.filter(m => m.slot === k), o = n.filter(m => own(m.id)).length; return `<button class="segb" data-act="forge-tab" data-t="${k}" aria-pressed="${FORGE.tab === k}">${l} <small>${o}/${n.length}</small></button>`; }).join('')}</div>
     <div class="fgrid">${list.map(card).join('')}</div>
     <h3 class="ph3">${esc(f.vi)} <small>(${esc(f.en)}) · ${RARITY[f.rar || 0].vi}</small></h3>
-    <div class="tierstrip">${[0, 1, 2, 3, 4, 5, 6].map(l => `<div class="tcell ${have && l === lv ? 'cur' : ''} ${have && l < lv ? 'done' : ''}"><span class="tier t${l}">${l ? '+' + l : 'Gốc'}</span>${img(f, l, 'sm')}<small>${l ? TIER_VI[l] : 'Thường'}</small></div>`).join('')}</div>
+    <div class="tierstrip">${[0, 1, 2, 3, 4, 5, 6].map(l => `<div class="tcell ${have && l === lv ? 'cur' : ''} ${have && l < lv ? 'done' : ''}"><span class="tier t${l}">${l ? '+' + l : 'Gốc'}</span>${img(f, l, 'sm')}<small>${l ? TIER_VI[l] : 'Thường'}</small><em class="perk">${TIER_PERK[l]}</em></div>`).join('')}</div>
     ${!have ? `<div class="fb miss"><strong>Bạn chưa có món này.</strong> ${howGet}</div>` : `
     <div class="forge-stage"><div class="fs-item"><span class="tier t${lv}">${lv ? '+' + lv + ' ' + TIER_VI[lv] : 'Chưa nâng'}</span>${img(f, lv, 'big')}</div>
       ${nx <= 6 ? `<div class="fs-arrow" aria-hidden="true">→</div><div class="fs-item next"><span class="tier t${nx}">+${nx} ${TIER_VI[nx]}</span>${img(f, nx, 'big')}</div>` : ''}</div>
@@ -561,7 +562,7 @@ function forgeHTML() {
   </div>`;
 }
 function forgeGo() {
-  const f = FASH[FORGE.id]; if (!f || !S.owned.includes(f.id)) return; S.look.lv = S.look.lv || {};
+  const f = FASH[FORGE.id]; if (!f || !S.owned.includes(f.id) || !CAN_UPGRADE(f)) return; S.look.lv = S.look.lv || {};
   const lv = S.look.lv[f.id] || 0, nx = lv + 1, cost = UP_COST[nx]; if (!cost || S.em < cost.em || S.di < cost.di) return;
   S.em -= cost.em; S.di -= cost.di;
   const shoe = FORGE.shoe && S.inv.horseshoe > 0; if (shoe) S.inv.horseshoe--; const chance = Math.min(100, cost.ch + (FORGE.quiz === true ? 15 : 0) + (shoe ? 10 : 0)), ok = Math.random() * 100 < chance;

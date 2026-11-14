@@ -129,7 +129,7 @@ document.addEventListener('click', e => {
     case 'dye-shoe': S.look.shoeC = d.c; markDirty(); renderHUD(); return openWardrobe();
     case 'shop-tab': SHOPTAB = d.t; BUY = null; return refreshNpc();
     case 'forge-pick': FORGE = {id: d.id, tab: FASH[d.id].slot, quiz: null, res: null}; refreshNpc(); { const s = document.querySelector('#modal .tierstrip'); if (s) s.scrollIntoView({block: 'nearest', behavior: 'smooth'}); } return;
-    case 'forge-tab': { const list = FASHION.filter(f => f.slot === d.t && UPGRADABLE(f.slot) && (f.price > 0 || f.chest || S.owned.includes(f.id))); const pick = list.find(f => S.owned.includes(f.id)) || list[0]; FORGE = {id: pick.id, tab: d.t, quiz: null, res: null}; return refreshNpc(); }
+    case 'forge-tab': { const list = FASHION.filter(f => f.slot === d.t && CAN_UPGRADE(f) && (f.price > 0 || f.chest || S.owned.includes(f.id))); const pick = list.find(f => S.owned.includes(f.id)) || list[0]; FORGE = {id: pick.id, tab: d.t, quiz: null, res: null}; return refreshNpc(); }
     case 'forge-quiz': return forgeQuiz();
     case 'forge-go': return forgeGo();
     case 'exchange': FORGE = Object.assign(FORGE || {}, {ex: true}); return refreshNpc();

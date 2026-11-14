@@ -111,7 +111,7 @@ function faceItemSVG(id, c, lv) {
 // wing / back item, drawn once for the right side then mirrored. flap in degrees.
 function backSVG(id, c, lv, flap, front) {
   const t = tierFill(lv, c), l2 = lv ? t : shade(c, 0.35), d = shade(c, -0.2);
-  const pair = (inner, ax, ay) => `<g transform="translate(${ax + 6} ${ay - 6}) rotate(${-flap}) scale(1.3)">${inner}</g><g transform="translate(${145 - ax - 6} ${ay - 6}) scale(-1 1) rotate(${-flap}) scale(1.3)">${inner}</g>`;
+  const pair = (inner, ax, ay) => wingStack(inner, lv, (body, k) => `<g transform="translate(${ax + 6} ${ay - 6}) rotate(${-flap}) scale(${k})">${body}</g><g transform="translate(${145 - ax - 6} ${ay - 6}) scale(-1 1) rotate(${-flap}) scale(${k})">${body}</g>`);
   switch (id) {
     case 'back_angel': return pair(`<path d="M0 0 C18 -40 70 -58 86 -26 C76 -22 74 -14 80 -8 C66 -8 62 2 68 8 C54 8 50 18 54 24 C36 20 14 14 0 0Z" fill="${lv ? t : c}"/><path d="M8 -2 C24 -30 60 -42 72 -24 C58 -18 52 -8 56 0 C40 2 26 6 8 -2Z" fill="${lv ? shade(TIER[lv] === 'rainbow' ? '#FFFFFF' : TIER[lv], 0.45) : '#EEF2FF'}"/>`, 80, 122);
     case 'back_devil': return pair(`<path d="M0 0 L36 -44 L44 -22 L60 -36 L60 -12 L80 -18 L66 6 Q44 0 34 14 Q20 4 0 0Z" fill="${lv ? t : c}"/><path d="M8 -2 L36 -36 M36 -36 L40 6 M60 -12 L46 6" stroke="${d}" stroke-width="3" fill="none"/>`, 80, 122);
@@ -194,18 +194,19 @@ const HAND_FIT = {
 function chibiInner(L, f, dir) {
   const skin = SKIN_TONES[L.skin] || SKIN_TONES[0], lv = L.lv || {}, back = dir === 'u';
   const bob = f.bob || 0, face = f.face || L.face || 'smile';
-  const backItem = L.back ? glowWrap(lv[L.back], backSVG(L.back, FASH[L.back].col, lv[L.back] || 0, f.flap || 0, back)) : '';
-  const handItem = f.tool ? handSVG(f.tool, '#fff', 0) : (L.hand ? glowWrap(lv[L.hand], handSVG(L.hand, FASH[L.hand].col, lv[L.hand] || 0)) : '');
+  const backItem = L.back ? tierWrap('back', lv[L.back] || 0, backSVG(L.back, FASH[L.back].col, lv[L.back] || 0, f.flap || 0, back), f.flap) : '';
+  const handItem = f.tool ? handSVG(f.tool, '#fff', 0) : (L.hand ? tierWrap('hand', lv[L.hand] || 0, handSVG(L.hand, FASH[L.hand].col, lv[L.hand] || 0), f.flap) : '');
   let s = '';
   if (!back) s += backItem;
   if (L.hairB && !back) s += `<g transform="translate(0 ${bob})">${tpl(NEMO.hairB[L.hairB], L.hairC)}</g>`;
-  s += legSVG(L, 59, f.legs ? f.legs[0] : 0, skin) + legSVG(L, 73, f.legs ? f.legs[1] : 0, skin);
+  const shoeLv = L.shoes ? (lv[L.shoes] || 0) : 0;
+  s += tierBehind('shoes', shoeLv) + legSVG(L, 59, f.legs ? f.legs[0] : 0, skin) + legSVG(L, 73, f.legs ? f.legs[1] : 0, skin) + tierFront('shoes', shoeLv, f.flap);
   s += `<g transform="translate(0 ${bob})">`;
   // farm tools stay in the arm layer; fashion items held in the hand are drawn last (see below) so the big head never hides them
   const tool = f.tool ? handItem : '';
   s += armSVG(L, 44, f.arms ? f.arms[0] : 0, skin, back ? tool : '');
   s += `<path d="M55 113H90V132C90 135.3 87.3 138 84 138H61C57.7 138 55 135.3 55 132V113Z" fill="${skin.b}"/>` + topSVG(L, f) + skirtSVG(L);
-  const acc = (k, fn) => L[k] && FASH[L[k]] ? glowWrap(lv[L[k]], fn(L[k], FASH[L[k]].col, lv[L[k]] || 0)) : '';
+  const acc = (k, fn) => L[k] && FASH[L[k]] ? tierWrap(k, lv[L[k]] || 0, fn(L[k], FASH[L[k]].col, lv[L[k]] || 0), f.flap) : '';
   if (!back) {
     if (L.bag && HANDBAGS.includes(L.bag)) s += `<g transform="rotate(${f.arms ? f.arms[0] : 0} 50 116)">${acc('bag', bagSVG)}</g>`;
   }
@@ -219,13 +220,13 @@ function chibiInner(L, f, dir) {
     s += featsSVG(L, skin, 'face');
     s += acc('deco', decoSVG);
     if (L.beard) s += tpl(NEMO.beards[L.beard], L.hairC);
-    if (L.face2) s += glowWrap(lv[L.face2], faceItemSVG(L.face2, FASH[L.face2].col, lv[L.face2] || 0));
+    if (L.face2) s += tierWrap('face', lv[L.face2] || 0, faceItemSVG(L.face2, FASH[L.face2].col, lv[L.face2] || 0), f.flap);
     s += acc('mouth', mouthSVG);
   }
   if (L.hairF && L.hairF !== 'none') s += tpl(NEMO.hairF[L.hairF], L.hairC);
   if (!back) s += acc('ear', earSVG) + featsSVG(L, skin, 'hair');
   if (L.hairB && back) s += tpl(NEMO.hairB[L.hairB], L.hairC);
-  if (L.hat) s += glowWrap(lv[L.hat], hatSVG(L.hat, FASH[L.hat].col, lv[L.hat] || 0));
+  if (L.hat) s += tierWrap('hat', lv[L.hat] || 0, hatSVG(L.hat, FASH[L.hat].col, lv[L.hat] || 0), f.flap) + hatAccent(lv[L.hat] || 0);
   // held item on top of everything, following the arm's swing and leaning away from the head
   if (handItem && !f.tool) {
     const fit = HAND_FIT[L.hand] || HAND_FIT._, ax = back ? 44 : 89, rot = f.arms ? f.arms[back ? 0 : 1] : 0, lean = (back ? -1 : 1) * fit[1];
@@ -299,7 +300,8 @@ function petSVG(id, lv, frame) {
     case 'pet_dragon': body = `<path d="M8 ${30 + hop} q-8 -14 6 -18 q0 8 8 10z M52 ${30 + hop} q8 -14 -6 -18 q0 8 -8 10z" fill="${shade(c, -0.25)}"/><ellipse cx="30" cy="${38 + hop}" rx="18" ry="17" fill="${c}"/><ellipse cx="30" cy="${45 + hop}" rx="10" ry="8" fill="#FFF3B0"/><path d="M22 ${22 + hop} l-3 -8 l6 5z M38 ${22 + hop} l3 -8 l-6 5z" fill="#FFC83D"/>${eyes(23, 37, 33 + hop)}<path d="M46 50 q10 4 8 -6" stroke="${c}" stroke-width="5" fill="none" stroke-linecap="round"/>`; break;
   }
   const glow = lv >= 4 ? `<ellipse cx="30" cy="34" rx="28" ry="26" fill="${TIER[lv] === 'rainbow' ? '#FFE48A' : TIER[lv]}" opacity=".28"/>` : '';
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -12 60 72" width="120" height="144">${RB_DEF}${glow}${body}${lv ? bow : ''}${crown}</svg>`;
+  const pt = petTier(lv, hop);
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-6 -16 72 78" width="132" height="143">${RB_DEF}${glow}${pt.back}${body}${lv ? bow : ''}${crown}${pt.front}</svg>`;
 }
 const PET_CACHE = new Map();
 function petImage(id, lv, frame) {
@@ -313,6 +315,8 @@ function drawAura(g, id, lv, x, y, t) {
   const base = FASH[id].col, col = id === 'aura_dragon' ? `hsl(${10 + (t / 20) % 40} 100% 60%)` : id === 'aura_galaxy' || id === 'aura_rainbow' ? `hsl(${(t / 6) % 360} 90% 70%)` : lv ? (TIER[lv] === 'rainbow' ? `hsl(${(t / 8) % 360} 90% 65%)` : TIER[lv]) : base;
   const n = 5 + lv * 2, r = 18 + lv;
   g.save(); g.globalAlpha = 0.35 + lv * 0.05; g.fillStyle = col; g.beginPath(); g.ellipse(x, y, r, r * 0.38, 0, 0, Math.PI * 2); g.fill(); g.globalAlpha = 1;
+  if (lv >= 3) { g.strokeStyle = col; g.lineWidth = 1.2; g.globalAlpha = 0.7; g.beginPath(); g.ellipse(x, y, r * 1.35, r * 0.52, 0, 0, Math.PI * 2); g.stroke(); g.globalAlpha = 1; }
+  if (lv >= 5) { for (let k = 0; k < 3; k++) { const px = x + (k - 1) * r * 0.8, h = 34 + lv * 6, gr = g.createLinearGradient(px, y, px, y - h); gr.addColorStop(0, col); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.globalAlpha = 0.35 + 0.15 * Math.sin(t / 300 + k); g.fillStyle = gr; g.fillRect(px - 2.5, y - h, 5, h); } g.globalAlpha = 1; }
   for (let i = 0; i < n; i++) {
     const a = i / n * Math.PI * 2 + t / 900, k = ((t / 1400 + i / n) % 1);
     const px = x + Math.cos(a) * r * 0.9, py = y + Math.sin(a) * r * 0.3 - k * (26 + lv * 4);
