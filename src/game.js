@@ -468,6 +468,7 @@ function npcBody(n) {
   if (role === 'ielts') return ieltsHTML();
   if (role === 'salon') return salonHTML();
   if (role === 'spa') return spaHTML();
+  if (role === 'lottery') return lottoHTML();
   return `<div class="row-btns"><button class="btn" data-act="chat">Nói chuyện</button><button class="btn ghost" data-act="close">Tạm biệt</button></div>`;
 }
 function orderHTML(o, k, canGive) {

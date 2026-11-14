@@ -81,3 +81,5 @@ Object.assign(SPA_SKINS, {
   mermaid: {id: 'mermaid', b: '#D6F4FF', d: '#B2E2F2', c: '#8EC9FF'}
 });
 SKIN_TONES.push(SPA_SKINS.honey, SPA_SKINS.mermaid);
+// blush position per face shape: [left x, right x, y, radius]
+const CHEEKS = {vline: [48, 97, 97, 8], idol: [49, 96, 96, 7.5], slim: [48, 97, 98, 8], heart: [47, 98, 97, 8.5], elf: [48, 97, 97, 8], fairy: [47, 98, 97, 8.5], oval: [46, 99, 99, 9], doll: [45, 100, 100, 9.5], mochi: [41, 104, 99, 11], square: [45, 100, 99, 10]};

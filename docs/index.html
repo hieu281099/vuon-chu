@@ -579,6 +579,16 @@ textarea.field{resize:vertical;line-height:1.5}
 @media (max-width:600px){.mm{top:calc(86px + env(safe-area-inset-top,0px));right:8px;width:112px;padding:3px 3px 2px;border-radius:12px}.mm span{font-size:9.5px}}
 @media (max-height:480px) and (orientation:landscape){.mm{top:calc(52px + env(safe-area-inset-top,0px));width:120px}}
 
+/* ---------- lottery scratch card ---------- */
+.ltable{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:12px;margin:6px 0 10px}
+.ltable span{display:flex;align-items:center;gap:4px}.ltable img{width:20px;height:20px}
+.lotto{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;background:linear-gradient(135deg,#ffe48a,#ff8fc7);border-radius:20px;padding:10px;max-width:420px}
+.lcell{aspect-ratio:1/0.9;border:0;border-radius:14px;background:repeating-linear-gradient(45deg,#c9cdd8 0 6px,#b6bac8 6px 12px);display:grid;place-items:center;cursor:pointer;color:#fff;font-weight:900;font-family:var(--display);font-size:18px;text-shadow:0 1px 2px rgba(0,0,0,.3)}
+.lcell:hover{filter:brightness(1.08)}
+.lcell.open{background:#fff;cursor:default;display:flex;flex-direction:column;gap:1px;padding:4px;color:var(--ink);text-shadow:none}
+.lcell.open img{width:42%;height:auto}.lcell.open b{font-size:12px;line-height:1.1;text-align:center}.lcell.open small{font-size:10px;color:var(--muted);font-family:var(--font);font-weight:700}
+.lcell.win{box-shadow:0 0 0 3px #ffb020,0 0 16px rgba(255,176,32,.8)}
+
 </style>
 
 <div id="loading" class="loading">
@@ -1561,6 +1571,8 @@ Object.assign(SPA_SKINS, {
   mermaid: {id: 'mermaid', b: '#D6F4FF', d: '#B2E2F2', c: '#8EC9FF'}
 });
 SKIN_TONES.push(SPA_SKINS.honey, SPA_SKINS.mermaid);
+// blush position per face shape: [left x, right x, y, radius]
+const CHEEKS = {vline: [48, 97, 97, 8], idol: [49, 96, 96, 7.5], slim: [48, 97, 98, 8], heart: [47, 98, 97, 8.5], elf: [48, 97, 97, 8], fairy: [47, 98, 97, 8.5], oval: [46, 99, 99, 9], doll: [45, 100, 100, 9.5], mochi: [41, 104, 99, 11], square: [45, 100, 99, 10]};
 
 /* ===================== UPGRADE TIERS: every level adds something you can see (merged into chibi.js) ===================== */
 // Only Epic (rar 2) and better items can be upgraded.
@@ -1825,7 +1837,10 @@ function headSVG(L, skin, back) {
   const shaped = L.shape && FACE_SHAPES[L.shape];
   const head = shaped ? (FACE_EARS[L.shape] || SHAPE_EARS)(skin) + FACE_SHAPES[L.shape](skin.b) : `<rect x="11" y="76" width="123" height="29" rx="14.5" fill="${skin.b}"/><rect x="19" y="83" width="107" height="15" rx="7.5" fill="${skin.d}"/><rect x="25" y="34" width="95" height="83" rx="30" fill="${skin.b}"/>`;
   if (back) return head + (L.hairF !== 'none' ? `<rect x="23" y="32" width="99" height="87" rx="31" fill="${L.hairC}"/>` : '');
-  return head + `<circle cx="45" cy="99" r="10" fill="${skin.c}"/><circle cx="100" cy="99" r="10" fill="${skin.c}"/>`;
+  // blush sits inside the face: smaller and further in on narrow shapes, and clipped to the face outline so it never bulges out
+  const [lx, rx, cy, cr] = (shaped && CHEEKS[L.shape]) || [45, 100, 99, 10];
+  const blush = `<circle cx="${lx}" cy="${cy}" r="${cr}" fill="${skin.c}"/><circle cx="${rx}" cy="${cy}" r="${cr}" fill="${skin.c}"/>`;
+  return head + (shaped ? `<clipPath id="faceclip">${FACE_SHAPES[L.shape]('#000')}</clipPath><g clip-path="url(#faceclip)">${blush}</g>` : blush);
 }
 const RB_DEF = `<defs><linearGradient id="rb" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF3552"/><stop offset=".25" stop-color="#FFC83D"/><stop offset=".5" stop-color="#3DDC84"/><stop offset=".75" stop-color="#4D8BFF"/><stop offset="1" stop-color="#B05CFF"/></linearGradient><filter id="gl" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter><linearGradient id="hg_pink" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FF8FC7"/><stop offset="1" stop-color="#9B5CFF"/></linearGradient><linearGradient id="hg_ocean" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4D8BFF"/><stop offset="1" stop-color="#7EF0C4"/></linearGradient><linearGradient id="hg_fire" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#FF3552"/><stop offset=".55" stop-color="#FF8A3D"/><stop offset="1" stop-color="#FFE48A"/></linearGradient><linearGradient id="hg_silver" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".5" stop-color="#D9DDF0"/><stop offset="1" stop-color="#B8B4E0"/></linearGradient><linearGradient id="hg_gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFF3B0"/><stop offset=".45" stop-color="#FFC83D"/><stop offset="1" stop-color="#C98A1A"/></linearGradient><linearGradient id="hg_galaxy" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1E1B4B"/><stop offset=".5" stop-color="#6D3FD8"/><stop offset="1" stop-color="#FF6FB5"/></linearGradient><linearGradient id="hg_aurora" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3DDC84"/><stop offset=".5" stop-color="#2DD4BF"/><stop offset="1" stop-color="#9B5CFF"/></linearGradient></defs>`;
 const glowWrap = (lv, s) => s && lv >= 4 ? `<g filter="url(#gl)">${s}</g>` : s;
@@ -2886,6 +2901,7 @@ function npcBody(n) {
   if (role === 'ielts') return ieltsHTML();
   if (role === 'salon') return salonHTML();
   if (role === 'spa') return spaHTML();
+  if (role === 'lottery') return lottoHTML();
   return `<div class="row-btns"><button class="btn" data-act="chat">Nói chuyện</button><button class="btn ghost" data-act="close">Tạm biệt</button></div>`;
 }
 function orderHTML(o, k, canGive) {
@@ -3277,6 +3293,69 @@ function openChest(kind) {
 }
 function giveKey(n, why) { S.keys = (S.keys || 0) + n; setTimeout(() => toast(`<b>+${n} chìa khoá rương</b>${why ? ' · ' + why : ''}`), 600); markDirty(); }
 
+/* ===================== LOTTERY SELLER: English scratch cards outside the post office ===================== */
+NPC_DEFS.push({id:'tam', name:'Cô Tám', map:'village', home:[24, 23], role:'lottery', look:L_({skin:2, hairF:'curly', hairB:'short', hairC:'#5B3423', top:'top_polo', topC:'#FFC83D', bottom:'bot_skirt', bottomC:'#FF3552', hat:'hat_beret', face2:'face_round', bag:'bag_cross', neck:'neck_bowtie', pet:'pet_chick'}),
+  greet:['Lucky tickets!','Try your luck!'], line:() => ({en:`Hello ${S.name}! Would you like a lucky ticket today?`, vi:`Chào ${S.name}! Mua vé số may mắn không cháu?`})});
+
+const LOTTO_PRICE = 30, LOTTO_DAY = 10;
+// symbol, English word, Vietnamese, prize text, chance of winning it (the rest of the time the card loses)
+const LOTTO = [
+  {k: 'coin', en: 'coin', vi: 'đồng xu', win: '50 xu', p: 0.2, give: () => { S.coins += 50; }},
+  {k: 'clover', en: 'four-leaf clover', vi: 'cỏ bốn lá', win: '150 xu', p: 0.12, give: () => { S.coins += 150; }},
+  {k: 'emerald', en: 'emerald', vi: 'ngọc lục bảo', win: '3 ngọc lục bảo', p: 0.07, give: () => { S.em += 3; }},
+  {k: 'diamond', en: 'diamond', vi: 'kim cương', win: '2 kim cương', p: 0.035, give: () => { S.di += 2; }},
+  {k: 'key', en: 'key', vi: 'chìa khoá', win: '1 chìa khoá rương', p: 0.02, give: () => { S.keys = (S.keys || 0) + 1; }},
+  {k: 'star', en: 'shooting star', vi: 'sao băng', win: 'ĐỘC ĐẮC: 1000 xu + 5 kim cương', p: 0.005, give: () => { S.coins += 1000; S.di += 5; }}
+];
+const LOTTO_ICON = {
+  coin: '<circle cx="20" cy="20" r="14" fill="#FFC83D" stroke="#C98A1A" stroke-width="3"/><path d="M20 12v16M15 16h8a3 3 0 0 1 0 6h-6a3 3 0 0 0 0 6h8" stroke="#C98A1A" stroke-width="2.4" fill="none"/>',
+  clover: '<g fill="#3DBE6C"><circle cx="14" cy="14" r="7"/><circle cx="26" cy="14" r="7"/><circle cx="14" cy="26" r="7"/><circle cx="26" cy="26" r="7"/></g><path d="M20 20Q24 30 30 36" stroke="#2E8B47" stroke-width="2.4" fill="none"/>',
+  emerald: '<path d="M20 4L34 16L20 36L6 16Z" fill="#3DDC84" stroke="#1E9E5A" stroke-width="2"/><path d="M6 16H34M20 4L14 16L20 36L26 16Z" stroke="#FFFFFF" stroke-width="1.2" fill="none" opacity=".7"/>',
+  diamond: '<path d="M8 14L14 6H26L32 14L20 34Z" fill="#8EC9FF" stroke="#4D8BFF" stroke-width="2"/><path d="M8 14H32M14 6L18 14L20 34L22 14L26 6" stroke="#FFFFFF" stroke-width="1.2" fill="none" opacity=".8"/>',
+  key: '<circle cx="13" cy="14" r="8" fill="none" stroke="#FFB020" stroke-width="4"/><path d="M19 19L33 33M27 27L31 23M30 30L34 26" stroke="#FFB020" stroke-width="4" stroke-linecap="round"/>',
+  star: '<path d="M20 3L25 15L38 15L27 23L31 36L20 28L9 36L13 23L2 15L15 15Z" fill="url(#lgold)" stroke="#FF6FB5" stroke-width="1.5"/>'
+};
+const lottoImg = k => svgURL(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><defs><linearGradient id="lgold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFF3B0"/><stop offset="1" stop-color="#FFB020"/></linearGradient></defs>${LOTTO_ICON[k]}</svg>`);
+let LOTTO_CARD = null;
+function lottoLeft() { const d = new Date().toISOString().slice(0, 10); if (!S.lotto || S.lotto.day !== d) S.lotto = {day: d, n: 0}; return LOTTO_DAY - S.lotto.n; }
+// decide the result first, then lay out six symbols that show it (a win has exactly three of one symbol)
+function lottoDeal() {
+  let r = Math.random(), prize = null;
+  for (const x of [...LOTTO].reverse()) { if (r < x.p) { prize = x; break; } r -= x.p; }
+  const syms = [];
+  if (prize) { syms.push(prize.k, prize.k, prize.k); const others = shuffle(LOTTO.filter(x => x !== prize)); syms.push(others[0].k, others[0].k, others[1].k); }
+  else { const pick = shuffle(LOTTO); syms.push(pick[0].k, pick[0].k, pick[1].k, pick[1].k, pick[2].k, pick[3].k); }
+  return {cells: shuffle(syms), open: [false, false, false, false, false, false], prize, done: false};
+}
+function lottoBuy() {
+  if (lottoLeft() <= 0 || S.coins < LOTTO_PRICE || (LOTTO_CARD && !LOTTO_CARD.done)) return;
+  S.coins -= LOTTO_PRICE; S.lotto.n++; LOTTO_CARD = lottoDeal(); sfx('coin'); speak('Good luck!', true); renderHUD(); markDirty(); refreshNpc();
+}
+function lottoScratch(i) {
+  const c = LOTTO_CARD; if (!c || c.done || c.open[i]) return;
+  c.open[i] = true; speak(LOTTO.find(x => x.k === c.cells[i]).en, true);
+  if (c.open.every(Boolean)) lottoFinish(); else refreshNpc();
+}
+function lottoAll() { const c = LOTTO_CARD; if (!c || c.done) return; c.open = c.open.map(() => true); lottoFinish(); }
+function lottoFinish() {
+  const c = LOTTO_CARD; c.done = true;
+  if (c.prize) { c.prize.give(); sfx('level'); queueFx({kind: 'spark', who: 'player'}); speak(c.prize.k === 'star' ? 'Jackpot!' : 'You win!', true); }
+  else sfx('bad');
+  renderHUD(); markDirty(); saveNow(); refreshNpc();
+}
+function lottoHTML() {
+  const left = lottoLeft(), c = LOTTO_CARD;
+  const card = c ? `<div class="lotto">${c.cells.map((k, i) => { const x = LOTTO.find(y => y.k === k); return c.open[i]
+      ? `<div class="lcell open ${c.done && c.prize && k === c.prize.k ? 'win' : ''}"><img src="${lottoImg(k)}" alt=""><b>${esc(x.en)}</b><small>${esc(x.vi)}</small></div>`
+      : `<button class="lcell" data-act="lotto-scratch" data-i="${i}" aria-label="Cào ô ${i + 1}"><span>CÀO</span></button>`; }).join('')}</div>
+    ${c.done ? (c.prize ? `<div class="fb good"><strong>${c.prize.k === 'star' ? 'ĐỘC ĐẮC!' : 'Trúng thưởng!'}</strong> Ba ô “${esc(c.prize.en)}” (${esc(c.prize.vi)}): bạn nhận <b>${c.prize.win}</b>.</div>` : `<div class="fb miss"><strong>Chưa trúng.</strong> Không có ba ô nào giống nhau. Thử vé khác nhé!</div>`)
+      : `<div class="row-btns"><button class="btn ghost sm" data-act="lotto-all">Cào hết</button></div>`}` : '';
+  return `<p class="note">Vé số cào tiếng Anh: chạm vào từng ô để cào, mỗi ô hiện một hình kèm tên tiếng Anh. Ba ô giống nhau là trúng. Hôm nay còn <b>${left}/${LOTTO_DAY}</b> vé.</p>
+    <div class="ltable">${LOTTO.map(x => `<span><img src="${lottoImg(x.k)}" alt=""> ×3 <b>${esc(x.en)}</b>: ${x.win}</span>`).join('')}</div>
+    ${card}
+    <div class="row-btns"><button class="btn gold" data-act="lotto-buy" ${left <= 0 || S.coins < LOTTO_PRICE || (c && !c.done) ? 'disabled' : ''}>${c && !c.done ? 'Cào xong vé này trước' : left <= 0 ? 'Hết vé hôm nay' : `Mua vé · ${coinIcon}${LOTTO_PRICE}`}</button></div>`;
+}
+
 /* ===================== NPC OUTFITS: every villager wears a unique, fully upgraded set ===================== */
 // _lv: tier for every equipped piece (6 = Cầu vồng, 5 = Hoàng kim). No two NPCs share a hat, wings, held item, aura or pet.
 const NPC_GEAR = {
@@ -3291,6 +3370,7 @@ const NPC_GEAR = {
   ha:   {hat: 'hat_halo', face2: 'face_visor', back: 'back_crystal', hand: 'hand_starstaff', aura: 'aura_galaxy', pet: 'pet_unicorn', neck: 'neck_ruby', ear: 'ear_moon', shoes: 'shoes_rainbow', bag: 'bag_galaxy'},
   bao:  {hat: 'hat_headphones', face2: 'face_star', back: 'back_guitar', hand: 'hand_mic', aura: 'aura_rainbow', pet: 'pet_fox', neck: 'neck_choker', shoes: 'shoes_cloud', bag: 'bag_heart'},
   ngan: {hat: 'hat_flower', face2: 'face_butterfly', back: 'back_phoenix', hand: 'hand_fan', aura: 'aura_butterfly', pet: 'pet_phoenix', neck: 'neck_heart', ear: 'ear_butterfly', shoes: 'shoes_sandals', bag: 'bag_tote'},
+  tam:  {hat: 'hat_beret', face2: 'face_round', bag: 'bag_cross', neck: 'neck_bowtie', pet: 'pet_chick', hand: 'hand_book', shoes: 'shoes_sandals', _lv: 4},
   thu:  {hat: 'hat_unicorn', face2: 'face_rainbowshades', back: 'back_ninetails', hand: 'hand_cotton', aura: 'aura_dragon', pet: 'pet_panda', neck: 'neck_galaxy', ear: 'ear_galaxy', bag: 'bag_bear', deco: 'deco_heartglitter', shape: 'vline', feats: ['lashes', 'glow']}
 };
 const GEAR_SLOTS = ['hat', 'face2', 'back', 'hand', 'aura', 'pet', 'neck', 'ear', 'shoes', 'bag', 'mouth', 'deco'];
@@ -4577,8 +4657,8 @@ function drawPet(id, lv, x, y, tnow, moving) {
 
 /* ===================== MINIMAP: where you are and where the NPCs are; tap to open a larger map with a list ===================== */
 const MM_TER = {g: '#8FD16A', d: '#EBD3A0', c: '#F3E7D2', w: '#5AB7F0', s: '#F3E2A8', D: '#B98A5C'};
-const ROLE_VI = {shop: 'Quần áo', market: 'Chợ', seeds: 'Hạt giống', forge: 'Lò rèn', teacher: 'Trường học', ielts: 'IELTS', salon: 'Tiệm tóc', spa: 'Spa', chat: 'Trò chuyện', home: 'Nhà'};
-const ROLE_COL = {shop: '#FF6FB5', market: '#FF8A3D', seeds: '#3DBE6C', forge: '#9B5CFF', teacher: '#4D8BFF', ielts: '#FFB020', salon: '#E25BD8', spa: '#2DD4BF', chat: '#8E8AA8'};
+const ROLE_VI = {shop: 'Quần áo', market: 'Chợ', seeds: 'Hạt giống', forge: 'Lò rèn', teacher: 'Trường học', ielts: 'IELTS', salon: 'Tiệm tóc', spa: 'Spa', chat: 'Trò chuyện', home: 'Nhà', lottery: 'Vé số'};
+const ROLE_COL = {shop: '#FF6FB5', market: '#FF8A3D', seeds: '#3DBE6C', forge: '#9B5CFF', teacher: '#4D8BFF', ielts: '#FFB020', salon: '#E25BD8', spa: '#2DD4BF', chat: '#8E8AA8', lottery: '#FF3552'};
 const MM_CACHE = {};
 // static layer of a map (terrain, buildings, trees, exits), drawn once per map at `k` px per tile
 function mmBase(m, k) {
@@ -4663,7 +4743,7 @@ function renderHint() {
     else if (S.animals.some(a => a && a.st === 'hungry')) h = 'Vật nuôi đang đói. Vào chuồng, chạm vào con vật để cho ăn.';
     else if (sts.includes('E')) h = Object.values(S.seeds).some(n => n > 0) ? 'Còn ô đất trống. Chạm vào để gieo hạt.' : 'Hết hạt giống. Sang <b>Làng</b> mua ở cửa hàng SEEDS.';
     else h = 'Cây đang lớn, vài giờ nữa mới chín. Chạm vào ô ruộng để bón phân, hoặc mở <b>Bản đồ</b> đi dạo.';
-  } else if (S.map === 'village') h = 'Chú Ba (MARKET) nhận đơn hàng, Cô Mai (CLOTHES SHOP) bán quần áo, Ông Tư (SEEDS) bán hạt, Cô Lan (SCHOOL) dạy học, Chị Ngân (HAIR SALON) làm tóc. Bảng tin ở quảng trường.';
+  } else if (S.map === 'village') h = 'Chú Ba (MARKET) nhận đơn hàng, Cô Mai (CLOTHES SHOP) bán quần áo, Ông Tư (SEEDS) bán hạt, Cô Lan (SCHOOL) dạy học, Chị Ngân (HAIR SALON) làm tóc, Cô Tám bán vé số trước POST. Bảng tin ở quảng trường.';
   else if (S.map === 'park') h = 'Gặp Chị Hà ở bảng IELTS CHALLENGE để làm thử thách IELTS hằng ngày. Chị Thu ở BEAUTY SPA đổi dáng mặt, đôi mắt, nét duyên.';
   else h = 'Chạm vào mặt nước để thả câu. Ông Sáu ở cầu tàu cũng thích nói chuyện.';
   if (h !== hintKey) { hintKey = h; const el = $('#hint'); el.innerHTML = h; el.classList.remove('gone'); clearTimeout(hintTimer); hintTimer = setTimeout(() => el.classList.add('gone'), 5000); }
@@ -4734,6 +4814,9 @@ document.addEventListener('click', e => {
     case 'buyanimal': return buyAnimal(+d.s, d.a);
     case 'farmshop': return openFarmShop(d.t);
     case 'minimap': return openMinimap();
+    case 'lotto-buy': return lottoBuy();
+    case 'lotto-scratch': return lottoScratch(+d.i);
+    case 'lotto-all': return lottoAll();
     case 'mm-go': return mmGo(d.id);
     case 'login': return openAuthInGame('login');
     case 'register': return openAuthInGame('register');
