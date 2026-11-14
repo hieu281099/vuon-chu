@@ -23,5 +23,29 @@ DIST.mkdir(exist_ok=True)
 print("dist/index.html", len(page) // 1024, "KB")
 # GitHub Pages copy of the web version (served from /docs on main)
 (ROOT / "docs").mkdir(exist_ok=True)
-(ROOT / "docs" / "index.html").write_text((DIST / "test.html").read_text(encoding="utf-8"), encoding="utf-8")
+# installable on iPhone / Android home screens: manifest, Apple meta tags, offline service worker
+PWA_HEAD = ('<title>Vườn Chữ</title><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">'
+            '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Vườn Chữ">'
+            '<meta name="theme-color" content="#1b1640"><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icon-180.png">')
+PWA_SW = "<script>if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(function(){});</script>"
+docs = (DIST / "test.html").read_text(encoding="utf-8").replace("</head>", PWA_HEAD + "</head>", 1).replace("</body>", PWA_SW + "</body>", 1)
+(ROOT / "docs" / "index.html").write_text(docs, encoding="utf-8")
+import json, hashlib
+(ROOT / "docs" / "manifest.webmanifest").write_text(json.dumps({
+    "name": "Vườn Chữ", "short_name": "Vườn Chữ", "description": "Game nông trại học tiếng Anh",
+    "start_url": "./", "scope": "./", "display": "fullscreen", "orientation": "landscape",
+    "background_color": "#1b1640", "theme_color": "#1b1640", "lang": "vi",
+    "icons": [{"src": "icon-192.png", "sizes": "192x192", "type": "image/png"}, {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}]
+}, ensure_ascii=False, indent=1), encoding="utf-8")
+ver = hashlib.md5(docs.encode("utf-8")).hexdigest()[:8]
+(ROOT / "docs" / "sw.js").write_text(f"""// offline cache for the game page; network first so updates arrive, cache when offline
+const C = 'vuonchu-{ver}', FILES = ['./', './index.html', './manifest.webmanifest', './icon-180.png', './icon-192.png', './icon-512.png'];
+self.addEventListener('install', e => {{ e.waitUntil(caches.open(C).then(c => c.addAll(FILES))); self.skipWaiting(); }});
+self.addEventListener('activate', e => {{ e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== C).map(k => caches.delete(k))))); self.clients.claim(); }});
+self.addEventListener('fetch', e => {{
+  const u = new URL(e.request.url);
+  if (e.request.method !== 'GET' || u.origin !== location.origin) return;   // Supabase, fonts: straight to the network
+  e.respondWith(fetch(e.request).then(r => {{ const copy = r.clone(); caches.open(C).then(c => c.put(e.request, copy)); return r; }}).catch(() => caches.match(e.request).then(r => r || caches.match('./index.html'))));
+}});
+""", encoding="utf-8")
 (ROOT / "docs" / ".nojekyll").write_text("", encoding="utf-8")

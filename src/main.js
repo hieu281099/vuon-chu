@@ -282,6 +282,10 @@ async function boot(hotData) {
     console.error(e); $('#loadmsg').textContent = 'Không tải được game: ' + (e.message || e);
   }
 }
+// landscape on phones: remember if the player chose to stay in portrait; try to lock landscape where the browser allows it
+try { if (localStorage.getItem('vc-portrait-ok')) document.documentElement.classList.add('portrait-ok'); } catch (e) {}
+document.getElementById('rot-skip').addEventListener('click', () => { document.documentElement.classList.add('portrait-ok'); try { localStorage.setItem('vc-portrait-ok', '1'); } catch (e) {} });
+window.addEventListener('pointerdown', function lockOnce() { window.removeEventListener('pointerdown', lockOnce); try { if (screen.orientation && screen.orientation.lock && (matchMedia('(display-mode: fullscreen)').matches || matchMedia('(display-mode: standalone)').matches)) screen.orientation.lock('landscape').catch(() => {}); } catch (e) {} }, {passive: true});
 if (location.hostname === '127.0.0.1') window.__vc = () => ({S, P, ANIMS, NPCS, MAPS, view, approach, changeMap, talk, spawnAnimals, onPlot, ex: () => EX, autoSimulate, TW: TRACK_WORDS, NPC_DEFS, readiness, renderHUD, FASHION, HAIR_ITEMS, SPA_ITEMS, spaPreview, chibiSVG, petSVG, hairPreview, fullLook, step: (sec) => { let t = performance.now(); for (let i = 0; i < sec * 20; i++) { t += 50; update(0.05, t); } draw(t); }});
 try { window.claude && window.claude.hot && window.claude.hot.snapshot && window.claude.hot.snapshot(() => { if (P && S) { S.px = P.x; S.py = P.y; } return {S}; }); } catch (e) {}
 const HOT = window.claude && window.claude.hot;

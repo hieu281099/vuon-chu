@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body><title>Vườn Chữ</title>
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Vườn Chữ</title><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Vườn Chữ"><meta name="theme-color" content="#1b1640"><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icon-180.png"></head><body><title>Vườn Chữ</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -595,8 +595,69 @@ textarea.field{resize:vertical;line-height:1.5}
 .letter .lhead b{color:var(--ink)}
 .letter p{margin:0}
 
+/* ---------- phones play in landscape: portrait shows a rotate prompt ---------- */
+.rotate{display:none}
+@media (orientation:portrait) and (max-width:600px) and (pointer:coarse){
+  html:not(.portrait-ok) .rotate{display:grid;position:fixed;inset:0;z-index:300;place-items:center;padding:24px;background:radial-gradient(circle at 30% 20%,#3a2b8a,#1b1640 65%);color:#fff;text-align:center}
+}
+.rotcard{display:flex;flex-direction:column;align-items:center;gap:10px;max-width:300px}
+.rotcard svg{width:150px;height:auto}
+.rotcard .rotphone{transform-origin:60px 45px;animation:rotphone 2.2s ease-in-out infinite}
+@keyframes rotphone{0%,20%{transform:rotate(-90deg)}55%,100%{transform:rotate(0)}}
+.rotcard b{font-family:var(--display);font-size:22px;line-height:1.2}
+.rotcard small{color:#d9d3ff;font-size:14px;font-weight:600}
+.rotcard button{margin-top:8px;background:none;border:1.5px solid rgba(255,255,255,.5);color:#fff;border-radius:99px;padding:8px 16px;font:inherit;font-weight:700;font-size:13px}
+
+/* ===================== LANDSCAPE PHONES: compact sheets so dialogs fit in ~360-430 px of height ===================== */
+@media (max-height:480px) and (orientation:landscape){
+  .overlay{padding:6px max(6px,env(safe-area-inset-right,0px)) 6px max(6px,env(safe-area-inset-left,0px));place-items:center}
+  .panel{max-height:calc(100% - 4px);padding:12px 14px 12px;border-radius:20px}
+  .panel.wide{max-width:min(980px,100%)}
+  .ptitle{font-size:20px;margin-bottom:2px}.psub{font-size:13px;margin:0 0 6px}
+  .pclose{top:8px;right:8px;width:30px;height:30px;font-size:19px}
+  .seg{margin:4px 0 8px;gap:3px;padding:3px}.segb{padding:5px 8px;font-size:12px;flex:1 1 auto}
+  .ph3{margin:8px 0 4px;font-size:12px}
+  .ward{grid-template-columns:168px minmax(0,1fr);gap:12px}.ward-prev{position:sticky;top:0}
+  .stagebox{width:160px;height:170px}
+  .cards{grid-template-columns:repeat(auto-fill,minmax(98px,1fr));gap:6px}.card{padding:6px 4px;border-radius:14px}.pv{width:66px;height:66px}.pv.big{width:110px;height:110px}
+  .npc-head{margin-bottom:6px;gap:10px}.portrait{width:50px;height:50px;border-radius:14px}.npc-line{font-size:14px}
+  .q-head{margin-bottom:6px}.q-word{font-size:26px;margin-bottom:8px}.q-word.vi{font-size:22px}.q-sent{font-size:15px;padding:8px 10px;margin-bottom:8px}
+  .opts{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.opt{min-height:40px;padding:6px 10px;font-size:14px}
+  .stats3 b{font-size:20px}.stats3 div{padding:6px 10px}
+  .egrid.two{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)}.passage{max-height:62vh;font-size:13.5px}
+  .exam-foot{padding:8px 0 4px}.clock b{font-size:16px}
+  .tcards{grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px}.tcard{padding:10px}
+  .lvhero{padding:8px 12px;margin:4px 0}.lvbig{font-size:28px;padding:4px 10px}.lvpath{margin:6px 0}
+  .fgrid{max-height:170px}.tierstrip{grid-template-columns:repeat(7,minmax(70px,1fr))}
+  .mmbigwrap{padding:4px}.mmbigwrap canvas{max-height:58vh;width:auto;max-width:100%;margin:0 auto}
+  .lotto{max-width:330px}.letter{font-size:13.5px;padding:8px 12px}
+  .authcard{padding:12px 16px}.authcard .logo{font-size:30px;margin-bottom:6px}#authform{gap:6px}#authform .field{padding:6px 10px}
+  .toast{font-size:12.5px;padding:6px 12px}
+  .rotate{display:none!important}
+}
+@media (max-height:480px) and (orientation:landscape) and (max-width:700px){
+  .ward{grid-template-columns:130px minmax(0,1fr)}.stagebox{width:124px;height:140px}
+  .cards{grid-template-columns:repeat(auto-fill,minmax(88px,1fr))}
+}
+@media (max-height:480px) and (orientation:landscape){
+  .hud-right{flex-wrap:nowrap;max-width:none;gap:4px}
+  .pill{font-size:12.5px;padding:3px 8px 3px 4px;gap:4px}.pill .ico{width:17px;height:17px}.pill.streak{display:none}.pill.auto b{font-size:11px}
+  .mm{top:calc(48px + env(safe-area-inset-top,0px));width:132px;padding:3px 3px 2px;border-radius:12px}.mm span{font-size:9.5px}
+  .hint{top:auto;bottom:calc(60px + env(safe-area-inset-bottom,0px));max-width:min(460px,64%);font-size:12.5px;padding:5px 12px}
+}
+@media (max-height:480px) and (orientation:landscape) and (max-width:760px){
+  .dk{width:44px;font-size:9px}.dk.main{width:50px}.dk svg{width:18px;height:18px}
+  .chat{width:min(210px,calc(100% - 420px))}
+  .mm{width:112px}
+  .hud-card{max-width:110px}
+}
+
 </style>
 
+<div id="rotate" class="rotate" role="dialog" aria-label="Xoay ngang điện thoại"><div class="rotcard">
+  <svg viewBox="0 0 120 90" aria-hidden="true"><rect x="38" y="8" width="44" height="74" rx="8" fill="none" stroke="#fff" stroke-width="5"/><g class="rotphone"><rect x="23" y="23" width="74" height="44" rx="8" fill="#ff6fb5" opacity=".9"/><circle cx="90" cy="45" r="3" fill="#fff"/></g><path d="M100 18a40 40 0 0 1 8 22" stroke="#ffd166" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M110 34l-2 8-7-5" stroke="#ffd166" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <b>Xoay ngang điện thoại để chơi</b><small>Vườn Chữ được thiết kế để chơi ở màn hình ngang, giống Avatar ngày xưa.</small>
+  <button type="button" id="rot-skip">Vẫn chơi màn dọc</button></div></div>
 <div id="loading" class="loading">
   <div class="load-card">
     <div class="logo">Vườn <span>Chữ</span></div>
@@ -5079,6 +5140,10 @@ async function boot(hotData) {
     console.error(e); $('#loadmsg').textContent = 'Không tải được game: ' + (e.message || e);
   }
 }
+// landscape on phones: remember if the player chose to stay in portrait; try to lock landscape where the browser allows it
+try { if (localStorage.getItem('vc-portrait-ok')) document.documentElement.classList.add('portrait-ok'); } catch (e) {}
+document.getElementById('rot-skip').addEventListener('click', () => { document.documentElement.classList.add('portrait-ok'); try { localStorage.setItem('vc-portrait-ok', '1'); } catch (e) {} });
+window.addEventListener('pointerdown', function lockOnce() { window.removeEventListener('pointerdown', lockOnce); try { if (screen.orientation && screen.orientation.lock && (matchMedia('(display-mode: fullscreen)').matches || matchMedia('(display-mode: standalone)').matches)) screen.orientation.lock('landscape').catch(() => {}); } catch (e) {} }, {passive: true});
 if (location.hostname === '127.0.0.1') window.__vc = () => ({S, P, ANIMS, NPCS, MAPS, view, approach, changeMap, talk, spawnAnimals, onPlot, ex: () => EX, autoSimulate, TW: TRACK_WORDS, NPC_DEFS, readiness, renderHUD, FASHION, HAIR_ITEMS, SPA_ITEMS, spaPreview, chibiSVG, petSVG, hairPreview, fullLook, step: (sec) => { let t = performance.now(); for (let i = 0; i < sec * 20; i++) { t += 50; update(0.05, t); } draw(t); }});
 try { window.claude && window.claude.hot && window.claude.hot.snapshot && window.claude.hot.snapshot(() => { if (P && S) { S.px = P.x; S.py = P.y; } return {S}; }); } catch (e) {}
 const HOT = window.claude && window.claude.hot;
@@ -5086,4 +5151,4 @@ if (HOT && HOT.ready) HOT.ready(boot); else boot((HOT && HOT.data) || {});
 
 })();
 </script>
-</body></html>
+<script>if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(function(){});</script></body></html>

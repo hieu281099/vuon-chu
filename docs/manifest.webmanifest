@@ -1,0 +1,25 @@
+{
+ "name": "Vườn Chữ",
+ "short_name": "Vườn Chữ",
+ "description": "Game nông trại học tiếng Anh",
+ "start_url": "./",
+ "scope": "./",
+ "display": "fullscreen",
+ "orientation": "landscape",
+ "background_color": "#1b1640",
+ "theme_color": "#1b1640",
+ "lang": "vi",
+ "icons": [
+  {
+   "src": "icon-192.png",
+   "sizes": "192x192",
+   "type": "image/png"
+  },
+  {
+   "src": "icon-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "any maskable"
+  }
+ ]
+}
