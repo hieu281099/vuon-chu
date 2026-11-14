@@ -514,6 +514,26 @@ textarea.field{resize:vertical;line-height:1.5}
 }
 @media (min-width:601px) and (max-width:820px) and (min-height:481px){.hint{bottom:calc(154px + env(safe-area-inset-bottom,0px))}}
 
+/* ---------- English level, salon ---------- */
+.ring{cursor:pointer}
+.ring .lvbadge{font-size:12px;min-width:26px}
+.ring.ready{animation:lvready 1.4s ease-in-out infinite}
+@keyframes lvready{50%{box-shadow:0 0 0 5px rgba(255,209,102,.55)}}
+.lvhero{display:flex;gap:14px;align-items:center;background:var(--grad);color:#fff;border-radius:22px;padding:14px 16px;margin:8px 0}
+.lvhero b{font-family:var(--display);font-size:20px;display:block}.lvhero small{opacity:.9;font-weight:700}
+.lvbig{font-family:var(--display);font-weight:800;font-size:40px;line-height:1;background:rgba(255,255,255,.2);border-radius:18px;padding:8px 14px}
+.lvbig.sm{font-size:18px;padding:4px 10px;background:var(--grad);color:#fff;border-radius:12px}
+.lvline{display:flex;gap:10px;align-items:center;background:var(--surface-2);border-radius:16px;padding:8px 12px;margin:10px 0 4px;cursor:pointer;font-size:13.5px}
+.lvpath{list-style:none;padding:0;margin:10px 0;display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.lvpath li{text-align:center;background:var(--surface-2);border-radius:14px;padding:8px 4px}
+.lvpath li b{font-family:var(--display);font-size:18px;display:block}.lvpath li small{font-size:10.5px;color:var(--muted);font-weight:700}
+.lvpath li.done{background:var(--mint-lt)}.lvpath li.cur{background:var(--violet);color:#fff}.lvpath li.cur small{color:#e8e2ff}
+.lvprog{position:relative;height:16px;border-radius:99px;background:var(--surface-3);overflow:hidden}
+.lvprog i{position:absolute;inset:0;width:var(--w);background:var(--grad);border-radius:99px}
+.lvprog span{position:relative;display:block;text-align:center;font-size:11px;font-weight:900;line-height:16px;color:var(--ink)}
+.card .hot{position:absolute;top:8px;right:8px;font-size:9.5px;font-weight:900;color:#fff;background:#ff3552;border-radius:99px;padding:1px 6px}
+@media (max-width:600px){.lvpath small{display:none}.lvbig{font-size:30px}}
+
 </style>
 
 <div id="loading" class="loading">
@@ -530,7 +550,7 @@ textarea.field{resize:vertical;line-height:1.5}
     <canvas id="world" aria-label="Thế giới trò chơi. Chạm để đi lại, chạm vào người hoặc đồ vật để tương tác."></canvas>
 
     <div class="hud-left">
-      <div class="ring" id="hud-ring"><img id="hud-face" class="hud-face" alt=""><span class="lvbadge" id="hud-lvl">1</span></div>
+      <div class="ring" id="hud-ring" data-act="lvinfo" role="button" tabindex="0" title="Trình độ tiếng Anh"><img id="hud-face" class="hud-face" alt=""><span class="lvbadge" id="hud-lvl">1</span></div>
       <div class="hud-card" data-act="study" role="button" tabindex="0" title="Đổi trình độ, chuyên ngành">
         <b id="hud-name">Bạn</b>
         <span class="hud-xp"><i id="hud-xp"></i></span>
@@ -941,7 +961,7 @@ function extraTop(s, c, b, d, tee, waist) {
     case 'top_gown': return `<path d="M58 113H87L89 127Q104 148 108 160H37Q41 148 56 127Z" fill="${c}"/><rect x="56" y="125" width="33" height="4" rx="2" fill="${shade(c, 0.4)}"/><path d="M48 150Q72.5 140 97 150" stroke="${shade(c, 0.3)}" stroke-width="2" fill="none"/>${starDots([[60, 140, 2.5], [86, 145, 2.5], [72, 152, 2]], '#FFFFFF')}`;
     case 'top_galaxy': return `<path d="M57 113H88L92 132L98 160H47L53 132Z" fill="#1E1B4B"/><path d="M57 113H88L86 120H59Z" fill="url(#rb)"/><path d="M47 160L53 132M98 160L92 132" stroke="url(#rb)" stroke-width="3"/>${starDots([[64, 128, 3], [80, 140, 3.5], [68, 150, 2.5], [84, 124, 2]], '#FFFFFF')}`;
   }
-  return '';
+  return extraTop2(s, c, b, d, tee, waist);
 }
 function extraHat(id, c, lv, t, d) {
   const g = lv ? t : null;
@@ -956,7 +976,7 @@ function extraHat(id, c, lv, t, d) {
     case 'hat_dragon': return `<path d="M24 60Q24 14 72.5 12Q121 14 121 60Q100 48 72.5 48Q45 48 24 60Z" fill="${c}"/><path d="M34 30Q10 10 18 -12Q30 10 48 20Z M111 30Q135 10 127 -12Q115 10 97 20Z" fill="${g || '#FFC83D'}"/><path d="M56 16L62 4L68 14L72.5 0L77 14L83 4L89 16" fill="${shade(c, -0.3)}"/><circle cx="72.5" cy="34" r="6" fill="#FF3552"/>`;
     case 'hat_starcrown': return `<path d="M30 48L26 12L50 30L72.5 -2L95 30L119 12L115 48Z" fill="url(#rb)"/><rect x="28" y="40" width="89" height="10" rx="5" fill="#FFC83D"/>${starDots([[72.5, -14, 9], [26, 2, 6], [119, 2, 6]], '#FFF3B0')}<circle cx="72.5" cy="30" r="7" fill="#FFFFFF"/>`;
   }
-  return '';
+  return extraHat2(id, c, lv, t, d);
 }
 function extraFace(id, c, lv) {
   const t = lv ? tierFill(lv, c) : c;
@@ -967,7 +987,7 @@ function extraFace(id, c, lv) {
     case 'face_visor': return `<rect x="28" y="70" width="89" height="24" rx="12" fill="${t}" opacity=".85"/><rect x="34" y="74" width="40" height="5" rx="2.5" fill="#FFFFFF" opacity=".5"/>`;
     case 'face_monocle': return `<circle cx="95" cy="82" r="13" fill="#FFFFFF" fill-opacity=".25" stroke="${t}" stroke-width="3.5"/><path d="M106 90Q114 110 104 124" stroke="${t}" stroke-width="1.5" fill="none"/>`;
   }
-  return '';
+  return extraFace2(id, c, lv);
 }
 function extraBack(id, c, lv, front, pair) {
   const t = tierFill(lv, c), d = shade(c, -0.2);
@@ -978,7 +998,7 @@ function extraBack(id, c, lv, front, pair) {
     case 'back_light': return pair(`<path d="M0 0C10 -60 70 -80 96 -40C80 -36 76 -26 84 -18C66 -16 62 -4 70 4C54 6 48 16 52 24C30 20 10 12 0 0Z" fill="url(#rb)" opacity=".75"/><path d="M6 -4C20 -44 62 -60 82 -36" stroke="#FFFFFF" stroke-width="4" fill="none"/>`, 80, 122);
     case 'back_phoenix': return pair(`<path d="M0 0C14 -50 60 -70 92 -50C78 -44 80 -34 90 -28C72 -26 70 -14 80 -6C62 -4 58 8 64 16C44 16 28 22 22 30C14 18 6 10 0 0Z" fill="#FF5A2E"/><path d="M8 -4C22 -38 56 -52 78 -42C62 -34 60 -22 66 -14C50 -12 44 0 46 10C30 8 18 6 8 -4Z" fill="#FFC83D"/><path d="M16 -8C28 -28 46 -34 58 -30C48 -22 46 -12 48 -4C36 -4 26 -4 16 -8Z" fill="#FFF3B0"/>`, 80, 122);
   }
-  return '';
+  return extraBack2(id, c, lv, front, pair);
 }
 function extraHand(id, c, lv) {
   const t = tierFill(lv, c);
@@ -989,6 +1009,156 @@ function extraHand(id, c, lv) {
     case 'hand_fan': return `<path d="M6 28L-24 -14Q6 -34 36 -14Z" fill="${lv ? t : c}"/>${[-18, -8, 2, 12, 22, 30].map(x => `<path d="M6 28L${x} -18" stroke="${shade(c, -0.25)}" stroke-width="1.2"/>`).join('')}<circle cx="6" cy="28" r="3" fill="#5B3423"/>`;
     case 'hand_saber': return `<rect x="1" y="16" width="9" height="16" rx="3" fill="#8E8AA8"/><rect x="1" y="16" width="9" height="3" fill="#1F1B24"/><rect x="2.5" y="-64" width="6" height="82" rx="3" fill="${lv ? t : c}"/><rect x="4.2" y="-62" width="2.6" height="78" rx="1.3" fill="#FFFFFF" opacity=".85"/>`;
     case 'hand_scepter': return `<path d="M6 30L18 -40" stroke="#FFC83D" stroke-width="5" stroke-linecap="round"/><circle cx="19" cy="-48" r="11" fill="url(#rb)"/>${starDots([[19, -48, 6]], '#FFFFFF')}<path d="M8 -36Q19 -30 30 -36" stroke="#FFC83D" stroke-width="3" fill="none"/>`;
+  }
+  return extraHand2(id, c, lv);
+}
+
+/* ===================== FASHION BATCH 2: more tops, skirts, hats, glasses, back items, props, auras and pets ===================== */
+FASHION.push(
+  // tops
+  {id:'top_striped', slot:'top', en:'striped shirt', vi:'Áo kẻ ngang', price:70, rar:0},
+  {id:'top_polo', slot:'top', en:'polo shirt', vi:'Áo polo', price:90, rar:0},
+  {id:'top_school', slot:'top', en:'school uniform', vi:'Đồng phục học sinh', price:120, rar:0, hot:1},
+  {id:'top_cardigan', slot:'top', en:'cardigan', vi:'Áo cardigan', price:150, rar:1, lvl:3, hot:1},
+  {id:'top_denim', slot:'top', en:'denim jacket', vi:'Áo khoác jean', price:170, rar:1, lvl:4},
+  {id:'top_chef', slot:'top', en:'chef jacket', vi:'Áo đầu bếp', price:160, rar:1, lvl:4},
+  {id:'top_maid', slot:'top', en:'maid dress', vi:'Váy hầu gái', price:14, cur:'gem', rar:2, lvl:6},
+  {id:'top_hero', slot:'top', en:'superhero suit', vi:'Đồ siêu anh hùng', price:16, cur:'gem', rar:2, lvl:7, hot:1},
+  {id:'top_astro', slot:'top', en:'space suit', vi:'Đồ phi hành gia', price:20, cur:'gem', rar:2, lvl:8},
+  {id:'top_princess', slot:'top', en:'princess dress', vi:'Váy công chúa', price:40, cur:'gem', rar:3, lvl:12, hot:1},
+  {id:'top_armor', slot:'top', en:'knight armour', vi:'Giáp hiệp sĩ', price:45, cur:'gem', rar:3, lvl:13},
+  {id:'top_dragonrobe', slot:'top', en:'dragon robe', vi:'Long bào hoàng kim', price:260, cur:'gem', rar:4, lvl:22},
+  // bottoms
+  {id:'bot_joggers', slot:'bottom', en:'joggers', vi:'Quần jogger', price:80, rar:0},
+  {id:'bot_mini', slot:'bottom', en:'mini skirt', vi:'Váy ngắn', price:90, rar:0},
+  {id:'bot_plaid', slot:'bottom', en:'plaid skirt', vi:'Váy caro', price:120, rar:1, lvl:3, hot:1},
+  {id:'bot_leather', slot:'bottom', en:'leather trousers', vi:'Quần da', price:12, cur:'gem', rar:2, lvl:6},
+  {id:'bot_rainbow', slot:'bottom', en:'rainbow skirt', vi:'Váy cầu vồng', price:35, cur:'gem', rar:3, lvl:12},
+  // hats
+  {id:'hat_ribbon', slot:'hat', en:'big bow', vi:'Nơ to', price:70, rar:0, col:'#FF6FB5', hot:1},
+  {id:'hat_sunhat', slot:'hat', en:'sun hat', vi:'Mũ rộng vành', price:100, rar:0, col:'#F2D58A'},
+  {id:'hat_chef', slot:'hat', en:'chef hat', vi:'Mũ đầu bếp', price:90, rar:0, col:'#FFFFFF'},
+  {id:'hat_frog', slot:'hat', en:'frog hat', vi:'Mũ ếch', price:140, rar:1, lvl:3, col:'#3DDC84', hot:1},
+  {id:'hat_mushroom', slot:'hat', en:'mushroom hat', vi:'Mũ nấm', price:150, rar:1, lvl:4, col:'#FF3552'},
+  {id:'hat_cowboy', slot:'hat', en:'cowboy hat', vi:'Mũ cao bồi', price:170, rar:1, lvl:4, col:'#B9774A'},
+  {id:'hat_pirate', slot:'hat', en:'pirate hat', vi:'Mũ cướp biển', price:16, cur:'gem', rar:2, lvl:6, col:'#1F1B24'},
+  {id:'hat_unicorn', slot:'hat', en:'unicorn horn', vi:'Sừng kỳ lân', price:28, cur:'gem', rar:3, lvl:10, col:'#FFFFFF', hot:1},
+  {id:'hat_phoenix', slot:'hat', en:'phoenix crown', vi:'Mũ phượng hoàng', price:0, rar:4, chest:1, col:'#FF5A2E'},
+  // face
+  {id:'face_mustache', slot:'face', en:'fake moustache', vi:'Ria mép giả', price:50, rar:0, col:'#1F1B24'},
+  {id:'face_eyepatch', slot:'face', en:'eye patch', vi:'Bịt mắt cướp biển', price:80, rar:0, col:'#1F1B24'},
+  {id:'face_goggles', slot:'face', en:'swimming goggles', vi:'Kính bơi', price:110, rar:1, lvl:3, col:'#2DD4BF'},
+  {id:'face_butterfly', slot:'face', en:'butterfly mask', vi:'Mặt nạ bướm', price:16, cur:'gem', rar:2, lvl:6, col:'#B05CFF', hot:1},
+  {id:'face_cyber', slot:'face', en:'cyber visor', vi:'Kính cyber', price:30, cur:'gem', rar:3, lvl:11, col:'#FF2EB5'},
+  // back
+  {id:'back_teddy', slot:'back', en:'teddy backpack', vi:'Ba lô gấu', price:150, rar:1, lvl:3, col:'#C98B5A', hot:1},
+  {id:'back_quiver', slot:'back', en:'quiver', vi:'Bao tên', price:160, rar:1, lvl:4, col:'#8B5A3C'},
+  {id:'back_bat', slot:'back', en:'bat wings', vi:'Cánh dơi', price:22, cur:'gem', rar:2, lvl:6, col:'#3B2E5A'},
+  {id:'back_crystal', slot:'back', en:'crystal wings', vi:'Cánh pha lê', price:55, cur:'gem', rar:3, lvl:13, col:'#8EE7FF', hot:1},
+  {id:'back_ninetails', slot:'back', en:'nine tails', vi:'Cửu vĩ hồ', price:0, rar:4, chest:1, col:'#FFFFFF'},
+  // hand
+  {id:'hand_book', slot:'hand', en:'book', vi:'Cuốn sách', price:50, rar:0, col:'#4D8BFF'},
+  {id:'hand_bouquet', slot:'hand', en:'bouquet', vi:'Bó hoa', price:90, rar:0, col:'#FF6FB5', hot:1},
+  {id:'hand_cotton', slot:'hand', en:'candy floss', vi:'Kẹo bông', price:70, rar:0, col:'#FFB3D1'},
+  {id:'hand_mic', slot:'hand', en:'microphone', vi:'Micro', price:130, rar:1, lvl:3, col:'#1F1B24'},
+  {id:'hand_lantern', slot:'hand', en:'lantern', vi:'Đèn lồng', price:150, rar:1, lvl:4, col:'#FF3552'},
+  {id:'hand_teddy', slot:'hand', en:'teddy bear', vi:'Gấu bông', price:160, rar:1, lvl:4, col:'#C98B5A'},
+  {id:'hand_starstaff', slot:'hand', en:'star staff', vi:'Gậy ngôi sao', price:22, cur:'gem', rar:2, lvl:7, col:'#FFC83D'},
+  {id:'hand_trident', slot:'hand', en:'trident', vi:'Đinh ba thủy thần', price:50, cur:'gem', rar:3, lvl:14, col:'#2DD4BF'},
+  // auras
+  {id:'aura_bubbles', slot:'aura', en:'bubble aura', vi:'Hào quang bong bóng', price:14, cur:'gem', rar:2, lvl:5, col:'#8EC9FF'},
+  {id:'aura_butterfly', slot:'aura', en:'butterfly aura', vi:'Hào quang bướm', price:20, cur:'gem', rar:2, lvl:7, col:'#B05CFF', hot:1},
+  {id:'aura_rainbow', slot:'aura', en:'rainbow aura', vi:'Hào quang cầu vồng', price:60, cur:'gem', rar:3, lvl:14, col:'#FF6FB5'},
+  {id:'aura_dragon', slot:'aura', en:'dragon fire aura', vi:'Hào quang rồng lửa', price:0, rar:4, chest:1, col:'#FF5A2E'},
+  // pets
+  {id:'pet_hamster', slot:'pet', en:'hamster', vi:'Chuột hamster', price:140, rar:1, lvl:3, col:'#F2B27A', hot:1},
+  {id:'pet_corgi', slot:'pet', en:'corgi', vi:'Chó corgi', price:22, cur:'gem', rar:2, lvl:5, col:'#FF9F4A'},
+  {id:'pet_penguin', slot:'pet', en:'penguin', vi:'Chim cánh cụt', price:24, cur:'gem', rar:2, lvl:6, col:'#2B2A40'},
+  {id:'pet_frog', slot:'pet', en:'frog', vi:'Ếch xanh', price:18, cur:'gem', rar:2, lvl:5, col:'#3DDC84'},
+  {id:'pet_owl', slot:'pet', en:'owl', vi:'Cú mèo', price:35, cur:'gem', rar:3, lvl:10, col:'#9A6A44'},
+  {id:'pet_kirin', slot:'pet', en:'baby kirin', vi:'Kỳ lân lửa', price:0, rar:4, chest:1, col:'#FFC83D'}
+);
+SKIRTS.push('bot_mini', 'bot_plaid', 'bot_rainbow');
+DRESSES.push('top_maid', 'top_princess', 'top_dragonrobe');
+LONG_SLEEVES.push('top_cardigan', 'top_denim', 'top_chef', 'top_hero', 'top_astro', 'top_armor', 'top_dragonrobe');
+
+function extraTop2(s, c, b, d, tee, waist) {
+  switch (s) {
+    case 'top_striped': return `${tee}${waist(b)}<path d="M55 117H90M55 121.5H90M55 126H90" stroke="${shade(c, -0.35)}" stroke-width="2"/>`;
+    case 'top_polo': return `${tee}${waist(b)}<path d="M64 113L72.5 120L81 113Z" fill="#FFFFFF"/><path d="M72.5 120V126" stroke="${d}" stroke-width="1.5"/><circle cx="72.5" cy="123" r="1" fill="${d}"/>`;
+    case 'top_school': return `<rect x="55" y="113" width="35" height="14" fill="#FFFFFF"/>${waist(b)}<path d="M62 113L72.5 119L83 113" stroke="#E2E6EF" stroke-width="2" fill="none"/><path d="M71 117H74L75 126L72.5 128L70 126Z" fill="${c}"/>`;
+    case 'top_cardigan': return `<rect x="55" y="113" width="35" height="14" fill="#FFFFFF"/>${waist(b)}<path d="M55 113H67L68 130H55Z M90 113H78L77 130H90Z" fill="${c}"/>${[118, 123, 128].map(y => `<circle cx="66" cy="${y}" r="1.2" fill="${d}"/>`).join('')}`;
+    case 'top_denim': return `<rect x="55" y="113" width="35" height="16" fill="${c}"/>${waist(b)}<path d="M57 119H67V125H57Z M78 119H88V125H78Z" fill="none" stroke="#FFC83D" stroke-width="1" stroke-dasharray="2 1.5"/><path d="M72.5 113V129" stroke="${d}" stroke-width="1.5"/>`;
+    case 'top_chef': return `<rect x="55" y="113" width="35" height="17" fill="#FFFFFF"/>${waist(b)}${[[66, 117], [66, 122], [79, 117], [79, 122]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.5" fill="${c}"/>`).join('')}<path d="M62 113L72.5 118L83 113" stroke="#E2E6EF" stroke-width="2" fill="none"/>`;
+    case 'top_maid': return `<path d="M57 113H88L92.3 134.4C92.7 136.3 91.2 138 89.3 138H55.7C53.8 138 52.3 136.3 52.7 134.4Z" fill="${c}"/><path d="M62 118H83L86 137H59Z" fill="#FFFFFF"/><path d="M59 137Q62 141 65 137Q68 141 71 137Q74 141 77 137Q80 141 83 137Q86 141 86 137" stroke="#FFFFFF" stroke-width="2" fill="none"/>`;
+    case 'top_hero': return `<rect x="55" y="113" width="35" height="16" fill="${c}"/>${waist('#FFC83D')}<path d="M72.5 115L76 120L72.5 125L69 120Z" fill="#FFC83D"/><path d="M55 113L60 113L57 120Z M90 113L85 113L88 120Z" fill="${d}"/>`;
+    case 'top_astro': return `<rect x="54" y="112" width="37" height="22" rx="6" fill="#F4F6FB"/><rect x="62" y="117" width="21" height="10" rx="3" fill="${c}"/><circle cx="66" cy="122" r="1.6" fill="#FF3552"/><circle cx="72" cy="122" r="1.6" fill="#3DDC84"/><circle cx="78" cy="122" r="1.6" fill="#FFC83D"/>`;
+    case 'top_princess': return `<path d="M58 113H87L89 125Q108 140 112 160H33Q37 140 56 125Z" fill="${c}"/><path d="M40 150Q56 140 72.5 150Q89 140 105 150" stroke="#FFFFFF" stroke-width="2.5" fill="none" opacity=".8"/><rect x="56" y="123" width="33" height="4" rx="2" fill="#FFC83D"/>${starDots([[52, 146, 2.2], [92, 142, 2.2], [72.5, 136, 2.6]], '#FFFFFF')}`;
+    case 'top_armor': return `<rect x="54" y="112" width="37" height="22" rx="5" fill="#C9D3E6"/><path d="M54 120H91M72.5 112V134" stroke="#8E9AB8" stroke-width="2"/><path d="M72.5 116L77 122L72.5 128L68 122Z" fill="${c}"/><rect x="54" y="130" width="37" height="5" fill="#8E9AB8"/>`;
+    case 'top_dragonrobe': return `<path d="M57 113H88L92 132L99 160H46L53 132Z" fill="url(#hg_gold)"/><path d="M57 113H88L86 121H59Z" fill="#FF3552"/><path d="M60 140Q66 130 72 138T86 136" stroke="#FF3552" stroke-width="3" fill="none"/><circle cx="62" cy="139" r="2.5" fill="#FF3552"/>${starDots([[80, 150, 2.4], [56, 152, 2]], '#FFFFFF')}`;
+  }
+  return '';
+}
+function extraHat2(id, c, lv, t, d) {
+  const g = lv ? t : null;
+  switch (id) {
+    case 'hat_ribbon': return `<path d="M72.5 24L44 8Q36 24 44 40Z M72.5 24L101 8Q109 24 101 40Z" fill="${g || c}"/><circle cx="72.5" cy="24" r="8" fill="${shade(c, -0.2)}"/>`;
+    case 'hat_sunhat': return `<ellipse cx="72.5" cy="50" rx="74" ry="14" fill="${c}"/><path d="M36 50Q36 14 72.5 12Q109 14 109 50Z" fill="${shade(c, 0.1)}"/><path d="M36 44Q72.5 36 109 44" stroke="${g || '#FF6FB5'}" stroke-width="7" fill="none"/>`;
+    case 'hat_chef': return `<rect x="38" y="30" width="69" height="24" rx="4" fill="#FFFFFF" stroke="#E2E6EF" stroke-width="2"/>${[[44, 18, 16], [72.5, 8, 20], [101, 18, 16]].map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="#FFFFFF"/>`).join('')}<rect x="38" y="44" width="69" height="6" fill="${g || '#E2E6EF'}"/>`;
+    case 'hat_frog': return `<path d="M24 58Q24 16 72.5 14Q121 16 121 58Z" fill="${c}"/><circle cx="46" cy="16" r="14" fill="${c}"/><circle cx="99" cy="16" r="14" fill="${c}"/><circle cx="46" cy="16" r="8" fill="#FFFFFF"/><circle cx="99" cy="16" r="8" fill="#FFFFFF"/><circle cx="46" cy="17" r="4" fill="#1F1B24"/><circle cx="99" cy="17" r="4" fill="#1F1B24"/><path d="M50 46Q72.5 56 95 46" stroke="${g || shade(c, -0.3)}" stroke-width="3" fill="none"/>`;
+    case 'hat_mushroom': return `<path d="M14 54Q14 0 72.5 0Q131 0 131 54Z" fill="${c}"/>${[[44, 20, 9], [80, 12, 8], [106, 32, 8], [64, 38, 6]].map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${g || '#FFFFFF'}"/>`).join('')}`;
+    case 'hat_cowboy': return `<path d="M4 46Q20 60 72.5 56Q125 60 141 46Q130 52 112 46Z" fill="${d}"/><path d="M38 50Q32 10 56 14Q72.5 22 89 14Q113 10 107 50Z" fill="${c}"/><path d="M38 42Q72.5 34 107 42" stroke="${g || '#1F1B24'}" stroke-width="5" fill="none"/>`;
+    case 'hat_pirate': return `<path d="M10 48Q72.5 -10 135 48Q72.5 30 10 48Z" fill="${c}"/><path d="M14 46Q72.5 28 131 46" stroke="${g || '#FFC83D'}" stroke-width="4" fill="none"/><circle cx="72.5" cy="26" r="7" fill="#FFFFFF"/><path d="M66 36L79 36M68 34L77 40M77 34L68 40" stroke="#FFFFFF" stroke-width="2"/>`;
+    case 'hat_unicorn': return `<path d="M60 34L72.5 -14L85 34Z" fill="${g || 'url(#hg_gold)'}"/><path d="M63 24L82 20M65 12L80 8" stroke="#FFFFFF" stroke-width="2.5" opacity=".7"/><path d="M40 40Q50 26 62 34Q52 34 40 40Z M105 40Q95 26 83 34Q93 34 105 40Z" fill="#FF8FC7"/>`;
+    case 'hat_phoenix': return `<path d="M30 48Q40 10 58 22Q60 0 72.5 -12Q85 0 87 22Q105 10 115 48Z" fill="url(#hg_fire)"/><path d="M50 48L58 30L66 46L72.5 24L79 46L87 30L95 48Z" fill="#FFE48A"/><circle cx="72.5" cy="40" r="6" fill="#FF3552"/>`;
+  }
+  return '';
+}
+function extraFace2(id, c, lv) {
+  const t = lv ? tierFill(lv, c) : c;
+  switch (id) {
+    case 'face_mustache': return `<path d="M50 100Q60 92 72.5 98Q85 92 95 100Q86 106 72.5 101Q59 106 50 100Z" fill="${t}"/>`;
+    case 'face_eyepatch': return `<path d="M28 66L118 92" stroke="${t}" stroke-width="3"/><ellipse cx="95" cy="83" rx="13" ry="11" fill="${t}"/>`;
+    case 'face_goggles': return `<path d="M24 82H121" stroke="${shade(c, -0.3)}" stroke-width="5"/><rect x="34" y="70" width="32" height="24" rx="12" fill="${t}" opacity=".85" stroke="#1F1B24" stroke-width="2.5"/><rect x="79" y="70" width="32" height="24" rx="12" fill="${t}" opacity=".85" stroke="#1F1B24" stroke-width="2.5"/><path d="M40 76L48 74M85 76L93 74" stroke="#FFFFFF" stroke-width="2.5" opacity=".7"/>`;
+    case 'face_butterfly': return `<path d="M72.5 82Q60 60 34 66Q26 84 40 94Q58 98 72.5 86Q87 98 105 94Q119 84 111 66Q85 60 72.5 82Z" fill="${t}"/><ellipse cx="52" cy="80" rx="8" ry="6" fill="#1F1B24" opacity=".75"/><ellipse cx="93" cy="80" rx="8" ry="6" fill="#1F1B24" opacity=".75"/>${starDots([[36, 70, 3], [109, 70, 3]], '#FFC83D')}`;
+    case 'face_cyber': return `<path d="M26 72H119L113 92H32Z" fill="${t}" opacity=".8"/><path d="M32 80H113" stroke="#FFFFFF" stroke-width="2" opacity=".8"/><path d="M26 72H119" stroke="#1F1B24" stroke-width="3"/>`;
+  }
+  return '';
+}
+function extraBack2(id, c, lv, front, pair) {
+  const t = tierFill(lv, c), d = shade(c, -0.2);
+  switch (id) {
+    case 'back_teddy': return front ? `<circle cx="72.5" cy="128" r="20" fill="${lv ? t : c}"/><circle cx="56" cy="110" r="7" fill="${lv ? t : c}"/><circle cx="89" cy="110" r="7" fill="${lv ? t : c}"/><circle cx="66" cy="124" r="2.5" fill="#1F1B24"/><circle cx="79" cy="124" r="2.5" fill="#1F1B24"/><ellipse cx="72.5" cy="132" rx="6" ry="4" fill="#F2D7B6"/>` : `<rect x="44" y="110" width="57" height="38" rx="16" fill="${lv ? t : c}"/>`;
+    case 'back_quiver': return `<rect x="96" y="96" width="14" height="44" rx="5" fill="${lv ? t : c}" transform="rotate(18 103 118)"/><path d="M98 98L104 80M104 98L112 82M108 100L118 86" stroke="#8E8AA8" stroke-width="2"/><path d="M102 78l4 -4 2 6z M110 80l4 -4 2 6z M116 84l4 -4 2 6z" fill="#FF3552"/>`;
+    case 'back_bat': return pair(`<path d="M0 0L30 -40Q34 -20 46 -24Q48 -10 62 -12Q58 2 72 6Q50 8 40 18Q30 6 0 0Z" fill="${lv ? t : c}"/><path d="M6 -2L30 -40M30 -40L40 16M46 -24L46 12M62 -12L52 10" stroke="${d}" stroke-width="2" fill="none"/>`, 80, 122);
+    case 'back_crystal': return pair(`<path d="M0 0L24 -56L44 -30L70 -46L64 -12L88 -8L58 14L34 20Z" fill="${lv ? t : c}" opacity=".8"/><path d="M0 0L24 -56L34 -16Z M44 -30L70 -46L54 -14Z" fill="#FFFFFF" opacity=".5"/>`, 80, 122);
+    case 'back_ninetails': return [-60, -42, -24, -8, 8, 24, 42, 60, 0].map(a => `<g transform="rotate(${a} 72.5 140)"><path d="M72.5 140Q60 96 72.5 56Q85 96 72.5 140Z" fill="#FFFFFF" stroke="#F2E6FF" stroke-width="2"/><path d="M72.5 60Q68 70 72.5 78Q77 70 72.5 60Z" fill="#FF8FC7"/></g>`).join('');
+  }
+  return '';
+}
+function extraHand2(id, c, lv) {
+  const t = tierFill(lv, c);
+  switch (id) {
+    case 'hand_book': return `<rect x="-6" y="8" width="26" height="30" rx="3" fill="${lv ? t : c}"/><rect x="-3" y="11" width="20" height="24" fill="#FFFFFF" opacity=".9"/><path d="M0 18H14M0 23H14M0 28H10" stroke="#C9D3E6" stroke-width="1.5"/>`;
+    case 'hand_bouquet': return `<path d="M2 36L8 6L14 36Z" fill="#F2E6CC"/>${[[2, -2], [10, -8], [18, -2], [6, 6], [14, 4]].map(([x, y], i) => `<circle cx="${x}" cy="${y}" r="7" fill="${i % 2 ? (lv ? t : c) : '#FFFFFF'}"/><circle cx="${x}" cy="${y}" r="2.5" fill="#FFC83D"/>`).join('')}<path d="M4 22H12" stroke="#FF3552" stroke-width="3"/>`;
+    case 'hand_cotton': return `<path d="M6 30L12 0" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/>${[[12, -10, 12], [2, -16, 9], [22, -16, 9], [12, -24, 9]].map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${lv ? t : c}"/>`).join('')}`;
+    case 'hand_mic': return `<rect x="2" y="6" width="9" height="28" rx="3" fill="${lv ? t : c}"/><circle cx="6.5" cy="0" r="9" fill="#C9D3E6"/><path d="M0 -3H13M0 2H13" stroke="#8E9AB8" stroke-width="1.2"/>`;
+    case 'hand_lantern': return `<path d="M6 26L10 -4" stroke="#5B3423" stroke-width="2"/><ellipse cx="10" cy="-20" rx="14" ry="16" fill="${lv ? t : c}"/><path d="M10 -36V-4M0 -20H20" stroke="#FFC83D" stroke-width="1.5" opacity=".7"/><rect x="5" y="-38" width="10" height="4" fill="#FFC83D"/><rect x="5" y="-6" width="10" height="4" fill="#FFC83D"/><circle cx="10" cy="-20" r="5" fill="#FFE48A" opacity=".8"/>`;
+    case 'hand_teddy': return `<circle cx="10" cy="6" r="13" fill="${lv ? t : c}"/><circle cx="10" cy="-12" r="10" fill="${lv ? t : c}"/><circle cx="2" cy="-20" r="4" fill="${lv ? t : c}"/><circle cx="18" cy="-20" r="4" fill="${lv ? t : c}"/><circle cx="6" cy="-13" r="1.6" fill="#1F1B24"/><circle cx="14" cy="-13" r="1.6" fill="#1F1B24"/><ellipse cx="10" cy="-8" rx="4" ry="3" fill="#F2D7B6"/><path d="M4 0L10 4L16 0" stroke="#FF6FB5" stroke-width="3" fill="none"/>`;
+    case 'hand_starstaff': return `<path d="M6 30L18 -40" stroke="#B9BFCC" stroke-width="4" stroke-linecap="round"/>${starDots([[19, -50, 13]], lv ? t : c)}<circle cx="19" cy="-50" r="4" fill="#FFFFFF"/>`;
+    case 'hand_trident': return `<path d="M6 32L20 -50" stroke="${lv ? t : c}" stroke-width="4" stroke-linecap="round"/><path d="M8 -56L20 -50L30 -42M14 -66L20 -50M20 -50L34 -58" stroke="${lv ? t : c}" stroke-width="4" stroke-linecap="round" fill="none"/><path d="M6 -60l2-6 2 6zM12 -70l2-6 2 6zM32 -62l2-6 2 6z" fill="${lv ? t : c}"/>`;
+  }
+  return '';
+}
+// pets with their own body shapes (called from petSVG for ids it does not draw itself)
+function petBody2(id, c, hop, eyes) {
+  switch (id) {
+    case 'pet_hamster': return `<ellipse cx="30" cy="${40 + hop}" rx="20" ry="17" fill="${c}"/><ellipse cx="30" cy="${46 + hop}" rx="12" ry="9" fill="#FFF3E2"/><circle cx="16" cy="${26 + hop}" r="5" fill="${c}"/><circle cx="44" cy="${26 + hop}" r="5" fill="${c}"/><circle cx="16" cy="${26 + hop}" r="2.5" fill="#FFB3D1"/><circle cx="44" cy="${26 + hop}" r="2.5" fill="#FFB3D1"/>${eyes(23, 37, 36 + hop)}<ellipse cx="30" cy="${41 + hop}" rx="2" ry="1.5" fill="#FF8FA3"/>`;
+    case 'pet_corgi': return `<ellipse cx="30" cy="51" rx="14" ry="8" fill="${shade(c, -0.05)}"/><path d="M12 ${22 + hop}L14 ${2 + hop}L28 ${16 + hop}Z M48 ${22 + hop}L46 ${2 + hop}L32 ${16 + hop}Z" fill="${c}"/><rect x="11" y="${14 + hop}" width="38" height="32" rx="15" fill="${c}"/><path d="M18 ${34 + hop}Q30 ${48 + hop} 42 ${34 + hop}Q30 ${40 + hop} 18 ${34 + hop}Z" fill="#FFFFFF"/><path d="M30 ${14 + hop}V${28 + hop}" stroke="#FFFFFF" stroke-width="4"/>${eyes(22, 38, 28 + hop)}<ellipse cx="30" cy="${36 + hop}" rx="3" ry="2" fill="#1F1B24"/>`;
+    case 'pet_penguin': return `<ellipse cx="30" cy="${38 + hop}" rx="18" ry="20" fill="${c}"/><ellipse cx="30" cy="${42 + hop}" rx="12" ry="15" fill="#FFFFFF"/>${eyes(24, 36, 30 + hop)}<path d="M27 ${35 + hop}h6l-3 4z" fill="#FFB020"/><path d="M12 ${38 + hop}Q6 ${46 + hop} 12 ${52 + hop}M48 ${38 + hop}Q54 ${46 + hop} 48 ${52 + hop}" stroke="${c}" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M22 58h6M32 58h6" stroke="#FFB020" stroke-width="3" stroke-linecap="round"/>`;
+    case 'pet_frog': return `<ellipse cx="30" cy="${44 + hop}" rx="22" ry="14" fill="${c}"/><circle cx="18" cy="${30 + hop}" r="9" fill="${c}"/><circle cx="42" cy="${30 + hop}" r="9" fill="${c}"/><circle cx="18" cy="${30 + hop}" r="5" fill="#FFFFFF"/><circle cx="42" cy="${30 + hop}" r="5" fill="#FFFFFF"/><circle cx="18" cy="${31 + hop}" r="2.6" fill="#1F1B24"/><circle cx="42" cy="${31 + hop}" r="2.6" fill="#1F1B24"/><path d="M20 ${46 + hop}Q30 ${54 + hop} 40 ${46 + hop}" stroke="#1F7A44" stroke-width="2.5" fill="none"/><circle cx="14" cy="${46 + hop}" r="3" fill="#FF8FA3" opacity=".6"/><circle cx="46" cy="${46 + hop}" r="3" fill="#FF8FA3" opacity=".6"/>`;
+    case 'pet_owl': return `<ellipse cx="30" cy="${40 + hop}" rx="19" ry="19" fill="${c}"/><path d="M13 ${26 + hop}L16 ${12 + hop}L24 ${22 + hop}Z M47 ${26 + hop}L44 ${12 + hop}L36 ${22 + hop}Z" fill="${shade(c, -0.2)}"/><circle cx="22" cy="${34 + hop}" r="8" fill="#FFF3E2"/><circle cx="38" cy="${34 + hop}" r="8" fill="#FFF3E2"/><circle cx="22" cy="${34 + hop}" r="4" fill="#1F1B24"/><circle cx="38" cy="${34 + hop}" r="4" fill="#1F1B24"/><path d="M27 ${40 + hop}h6l-3 5z" fill="#FFB020"/><path d="M22 ${48 + hop}Q30 ${52 + hop} 38 ${48 + hop}M24 ${53 + hop}Q30 ${56 + hop} 36 ${53 + hop}" stroke="${shade(c, 0.3)}" stroke-width="2" fill="none"/>`;
+    case 'pet_kirin': return `<path d="M8 ${44 + hop}Q-4 30 6 18Q12 30 20 34Z" fill="#FF5A2E"/><ellipse cx="30" cy="${40 + hop}" rx="18" ry="16" fill="url(#hg_gold)"/><path d="M26 ${24 + hop}L30 ${2 + hop}L34 ${24 + hop}Z" fill="#FF3552"/><path d="M40 ${26 + hop}Q54 ${30 + hop} 50 ${46 + hop}Q46 ${36 + hop} 38 ${32 + hop}Z" fill="#FF5A2E"/>${eyes(23, 35, 37 + hop)}<circle cx="18" cy="${44 + hop}" r="3" fill="#FF8FA3" opacity=".6"/>`;
   }
   return '';
 }
@@ -1097,7 +1267,7 @@ function headSVG(L, skin, back) {
   if (back) return head + (L.hairF !== 'none' ? `<rect x="23" y="32" width="99" height="87" rx="31" fill="${L.hairC}"/>` : '');
   return head + `<circle cx="45" cy="99" r="10" fill="${skin.c}"/><circle cx="100" cy="99" r="10" fill="${skin.c}"/>`;
 }
-const RB_DEF = `<defs><linearGradient id="rb" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF3552"/><stop offset=".25" stop-color="#FFC83D"/><stop offset=".5" stop-color="#3DDC84"/><stop offset=".75" stop-color="#4D8BFF"/><stop offset="1" stop-color="#B05CFF"/></linearGradient><filter id="gl" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`;
+const RB_DEF = `<defs><linearGradient id="rb" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF3552"/><stop offset=".25" stop-color="#FFC83D"/><stop offset=".5" stop-color="#3DDC84"/><stop offset=".75" stop-color="#4D8BFF"/><stop offset="1" stop-color="#B05CFF"/></linearGradient><filter id="gl" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter><linearGradient id="hg_pink" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FF8FC7"/><stop offset="1" stop-color="#9B5CFF"/></linearGradient><linearGradient id="hg_ocean" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4D8BFF"/><stop offset="1" stop-color="#7EF0C4"/></linearGradient><linearGradient id="hg_fire" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#FF3552"/><stop offset=".55" stop-color="#FF8A3D"/><stop offset="1" stop-color="#FFE48A"/></linearGradient><linearGradient id="hg_silver" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".5" stop-color="#D9DDF0"/><stop offset="1" stop-color="#B8B4E0"/></linearGradient><linearGradient id="hg_gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFF3B0"/><stop offset=".45" stop-color="#FFC83D"/><stop offset="1" stop-color="#C98A1A"/></linearGradient><linearGradient id="hg_galaxy" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1E1B4B"/><stop offset=".5" stop-color="#6D3FD8"/><stop offset="1" stop-color="#FF6FB5"/></linearGradient><linearGradient id="hg_aurora" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3DDC84"/><stop offset=".5" stop-color="#2DD4BF"/><stop offset="1" stop-color="#9B5CFF"/></linearGradient></defs>`;
 const glowWrap = (lv, s) => s && lv >= 4 ? `<g filter="url(#gl)">${s}</g>` : s;
 // frame: {legs:[dl,dr], bob, arms:[rl,rr], face, tool, flap}
 function chibiInner(L, f, dir) {
@@ -1187,6 +1357,7 @@ function petSVG(id, lv, frame) {
     case 'pet_kitty': case 'pet_puppy': case 'pet_bunny': case 'pet_fox': case 'pet_panda': case 'pet_unicorn': {
       const ears = id === 'pet_fox' ? `<path d="M12 ${24 + hop}L14 ${2 + hop}L30 ${16 + hop}Z M48 ${24 + hop}L46 ${2 + hop}L30 ${16 + hop}Z" fill="${c}"/><path d="M16 ${18 + hop}L17 ${8 + hop}L24 ${15 + hop}Z M44 ${18 + hop}L43 ${8 + hop}L36 ${15 + hop}Z" fill="#1F1B24"/>` : id === 'pet_panda' ? `<circle cx="15" cy="${16 + hop}" r="7" fill="#1F1B24"/><circle cx="45" cy="${16 + hop}" r="7" fill="#1F1B24"/>` : id === 'pet_unicorn' ? `<path d="M16 ${20 + hop}L18 ${8 + hop}L26 ${16 + hop}Z M44 ${20 + hop}L42 ${8 + hop}L34 ${16 + hop}Z" fill="${c}"/><path d="M26 ${16 + hop}L30 ${-10 + hop}L34 ${16 + hop}Z" fill="url(#rb)"/>` : id === 'pet_kitty' ? `<path d="M14 ${22 + hop} L16 ${4 + hop} L28 ${16 + hop}Z M46 ${22 + hop} L44 ${4 + hop} L32 ${16 + hop}Z" fill="${c}"/>` : id === 'pet_puppy' ? `<ellipse cx="13" cy="${26 + hop}" rx="6" ry="11" fill="${shade(c, -0.3)}"/><ellipse cx="47" cy="${26 + hop}" rx="6" ry="11" fill="${shade(c, -0.3)}"/>` : `<ellipse cx="22" cy="${4 + hop}" rx="5" ry="15" fill="${c}"/><ellipse cx="38" cy="${4 + hop}" rx="5" ry="15" fill="${c}"/><ellipse cx="22" cy="${6 + hop}" rx="2.5" ry="10" fill="#FFB3D1"/><ellipse cx="38" cy="${6 + hop}" rx="2.5" ry="10" fill="#FFB3D1"/>`;
       body = `<ellipse cx="30" cy="51" rx="13" ry="8" fill="${shade(c, -0.08)}"/>${ears}<rect x="11" y="${14 + hop}" width="38" height="32" rx="15" fill="${c}"/>${id === 'pet_panda' ? `<ellipse cx="22" cy="${29 + hop}" rx="6" ry="7" fill="#1F1B24"/><ellipse cx="38" cy="${29 + hop}" rx="6" ry="7" fill="#1F1B24"/>` : id === 'pet_fox' ? `<path d="M14 ${34 + hop}Q30 ${50 + hop} 46 ${34 + hop}Q30 ${42 + hop} 14 ${34 + hop}Z" fill="#FFFFFF"/>` : id === 'pet_unicorn' ? `<path d="M40 ${14 + hop}Q54 ${22 + hop} 50 ${40 + hop}Q46 ${28 + hop} 38 ${22 + hop}Z" fill="#FF8FC7"/><path d="M44 ${16 + hop}Q56 ${26 + hop} 52 ${36 + hop}" stroke="#8EE7FF" stroke-width="3" fill="none"/>` : ''}${id === 'pet_panda' ? `<circle cx="23" cy="${29 + hop}" r="2.6" fill="#FFFFFF"/><circle cx="37" cy="${29 + hop}" r="2.6" fill="#FFFFFF"/>` : ''}${eyes(23, 37, 29 + hop)}<ellipse cx="30" cy="${35 + hop}" rx="3" ry="2" fill="#1F1B24"/><circle cx="17" cy="${36 + hop}" r="3.5" fill="#FF8FA3" opacity=".6"/><circle cx="43" cy="${36 + hop}" r="3.5" fill="#FF8FA3" opacity=".6"/>${id === 'pet_kitty' || id === 'pet_fox' ? `<path d="M43 52 q12 -2 10 -14" stroke="${c}" stroke-width="4" fill="none" stroke-linecap="round"/>` : ''}`; break; }
+    default: body = petBody2(id, c, hop, eyes); break;
     case 'pet_dragon': body = `<path d="M8 ${30 + hop} q-8 -14 6 -18 q0 8 8 10z M52 ${30 + hop} q8 -14 -6 -18 q0 8 -8 10z" fill="${shade(c, -0.25)}"/><ellipse cx="30" cy="${38 + hop}" rx="18" ry="17" fill="${c}"/><ellipse cx="30" cy="${45 + hop}" rx="10" ry="8" fill="#FFF3B0"/><path d="M22 ${22 + hop} l-3 -8 l6 5z M38 ${22 + hop} l3 -8 l-6 5z" fill="#FFC83D"/>${eyes(23, 37, 33 + hop)}<path d="M46 50 q10 4 8 -6" stroke="${c}" stroke-width="5" fill="none" stroke-linecap="round"/>`; break;
   }
   const glow = lv >= 4 ? `<ellipse cx="30" cy="34" rx="28" ry="26" fill="${TIER[lv] === 'rainbow' ? '#FFE48A' : TIER[lv]}" opacity=".28"/>` : '';
@@ -1201,18 +1372,19 @@ function petImage(id, lv, frame) {
 
 /* ---------- auras (canvas particles) ---------- */
 function drawAura(g, id, lv, x, y, t) {
-  const base = FASH[id].col, col = id === 'aura_galaxy' ? `hsl(${(t / 6) % 360} 90% 70%)` : lv ? (TIER[lv] === 'rainbow' ? `hsl(${(t / 8) % 360} 90% 65%)` : TIER[lv]) : base;
+  const base = FASH[id].col, col = id === 'aura_dragon' ? `hsl(${10 + (t / 20) % 40} 100% 60%)` : id === 'aura_galaxy' || id === 'aura_rainbow' ? `hsl(${(t / 6) % 360} 90% 70%)` : lv ? (TIER[lv] === 'rainbow' ? `hsl(${(t / 8) % 360} 90% 65%)` : TIER[lv]) : base;
   const n = 5 + lv * 2, r = 18 + lv;
   g.save(); g.globalAlpha = 0.35 + lv * 0.05; g.fillStyle = col; g.beginPath(); g.ellipse(x, y, r, r * 0.38, 0, 0, Math.PI * 2); g.fill(); g.globalAlpha = 1;
   for (let i = 0; i < n; i++) {
     const a = i / n * Math.PI * 2 + t / 900, k = ((t / 1400 + i / n) % 1);
     const px = x + Math.cos(a) * r * 0.9, py = y + Math.sin(a) * r * 0.3 - k * (26 + lv * 4);
-    g.globalAlpha = 1 - k; g.fillStyle = id === 'aura_sparkle' || id === 'aura_leaves' || id === 'aura_galaxy' ? col : base;
+    g.globalAlpha = 1 - k; g.fillStyle = ['aura_sparkle', 'aura_leaves', 'aura_galaxy', 'aura_rainbow', 'aura_dragon'].includes(id) ? col : base;
     const s = 2.2 + (i % 3) * 0.6;
     if (id === 'aura_hearts') { g.beginPath(); g.moveTo(px, py + s); g.bezierCurveTo(px - 2 * s, py - s * 0.6, px - s * 0.6, py - 2 * s, px, py - s * 0.6); g.bezierCurveTo(px + s * 0.6, py - 2 * s, px + 2 * s, py - s * 0.6, px, py + s); g.fill(); }
-    else if (id === 'aura_flame') { g.beginPath(); g.ellipse(px, py, s * 0.9, s * 1.6, 0, 0, Math.PI * 2); g.fill(); }
+    else if (id === 'aura_flame' || id === 'aura_dragon') { g.beginPath(); g.ellipse(px, py, s * 0.9, s * 1.6, 0, 0, Math.PI * 2); g.fill(); }
+    else if (id === 'aura_bubbles') { g.strokeStyle = base; g.lineWidth = 1.2; g.beginPath(); g.arc(px, py, s * 1.4, 0, Math.PI * 2); g.stroke(); }
     else if (id === 'aura_snow') { g.beginPath(); g.arc(px, py, s * 1.1, 0, Math.PI * 2); g.fill(); }
-    else if (id === 'aura_leaves' || id === 'aura_sakura') { g.beginPath(); g.ellipse(px, py, s * 1.5, s * 0.7, a, 0, Math.PI * 2); g.fill(); }
+    else if (id === 'aura_leaves' || id === 'aura_sakura' || id === 'aura_butterfly') { g.beginPath(); g.ellipse(px, py, s * 1.5, s * 0.7, a, 0, Math.PI * 2); g.fill(); }
     else { g.fillRect(px - s / 2, py - s * 1.5, s, s * 3); g.fillRect(px - s * 1.5, py - s / 2, s * 3, s); }
   }
   g.restore();
@@ -1276,6 +1448,7 @@ const BSTYLE = {
   post:   {wall:'#FFF8E6', roof:'#FFB547', roof2:'#F29A1F', trim:'#EEDDB6', door:'#C4703A'},
   house2: {wall:'#E8F7FF', roof:'#4FC3C9', roof2:'#36A8AE', trim:'#CBE7EE', door:'#2F8A8F'},
   barn:   {wall:'#E8584B', roof:'#B9483D', roof2:'#9E3B32', trim:'#FFFFFF', door:'#FFFFFF'},
+  salon:  {wall:'#FFF0FB', roof:'#C77DFF', roof2:'#A75BE8', trim:'#F2D4FF', door:'#FF6FB5', awning:['#FF8FC7','#FFFFFF']},
   coop:   {wall:'#FFD36B', roof:'#E8584B', roof2:'#C9473C', trim:'#FFF3D0', door:'#8B5A3C'}
 };
 function houseDef(style, tw, th) {
@@ -1605,10 +1778,11 @@ function buildMaps() {
   house(v, 'school', 11, 19, 9, 5, {sign: 'SCHOOL', role: 'teacher'});
   house(v, 'forge', 30, 15, 5, 5, {sign: 'UPGRADE', role: 'forge'});
   house(v, 'post', 23, 18, 5, 4, {sign: 'POST'});
+  house(v, 'salon', 2, 18, 6, 4, {sign: 'HAIR SALON', role: 'salon'});
   prop(v, 'board', 12, 11); prop(v, 'well', 23, 14);
   for (const [x, y] of [[10, 9], [25, 9], [10, 17], [25, 17]]) prop(v, 'lamp', x, y);
   prop(v, 'bench', 14, 16); prop(v, 'bench', 21, 16); prop(v, 'crate', 15, 7); prop(v, 'sacks', 20, 7);
-  for (const [x, y, k] of [[8, 16, 'round'], [5, 21, 'fruit'], [30, 24, 'pine'], [33, 9, 'round'], [3, 16, 'blossom']]) tree(v, x, y, k);
+  for (const [x, y, k] of [[8, 16, 'round'], [9, 25, 'fruit'], [30, 24, 'pine'], [33, 9, 'round'], [3, 15, 'blossom']]) tree(v, x, y, k);
   prop(v, 'flowers', 9, 11, false); prop(v, 'flowers', 26, 11, false);
   v.exits.push({x: 0, y: 12, w: 1, h: 2, to: 'farm', tx: 34, ty: 12});
   v.exits.push({x: 35, y: 12, w: 1, h: 2, to: 'river', tx: 1, ty: 9});
@@ -1681,7 +1855,9 @@ NPC_DEFS.push(
   {id:'ha', name:'Chị Hà', map:'park', home:[18, 16], role:'ielts', look:L_({skin:0, hairF:'elegant', hairB:'long', hairC:'#5B3423', top:'top_jacket', topC:'#545AF2', bottom:'bot_pants', bottomC:'#1F1B24', face2:'face_round', hand:'hand_lollipop'}),
     greet:['IELTS challenge today!','Band 7, here we come!'], line:() => ({en:`Hi ${S.name}! Ready for today's IELTS challenge?`, vi:`Chào ${S.name}! Sẵn sàng làm thử thách IELTS hôm nay chưa?`})},
   {id:'bao', name:'Anh Bảo', map:'park', home:[10, 11], role:'chat', wander:true, look:L_({skin:3, hairF:'straight', hairC:'#1F1B24', top:'top_hoodie', topC:'#FF6B35', bottom:'bot_shorts', bottomC:'#1F1B24', hat:'hat_cap', pet:'pet_puppy'}),
-    greet:['Morning run!','Nice weather today.'], line:() => ({en:`Hey ${S.name}! Do you jog in the park too?`, vi:`Chào ${S.name}! Bạn cũng chạy bộ trong công viên à?`})}
+    greet:['Morning run!','Nice weather today.'], line:() => ({en:`Hey ${S.name}! Do you jog in the park too?`, vi:`Chào ${S.name}! Bạn cũng chạy bộ trong công viên à?`})},
+  {id:'ngan', name:'Chị Ngân', map:'village', home:[8, 23], role:'salon', look:L_({skin:1, hairF:'elegant', hairB:'long', hairC:'#FF8FC7', top:'top_cardigan', topC:'#B05CFF', bottom:'bot_pleated', bottomC:'#1F1B24', face2:'face_star', hand:'hand_fan'}),
+    greet:['New hairstyles!','Try a new look!'], line:() => ({en:`Hi ${S.name}! Which hairstyle would you like today?`, vi:`Chào ${S.name}! Hôm nay em muốn làm kiểu tóc nào?`})}
 );
 const fullLook = L => Object.assign({}, DEFAULT_LOOK, L || {}, {lv: Object.assign({}, (L && L.lv) || {})});
 
@@ -1694,8 +1870,8 @@ function newGame() {
   const plots = Array.from({length: 24}, (_, i) => ({u: i < 8, c: null, p: 0, w: 0, weed: false, hw: false}));
   Object.assign(plots[0], {c: 'carrot', p: 1}); Object.assign(plots[1], {c: 'radish', p: 0.4, w: now + 20000}); Object.assign(plots[2], {c: 'carrot', p: 0.25});
   return {v: 4, created: false, name: '', look: fullLook(DEFAULT_LOOK), owned: [...FREE_ITEMS], map: 'farm', px: 0, py: 0,
-    coins: 80, em: 4, di: 1, daily: '', xp: 0, lvl: 1, plots, animals: [{t: 'chicken', st: 'hungry', r: 0}, ...Array(17).fill(null)], barnLv: 0, keys: 1, pity: 0,
-    seeds: {carrot: 6, radish: 4}, inv: {}, m: {}, orders: [], streak: 0, best: 0, stats: {ok: 0, all: 0, talks: 0, fish: 0},
+    coins: 80, em: 4, di: 1, daily: '', xp: 0, lvl: 3, plots, animals: [{t: 'chicken', st: 'hungry', r: 0}, ...Array(17).fill(null)], barnLv: 0, keys: 1, pity: 0,
+    cefr: 'A1', hair: [], lvAns: 0, seeds: {carrot: 6, radish: 4}, inv: {}, m: {}, orders: [], streak: 0, best: 0, stats: {ok: 0, all: 0, talks: 0, fish: 0},
     study: {track: 'general', level: 'A1', unlocked: ['A1']}, sound: true, last: now, caught: false};
 }
 async function initStore() {
@@ -1753,7 +1929,7 @@ async function publishProfile() {
   if (Store.mode !== 'cloud' || !S.created) return;
   Store.lastPublic = Date.now();
   try {
-    await Store.db.doc(`players/${Store.uid}`).set({name: S.name.slice(0, 16), lvl: S.lvl, xp: S.xp, words: Object.values(S.m).filter(r => r.m >= 4).length, look: S.look, track: S.study.track, level: S.study.level, updated: Date.now()});
+    await Store.db.doc(`players/${Store.uid}`).set({name: S.name.slice(0, 16), lvl: lvIdx() + 1, xp: S.xp, words: Object.values(S.m).filter(r => r.m >= 4).length, look: S.look, track: S.study.track, level: S.study.level, updated: Date.now()});
   } catch (e) { console.warn('profile', e); }
 }
 function setSaveBadge(s) {
@@ -1907,6 +2083,7 @@ function record(w, ok) {
   const r = S.m[w.key] || (S.m[w.key] = {m: 0, s: 0, w: 0}); r.s++; S.stats.all++;
   if (ok) { r.m = Math.min(5, r.m + 1); r.w = 0; S.stats.ok++; S.streak++; S.best = Math.max(S.best, S.streak); addXP(5); if (S.streak % 5 === 0) { S.coins += 10; giveGems(1, S.streak % 20 === 0 ? 1 : 0, `chuỗi ${S.streak} câu đúng`); } }
   else { r.m = Math.max(0, r.m - 1); r.w = 1; S.streak = 0; }
+  lvNoteAnswer();
 }
 function finish(ok, timeout) {
   stopTimer(); Q.done = true; const w = Q.w;
@@ -1923,12 +2100,7 @@ function finish(ok, timeout) {
 /* ===================== PROGRESSION ===================== */
 function addXP(n) {
   S.xp += n;
-  while (S.xp >= need(S.lvl)) {
-    S.xp -= need(S.lvl); S.lvl++;
-    const news = [...CROPS.filter(c => c.lvl === S.lvl && !c.rare).map(c => `hạt ${c.en}`), ...ANIMALS.filter(a => a.lvl === S.lvl).map(a => `con ${a.en}`)];
-    setTimeout(() => { sfx('level'); toast(`<b>Lên cấp ${S.lvl}!</b>${news.length ? ' Mở khoá ' + news.join(', ') + '.' : ''}`, 4200); }, 350);
-    queueFx({kind: 'spark', who: 'player'}); giveGems(3, S.lvl % 5 === 0 ? 1 : 0, 'lên cấp ' + S.lvl); if (S.lvl % 5 === 0) giveKey(1, 'lên cấp ' + S.lvl); saveNow(true);
-  }
+  // the character has no XP level any more: the English level (S.cefr) is its level
 }
 const unlockedCrops = () => CROPS.filter(c => c.lvl <= S.lvl && !c.rare);
 const unlockCost = () => 40 * (S.plots.filter(p => p.u).length - 7);
@@ -2116,6 +2288,7 @@ function npcBody(n) {
   if (role === 'shop') return BUY ? buyHTML() : shopHTML();
   if (role === 'teacher') return teacherHTML();
   if (role === 'ielts') return ieltsHTML();
+  if (role === 'salon') return salonHTML();
   return `<div class="row-btns"><button class="btn" data-act="chat">Nói chuyện</button><button class="btn ghost" data-act="close">Tạm biệt</button></div>`;
 }
 function orderHTML(o, k, canGive) {
@@ -2132,11 +2305,11 @@ function animalsHTML() {
   const free = freeSlot();
   if (free < 0) return `<p class="note">Chuồng đã đầy (${barnCount()}/${barnCap()} con). Nâng cấp chuồng ở cửa hàng nông trại để nuôi thêm.</p><div class="row-btns"><button class="btn" data-act="farmshop" data-t="barn">Nâng cấp chuồng</button></div>`;
   return `<p class="note">Vật nuôi sẽ về chuồng ở nông trại. Cho ăn bằng một câu hỏi tiếng Anh.</p><div class="list">${ANIMALS.map(A => { const lock = A.lvl > S.lvl, poor = S.coins < A.cost, P2 = PRODUCTS[A.product];
-    return `<button class="row-item ${lock ? 'locked' : ''}" data-act="buyanimal" data-s="${free}" data-a="${A.id}" ${lock || poor ? 'disabled' : ''}><img class="ii" src="${svgURL(animalDef(A.id, 0).svg)}" alt=""><span class="ri-main"><b>${A.en}</b><small>${A.vi} · cho ${P2.en} mỗi ${fmt(A.time)}</small></span><span class="ri-side">${lock ? `Cấp ${A.lvl}` : `${coinIcon}${A.cost}`}</span></button>`; }).join('')}</div>`;
+    return `<button class="row-item ${lock ? 'locked' : ''}" data-act="buyanimal" data-s="${free}" data-a="${A.id}" ${lock || poor ? 'disabled' : ''}><img class="ii" src="${svgURL(animalDef(A.id, 0).svg)}" alt=""><span class="ri-main"><b>${A.en}</b><small>${A.vi} · cho ${P2.en} mỗi ${fmt(A.time)}</small></span><span class="ri-side">${lock ? needTag(A.lvl) : `${coinIcon}${A.cost}`}</span></button>`; }).join('')}</div>`;
 }
 function seedsHTML() {
   return `<p class="note">Mỗi gói 5 hạt. Hạt giống sẽ vào túi, ra ruộng chạm ô đất trống để gieo.</p><div class="list">${CROPS.filter(c => !c.rare).map(c => { const lock = c.lvl > S.lvl, price = c.cost * 5, poor = S.coins < price;
-    return `<button class="row-item ${lock ? 'locked' : ''}" data-act="buyseed" data-crop="${c.id}" ${lock || poor ? 'disabled' : ''}>${itemImg(c.id)}<span class="ri-main"><b>${c.en} seeds</b><small>${c.vi} · chín sau ${fmt(c.time)} · bán ${c.sell} xu · đang có ${S.seeds[c.id] || 0}</small></span><span class="ri-side">${lock ? `Cấp ${c.lvl}` : `${coinIcon}${price}`}</span></button>`; }).join('')}</div>`;
+    return `<button class="row-item ${lock ? 'locked' : ''}" data-act="buyseed" data-crop="${c.id}" ${lock || poor ? 'disabled' : ''}>${itemImg(c.id)}<span class="ri-main"><b>${c.en} seeds</b><small>${c.vi} · chín sau ${fmt(c.time)} · bán ${c.sell} xu · đang có ${S.seeds[c.id] || 0}</small></span><span class="ri-side">${lock ? needTag(c.lvl) : `${coinIcon}${price}`}</span></button>`; }).join('')}</div>`;
 }
 function buySeed(id) { const c = CROP[id], price = c.cost * 5; if (!c || c.lvl > S.lvl || S.coins < price) return; S.coins -= price; S.seeds[id] = (S.seeds[id] || 0) + 5; sfx('coin'); speak(`${c.en} seeds`, true); toast(`Đã mua 5 hạt <b>${c.en}</b>.`); refreshNpc(); renderHUD(); markDirty(); }
 let SHOPTAB = 'top';
@@ -2147,7 +2320,7 @@ function itemCard(f, L, act, extra = '') {
   const own = S.owned.includes(f.id), lock = (f.lvl || 1) > S.lvl, lv = (S.look.lv || {})[f.id] || 0;
   const tryL = Object.assign({}, L, slotPatch(f)); if (lv) tryL.lv = Object.assign({}, L.lv, {[f.id]: lv});
   const img = f.slot === 'pet' ? `<img class="pv pet" src="${svgURL(petSVG(f.id, lv, 0))}" alt="">` : f.slot === 'aura' ? `<span class="pv aura" style="--c:${f.col}"></span>` : `<img class="pv" src="${portraitSVG(tryL, {full: ['back', 'hand'].includes(f.slot), hand: true})}" alt="">`;
-  return `<button class="card r${f.rar || 0}" data-act="${act}" data-id="${f.id}" ${extra}><span class="rar">${RARITY[f.rar || 0].vi}</span>${lv ? `<span class="plus t${lv}">+${lv}</span>` : ''}${img}<b>${act === 'shop-pick' && !own ? '???' : esc(f.en)}</b><small>${esc(f.vi)}</small>${act === 'shop-pick' ? `<span class="price">${own ? 'Đã có' : lock ? `Cấp ${f.lvl}` : priceTag(f)}</span>` : ''}</button>`;
+  return `<button class="card r${f.rar || 0}" data-act="${act}" data-id="${f.id}" ${extra}><span class="rar">${RARITY[f.rar || 0].vi}</span>${lv ? `<span class="plus t${lv}">+${lv}</span>` : ''}${img}<b>${act === 'shop-pick' && !own ? '???' : esc(f.en)}</b><small>${esc(f.vi)}</small>${act === 'shop-pick' ? `<span class="price">${own ? 'Đã có' : lock ? needTag(f.lvl) : priceTag(f)}</span>` : ''}</button>`;
 }
 function shopHTML() {
   const L = fullLook(S.look), list = FASHION.filter(f => f.slot === SHOPTAB && (f.price > 0 || f.chest));
@@ -2168,7 +2341,7 @@ function shopPick(id) {
 }
 function shopAnswer(i) {
   if (!BUY || BUY.done) return; const f = FASH[BUY.id];
-  BUY.done = true; BUY.pick = i; BUY.ok = BUY.opts[i] === f.en; S.stats.all++;
+  BUY.done = true; BUY.pick = i; BUY.ok = BUY.opts[i] === f.en; S.stats.all++; lvNoteAnswer();
   if (BUY.ok) { S.stats.ok++; if (f.cur === 'gem') S.di -= f.price; else S.coins -= f.price; S.owned.push(f.id); Object.assign(S.look, slotPatch(f)); addXP(4); sfx('coin'); speak(f.en, true); queueFx({kind: 'spark', who: 'player'}); } else sfx('bad');
   refreshNpc(); renderHUD(); markDirty();
 }
@@ -2305,7 +2478,7 @@ function openStudy() {
   openModal(`<h2 class="ptitle">Học tập</h2>
     <div class="stats3"><div><b>${seenAll}</b><small>từ đã gặp</small></div><div><b>${known}</b><small>từ đã thuộc</small></div><div><b>${acc}%</b><small>trả lời đúng</small></div></div>
     <h3 class="ph3">Chuyên ngành</h3><div class="chips">${Object.entries(TRACKS).map(([id, t]) => `<button class="chip" data-act="track" data-t="${id}" aria-pressed="${track === id}">${esc(t.vi)}</button>`).join('')}</div>
-    <h3 class="ph3">Trình độ</h3><div class="chips">${LEVELS.map(lv => { return `<button class="chip" data-act="level" data-t="${lv}" aria-pressed="${level === lv}">${lv} · ${track === 'ielts' ? IELTS_BAND[lv] : LEVEL_VI[lv]}</button>`; }).join('')}</div>
+    <div class="lvline" data-act="lvinfo" role="button"><span class="lvbig sm">${S.cefr}</span><span>Trình độ được công nhận (cấp độ nhân vật). Muốn lên cấp phải qua bài test. <b>Xem tiến độ</b></span></div><h3 class="ph3">Trình độ đang học (chọn tự do để luyện)</h3><div class="chips">${LEVELS.map(lv => { return `<button class="chip" data-act="level" data-t="${lv}" aria-pressed="${level === lv}">${lv} · ${track === 'ielts' ? IELTS_BAND[lv] : LEVEL_VI[lv]}</button>`; }).join('')}</div>
     ${track !== 'general' && !TRACK_WORDS[track][level] ? `<p class="note">Từ vựng chuyên ngành bắt đầu từ A2. Ở ${level}, câu hỏi chủ yếu là giao tiếp chung, có xen vài từ chuyên ngành dễ.</p>` : ''}
     <div class="row-btns"><button class="btn sm" data-act="tests">Trung tâm thi</button><button class="btn ghost sm" data-act="t-place">Kiểm tra trình độ</button>${track === 'ielts' ? '<button class="btn ghost sm" data-act="roadmap">Lộ trình IELTS</button>' : ''}</div><p class="note">Câu hỏi khi tưới cây, cho ăn, câu cá đều lấy từ chuyên ngành và trình độ bạn chọn. Bạn đổi trình độ bất cứ lúc nào. Bài kiểm tra tổng thể mỗi tuần sẽ tự nâng trình độ khi bạn tiến bộ. Thi ở trường (SCHOOL) với Cô Lan để nhận thưởng ngọc và kim cương.</p>
     <h3 class="ph3">Từ vựng ${level}</h3><ul class="words">${words.map(w => { const r = S.m[w.key], m = r ? r.m : 0; return `<li class="${r && r.w ? 'weak' : ''}">${sayBtn(w.en)}<span class="en">${esc(w.en)}</span><span class="vi">${r ? esc(w.vi) : '<i>chưa gặp</i>'}</span><span class="stars">${[1,2,3,4,5].map(k => `<i class="${k <= m ? 'on' : ''}"></i>`).join('')}</span></li>`; }).join('')}</ul>`, {label: 'Học tập', wide: true});
@@ -2317,7 +2490,7 @@ function openWardrobe() {
   const items = FASHION.filter(f => f.slot === WARD && S.owned.includes(f.id));
   const colorKey = {top: 'topC', bottom: 'bottomC'}[WARD];
   const optional = !['top', 'bottom'].includes(WARD), cur = WARD === 'face' ? L.face2 : L[WARD];
-  openModal(`<h2 class="ptitle">Tủ đồ</h2><div class="ward"><div class="ward-prev"><div class="stagebox"><img class="pv hero" src="${portraitSVG(L, {full: true, hand: true})}" alt="Nhân vật của bạn">${L.pet ? `<img class="petmini" src="${svgURL(petSVG(L.pet, (L.lv || {})[L.pet] || 0, 0))}" alt="">` : ''}</div><button class="btn ghost sm" data-act="creator">Sửa ngoại hình</button></div><div class="ward-main">
+  openModal(`<h2 class="ptitle">Tủ đồ</h2><div class="ward"><div class="ward-prev"><div class="stagebox"><img class="pv hero" src="${portraitSVG(L, {full: true, hand: true})}" alt="Nhân vật của bạn">${L.pet ? `<img class="petmini" src="${svgURL(petSVG(L.pet, (L.lv || {})[L.pet] || 0, 0))}" alt="">` : ''}</div><button class="btn ghost sm" data-act="creator">Sửa ngoại hình</button><button class="btn sm" data-act="salon">Tiệm tóc</button></div><div class="ward-main">
     <div class="seg">${SLOTS.map(([k, l]) => `<button class="segb" data-act="ward-slot" data-t="${k}" aria-pressed="${WARD === k}">${l}</button>`).join('')}</div>
     <div class="cards">${optional ? `<button class="card ${!cur ? 'on' : ''}" data-act="wear" data-id=""><span class="pv none">Trống</span><b>Bỏ ra</b><small>không dùng</small></button>` : ''}${items.map(f => itemCard(f, L, 'wear', cur === f.id ? 'aria-pressed="true"' : '')).join('') || '<p class="empty">Chưa có món nào. Mua ở CLOTHES SHOP trong Làng.</p>'}</div>
     ${colorKey ? `<h3 class="ph3">Đổi màu</h3><div class="swatches">${CLOTH_COLS.map(c => `<button class="sw" style="background:${c}" data-act="dye" data-c="${c}" aria-pressed="${L[colorKey] === c}" aria-label="${c}"></button>`).join('')}</div>` : ''}
@@ -2331,7 +2504,7 @@ async function openBoard() {
     try { const snap = await Store.db.collection('players').orderBy('lvl', 'desc').limit(20).get(); rows = snap.docs.map(d => Object.assign({id: d.id}, d.data())); } catch (e) { console.warn(e); }
   }
   openModal(`<h2 class="ptitle">Bảng tin làng</h2><p class="psub">Những người chơi chăm chỉ nhất. Bảng xếp hạng chung của mọi người chơi trên web và app.</p>
-    ${rows.length ? `<ol class="board">${rows.map((r, i) => `<li class="${r.id === Store.uid ? 'me' : ''}"><span class="rank">${i + 1}</span><img class="portrait xs" ${pimg(fullLook(r.look))} alt=""><span class="ri-main"><b class="pname"></b><small>${esc((TRACKS[r.track] || TRACKS.general).vi)} · ${esc(r.level || 'A1')} · thuộc ${r.words || 0} từ</small></span><span class="lv">Cấp ${r.lvl}</span></li>`).join('')}</ol>` : `<p class="empty">${Store.mode === 'cloud' ? 'Chưa có ai trên bảng. Chơi thêm một lúc rồi quay lại nhé.' : 'Bảng xếp hạng cần đăng nhập Claude. Bạn đang chơi chế độ lưu trên máy.'}</p>`}`, {label: 'Bảng tin'});
+    ${rows.length ? `<ol class="board">${rows.map((r, i) => `<li class="${r.id === Store.uid ? 'me' : ''}"><span class="rank">${i + 1}</span><img class="portrait xs" ${pimg(fullLook(r.look))} alt=""><span class="ri-main"><b class="pname"></b><small>${esc((TRACKS[r.track] || TRACKS.general).vi)} · ${esc(r.level || 'A1')} · thuộc ${r.words || 0} từ</small></span><span class="lv">${LEVELS[Math.min(4, Math.max(0, (r.lvl || 1) - 1))]}</span></li>`).join('')}</ol>` : `<p class="empty">${Store.mode === 'cloud' ? 'Chưa có ai trên bảng. Chơi thêm một lúc rồi quay lại nhé.' : 'Bảng xếp hạng cần đăng nhập Claude. Bạn đang chơi chế độ lưu trên máy.'}</p>`}`, {label: 'Bảng tin'});
   document.querySelectorAll('.board .pname').forEach((el, i) => { el.textContent = rows[i].name || 'Người chơi'; });
 }
 function openSettings() {
@@ -2388,7 +2561,7 @@ function renderCreator() {
   let body = '';
   if (CC.tab === 'body') body = `<span class="lbl">Màu da</span><div class="swatches">${SKIN_TONES.map((t, i) => `<button class="sw" style="background:${t.b}" data-act="cc" data-k="skin" data-v="${i}" aria-pressed="${L.skin === i}" aria-label="Màu da ${i + 1}"></button>`).join('')}</div>
     <span class="lbl">Kiểu áo</span>${chips('top', ['top_tee', 'top_dress'], v => FASH[v].vi)}<span class="lbl">Màu áo</span>${sw('topC', CLOTH_COLS)}<span class="lbl">Màu quần</span>${sw('bottomC', CLOTH_COLS)}`;
-  if (CC.tab === 'hair') body = `<span class="lbl">Tóc phía trước</span>${chips('hairF', HAIR_F, v => HAIR_F_VI[v])}<span class="lbl">Tóc phía sau</span>${chips('hairB', HAIR_B, v => HAIR_B_VI[v])}<span class="lbl">Màu tóc</span>${sw('hairC', HAIR_COLS)}`;
+  if (CC.tab === 'hair') body = `<span class="lbl">Tóc phía trước</span>${chips('hairF', Object.keys(NEMO.hairF).filter(v => v !== 'none').concat('none').filter(ownsHairF), v => HAIR_F_VI[v] || (HAIR_ITEMS.find(h => h.f === v) || {}).vi || v)}<span class="lbl">Tóc phía sau</span>${chips('hairB', [null, ...Object.keys(NEMO.hairB)].filter(ownsHairB), v => HAIR_B_VI[v] || (HAIR_ITEMS.find(h => h.b === v) || {}).vi || v)}<span class="lbl">Màu tóc</span>${sw('hairC', [...HAIR_COLS, ...ownedDyes()])}<p class="note">Kiểu tóc và màu nhuộm đẹp, hiếm có ở <b>Tiệm tóc</b> trong Làng. <button class="linkbtn" data-act="salon">Đến tiệm tóc</button></p>`;
   if (CC.tab === 'face') body = `<span class="lbl">Biểu cảm</span>${chips('face', FACES, v => FACE_VI[v])}<span class="lbl">Râu</span>${chips('beard', [null, 'short', 'middle', 'long'], v => ({null: 'Không', short: 'Ria mép', middle: 'Râu quai nón', long: 'Râu dài'})[v])}`;
   if (CC.tab === 'study') body = `<span class="lbl">Trình độ tiếng Anh hiện tại</span><div class="chips">${['A1','A2','B1','B2'].map(lv => `<button class="chip" data-act="cc-lv" data-v="${lv}" aria-pressed="${CC.level === lv}">${lv} · ${LEVEL_VI[lv]}</button>`).join('')}</div>
     <span class="lbl">Chuyên ngành muốn học</span><div class="chips">${Object.entries(TRACKS).map(([id, t]) => `<button class="chip" data-act="cc-tr" data-v="${id}" aria-pressed="${CC.track === id}">${esc(t.vi)}</button>`).join('')}</div>`;
@@ -2408,7 +2581,8 @@ function ccDone() {
   const first = CC.first; S.created = true;
   if (CC.look.top === 'top_dress' && !S.owned.includes('top_dress')) S.owned.push('top_dress');
   if (first) { S.study.level = CC.level; S.study.track = CC.track; S.study.unlocked = LEVELS.slice(0, LEVELS.indexOf(CC.level) + 1); S.orders = [genOrder(['carrot']), genOrder(['radish', 'carrot']), genOrder(['egg'])]; }
-  CC = null; closeModal(); saveNow(true);
+  const picked = CC.level; CC = null; closeModal(); saveNow(true);
+  if (first && picked !== 'A1') setTimeout(() => openModal(`<h2 class="ptitle">Được công nhận ${picked}?</h2><p class="psub">Cấp độ của nhân vật chính là trình độ tiếng Anh. Bạn bắt đầu ở <b>A1</b>. Làm bài kiểm tra xếp lớp 24 câu để được công nhận ngay ${picked} và mở khoá đồ, cây trồng, vật nuôi theo trình độ.</p><div class="row-btns"><button class="btn gold" data-act="t-place">Làm bài xếp lớp</button><button class="btn ghost" data-act="close">Để sau</button></div>`, {label: 'Xếp lớp'}), 4800);
   if (first) { speak(`Hello, ${S.name}! Welcome to the farm.`, true); toast(`Chào <b>${esc(S.name)}</b>! Cây cà rốt có ngôi sao đã chín, chạm vào để thu hoạch.`, 4500); }
 }
 
@@ -2429,7 +2603,7 @@ function upgradeBarn() {
 function barnHTML() {
   const lv = S.barnLv || 0, nx = BARN_UP[lv + 1];
   return `<div class="barnbar"><div><b>Chuồng cấp ${lv + 1}</b><small>Đang nuôi ${barnCount()}/${barnCap()} con · tối đa ${BARN_CAP[BARN_CAP.length - 1]} con</small></div><div class="slots">${Array.from({length: 18}, (_, i) => `<i class="${i < barnCap() ? (S.animals[i] ? 'full' : 'open') : 'lock'}"></i>`).join('')}</div></div>
-    ${nx ? `<div class="row-btns"><button class="btn gold" data-act="fs-barn" ${S.lvl < nx.lvl || !canPay(nx) ? 'disabled' : ''}>Nâng lên ${BARN_CAP[lv + 1]} chỗ · ${costHTML(nx)}</button>${S.lvl < nx.lvl ? `<span class="note">Cần cấp ${nx.lvl}</span>` : ''}</div>` : '<p class="note">Chuồng đã ở cấp tối đa.</p>'}`;
+    ${nx ? `<div class="row-btns"><button class="btn gold" data-act="fs-barn" ${S.lvl < nx.lvl || !canPay(nx) ? 'disabled' : ''}>Nâng lên ${BARN_CAP[lv + 1]} chỗ · ${costHTML(nx)}</button>${S.lvl < nx.lvl ? `<span class="note">${needTag(nx.lvl)}</span>` : ''}</div>` : '<p class="note">Chuồng đã ở cấp tối đa.</p>'}`;
 }
 
 let FSTAB = 'seeds';
@@ -2438,11 +2612,11 @@ function openFarmShop(tab) {
   const tabs = [['seeds', 'Hạt giống'], ['animals', 'Vật nuôi'], ['barn', 'Nâng chuồng'], ['chest', 'Rương may mắn']];
   let body = '';
   if (FSTAB === 'seeds') body = `<p class="note">Mua hạt giống ngay tại nông trại. Gói 5 hạt hoặc gói lớn 20 hạt (giảm 10%).</p><div class="list">${CROPS.filter(c => !c.rare).map(c => { const lock = c.lvl > S.lvl, p5 = c.cost * 5, p20 = Math.round(c.cost * 20 * 0.9);
-      return `<div class="row-item static ${lock ? 'locked' : ''}">${itemImg(c.id)}<span class="ri-main"><b>${c.en} ${sayBtn(c.en)}</b><small>${c.vi} · chín sau ${fmt(c.time)} · bán ${c.sell} xu · đang có ${S.seeds[c.id] || 0}</small></span>${lock ? `<span class="ri-side">Cấp ${c.lvl}</span>` : `<button class="btn ghost sm" data-act="fs-seed" data-crop="${c.id}" data-n="5" ${S.coins < p5 ? 'disabled' : ''}>5 hạt · ${coinIcon}${p5}</button><button class="btn sm" data-act="fs-seed" data-crop="${c.id}" data-n="20" ${S.coins < p20 ? 'disabled' : ''}>20 hạt · ${coinIcon}${p20}</button>`}</div>`; }).join('')}</div>`;
+      return `<div class="row-item static ${lock ? 'locked' : ''}">${itemImg(c.id)}<span class="ri-main"><b>${c.en} ${sayBtn(c.en)}</b><small>${c.vi} · chín sau ${fmt(c.time)} · bán ${c.sell} xu · đang có ${S.seeds[c.id] || 0}</small></span>${lock ? `<span class="ri-side">${needTag(c.lvl)}</span>` : `<button class="btn ghost sm" data-act="fs-seed" data-crop="${c.id}" data-n="5" ${S.coins < p5 ? 'disabled' : ''}>5 hạt · ${coinIcon}${p5}</button><button class="btn sm" data-act="fs-seed" data-crop="${c.id}" data-n="20" ${S.coins < p20 ? 'disabled' : ''}>20 hạt · ${coinIcon}${p20}</button>`}</div>`; }).join('')}</div>`;
   if (FSTAB === 'animals') { const free = freeSlot();
     body = `${barnHTML()}${free < 0 ? `<p class="fb miss"><strong>Chuồng đầy.</strong> Nâng cấp chuồng để nuôi thêm.</p>` : ''}<div class="list">${ANIMALS.map(A => { const lock = A.lvl > S.lvl, P2 = PRODUCTS[A.product];
-      return `<button class="row-item ${lock ? 'locked' : ''}" data-act="fs-animal" data-a="${A.id}" ${lock || free < 0 || S.coins < A.cost ? 'disabled' : ''}><img class="ii" src="${svgURL(animalDef(A.id, 0).svg)}" alt=""><span class="ri-main"><b>${A.en}</b><small>${A.vi} · cho ${P2.en} mỗi ${fmt(A.time)}</small></span><span class="ri-side">${lock ? `Cấp ${A.lvl}` : `${coinIcon}${A.cost}`}</span></button>`; }).join('')}</div>`; }
-  if (FSTAB === 'barn') body = `<p class="note">Giống Avatar: ban đầu chuồng chỉ nuôi được 3 con. Nâng cấp dần để nuôi tới 18 con.</p>${barnHTML()}<ol class="barnsteps">${BARN_UP.slice(1).map((c, i) => `<li class="${(S.barnLv || 0) > i ? 'ok' : ''}"><b>${BARN_CAP[i + 1]} chỗ</b><span>Cấp ${c.lvl}</span><span>${costHTML(c)}</span></li>`).join('')}</ol>`;
+      return `<button class="row-item ${lock ? 'locked' : ''}" data-act="fs-animal" data-a="${A.id}" ${lock || free < 0 || S.coins < A.cost ? 'disabled' : ''}><img class="ii" src="${svgURL(animalDef(A.id, 0).svg)}" alt=""><span class="ri-main"><b>${A.en}</b><small>${A.vi} · cho ${P2.en} mỗi ${fmt(A.time)}</small></span><span class="ri-side">${lock ? needTag(A.lvl) : `${coinIcon}${A.cost}`}</span></button>`; }).join('')}</div>`; }
+  if (FSTAB === 'barn') body = `<p class="note">Giống Avatar: ban đầu chuồng chỉ nuôi được 3 con. Nâng cấp dần để nuôi tới 18 con.</p>${barnHTML()}<ol class="barnsteps">${BARN_UP.slice(1).map((c, i) => `<li class="${(S.barnLv || 0) > i ? 'ok' : ''}"><b>${BARN_CAP[i + 1]} chỗ</b><span>${needTag(c.lvl)}</span><span>${costHTML(c)}</span></li>`).join('')}</ol>`;
   if (FSTAB === 'chest') body = chestHTML();
   openModal(`<h2 class="ptitle">Cửa hàng nông trại</h2><div class="seg">${tabs.map(([k, l]) => `<button class="segb" data-act="fs-tab" data-t="${k}" aria-pressed="${FSTAB === k}">${l}</button>`).join('')}</div>${body}`, {label: 'Cửa hàng nông trại', wide: true});
 }
@@ -2456,20 +2630,21 @@ function farmBuyAnimal(id) { const i = freeSlot(); if (i < 0) return; buyAnimal(
 /* ---------- lucky chest: keys come from weekly tests, roadmap stages, rare fish and every 5 levels ---------- */
 const CHEST_PRICE = 5, PITY = 40; let LASTCHEST = 'key';
 function chestHTML() {
-  const myth = FASHION.filter(f => f.chest), have = myth.filter(f => S.owned.includes(f.id)).length;
+  const myth = FASHION.filter(f => f.chest), have = myth.filter(f => S.owned.includes(f.id)).length + HAIR_ITEMS.filter(h => h.chest && (S.hair || []).includes(h.id)).length, total = myth.length + HAIR_ITEMS.filter(h => h.chest).length;
   return `<div class="chest"><div class="chestbox" aria-hidden="true"><i></i></div><div><p>Mở rương có thể nhận: xu, ngọc lục bảo, kim cương, <b>hạt nhân sâm</b> (bán 1200 xu), đồ Sử thi, Huyền thoại và cực hiếm là <b class="myth">đồ Thần thoại</b> chỉ có trong rương (tỉ lệ 1,5%).</p>
-    <p class="note">Bảo hiểm: mở đủ ${PITY} lần chưa ra đồ Thần thoại thì lần tiếp theo chắc chắn ra. Đã mở ${S.pity || 0}/${PITY}. Bộ sưu tập Thần thoại: ${have}/${myth.length}.</p>
+    <p class="note">Bảo hiểm: mở đủ ${PITY} lần chưa ra đồ Thần thoại thì lần tiếp theo chắc chắn ra. Đã mở ${S.pity || 0}/${PITY}. Bộ sưu tập Thần thoại: ${have}/${total} (gồm cả kiểu tóc).</p>
     <div class="row-btns"><button class="btn gold" data-act="chest-open" data-k="key" ${(S.keys || 0) < 1 ? 'disabled' : ''}>Dùng 1 chìa khoá (có ${S.keys || 0})</button><button class="btn" data-act="chest-open" data-k="di" ${S.di < CHEST_PRICE ? 'disabled' : ''}>Mở bằng ${gemIcon('di')}${CHEST_PRICE}</button></div>
     <p class="note">Kiếm chìa khoá: bài kiểm tra tuần chính thức, hoàn thành chặng lộ trình IELTS, câu được cá ngừ quý, mỗi 5 cấp.</p></div></div>
     <div class="mythrow">${myth.map(f => `<span class="${S.owned.includes(f.id) ? 'got' : ''}" title="${esc(f.vi)}">${f.slot === 'pet' ? `<img src="${svgURL(petSVG(f.id, 0, 0))}" alt="">` : `<img src="${portraitSVG(Object.assign({}, fullLook(S.look), slotPatch(f)), {full: ['back', 'hand'].includes(f.slot), hand: true})}" alt="">`}<small>${esc(f.vi)}</small></span>`).join('')}</div>`;
 }
 function rollChest() {
   const notOwned = l => l.filter(f => !S.owned.includes(f.id));
-  const myth = notOwned(FASHION.filter(f => f.chest)), rare = notOwned(FASHION.filter(f => f.rar >= 2 && f.rar <= 3 && f.price > 0));
+  const myth = [...notOwned(FASHION.filter(f => f.chest)).map(item => ({item})), ...HAIR_ITEMS.filter(h => h.chest && !(S.hair || []).includes(h.id)).map(hairItem => ({hairItem}))];
+  const rare = [...notOwned(FASHION.filter(f => f.rar >= 2 && f.rar <= 3 && f.price > 0)).map(item => ({item})), ...HAIR_ITEMS.filter(h => h.rar >= 2 && h.rar <= 3 && !(S.hair || []).includes(h.id)).map(hairItem => ({hairItem}))];
   S.pity = (S.pity || 0) + 1;
   const r = Math.random();
-  if (myth.length && (r < 0.015 || S.pity >= PITY)) { S.pity = 0; return {item: rand(myth)}; }
-  if (rare.length && r < 0.095) return {item: rand(rare)};
+  if (myth.length && (r < 0.015 || S.pity >= PITY)) { S.pity = 0; return rand(myth); }
+  if (rare.length && r < 0.095) return rand(rare);
   if (r < 0.155) return {seed: 'ginseng'};
   if (r < 0.255) return {di: 2 + Math.floor(Math.random() * 3)};
   if (r < 0.505) return {em: 3 + Math.floor(Math.random() * 6)};
@@ -2478,16 +2653,226 @@ function rollChest() {
 function openChest(kind) {
   if (kind === 'key') { if ((S.keys || 0) < 1) return; S.keys--; } else { if (S.di < CHEST_PRICE) return; S.di -= CHEST_PRICE; }
   const g = rollChest(); let title, img = '', cls = 'r0';
-  if (g.item) { const f = g.item; S.owned.push(f.id); cls = 'r' + f.rar; title = `<b>${esc(f.vi)}</b> (${esc(f.en)}) · ${RARITY[f.rar].vi}`; img = f.slot === 'pet' ? svgURL(petSVG(f.id, 0, 0)) : portraitSVG(Object.assign({}, fullLook(S.look), slotPatch(f)), {full: true, hand: true}); if (f.rar >= 4) sfx('level'); }
+  if (g.hairItem) { const h = g.hairItem; S.hair = S.hair || []; S.hair.push(h.id); cls = 'r' + h.rar; title = `<b>${esc(h.vi)}</b> (${esc(h.en)}) · ${RARITY[h.rar].vi} · tóc`; img = hairPreview(h); if (h.rar >= 4) sfx('level'); }
+  else if (g.item) { const f = g.item; S.owned.push(f.id); cls = 'r' + f.rar; title = `<b>${esc(f.vi)}</b> (${esc(f.en)}) · ${RARITY[f.rar].vi}`; img = f.slot === 'pet' ? svgURL(petSVG(f.id, 0, 0)) : portraitSVG(Object.assign({}, fullLook(S.look), slotPatch(f)), {full: true, hand: true}); if (f.rar >= 4) sfx('level'); }
   else if (g.seed) { S.seeds.ginseng = (S.seeds.ginseng || 0) + 1; cls = 'r3'; title = '<b>1 hạt nhân sâm</b> (ginseng) · chín sau 48 giờ, bán 1200 xu'; img = produceSVG('ginseng'); }
   else if (g.di) { S.di += g.di; cls = 'r2'; title = `<b>${g.di} kim cương</b>`; }
   else if (g.em) { S.em += g.em; cls = 'r1'; title = `<b>${g.em} ngọc lục bảo</b>`; }
   else { S.coins += g.coins; title = `<b>${g.coins} xu</b>`; }
   sfx('coin'); renderHUD(); markDirty(); saveNow(true);
-  openModal(`<div class="loot ${cls}"><h2 class="ptitle">${g.item && g.item.rar >= 4 ? 'THẦN THOẠI!' : 'Mở rương!'}</h2>${img ? `<img class="pv big" src="${img}" alt="">` : `<div class="lootico">${g.di ? gemIcon('di') : g.em ? gemIcon('em') : coinIcon}</div>`}<p>Bạn nhận được ${title}</p>
-    ${g.item ? '<p class="note">Đồ đã vào Tủ đồ. Có thể nâng cấp ở lò rèn.</p>' : ''}<div class="row-btns"><button class="btn gold" data-act="chest-again">Mở tiếp</button>${g.item ? `<button class="btn" data-act="wear-now" data-id="${g.item.id}">Mặc luôn</button>` : ''}<button class="btn ghost" data-act="close">Đóng</button></div></div>`, {label: 'Mở rương'});
+  openModal(`<div class="loot ${cls}"><h2 class="ptitle">${(g.item || g.hairItem) && (g.item || g.hairItem).rar >= 4 ? 'THẦN THOẠI!' : 'Mở rương!'}</h2>${img ? `<img class="pv big" src="${img}" alt="">` : `<div class="lootico">${g.di ? gemIcon('di') : g.em ? gemIcon('em') : coinIcon}</div>`}<p>Bạn nhận được ${title}</p>
+    ${g.item ? '<p class="note">Đồ đã vào Tủ đồ. Có thể nâng cấp ở lò rèn.</p>' : g.hairItem ? '<p class="note">Kiểu tóc đã vào bộ sưu tập, đổi ở Tủ đồ → Sửa ngoại hình hoặc Tiệm tóc.</p>' : ''}<div class="row-btns"><button class="btn gold" data-act="chest-again">Mở tiếp</button>${g.item ? `<button class="btn" data-act="wear-now" data-id="${g.item.id}">Mặc luôn</button>` : ''}${g.hairItem ? `<button class="btn" data-act="hair-now" data-id="${g.hairItem.id}">Dùng luôn</button>` : ''}<button class="btn ghost" data-act="close">Đóng</button></div></div>`, {label: 'Mở rương'});
 }
 function giveKey(n, why) { S.keys = (S.keys || 0) + n; setTimeout(() => toast(`<b>+${n} chìa khoá rương</b>${why ? ' · ' + why : ''}`), 600); markDirty(); }
+
+/* ===================== ENGLISH LEVEL = THE CHARACTER'S LEVEL ===================== */
+// The character has no XP level. Its level is the certified English level (S.cefr: A1..C1), which only goes up by passing a test.
+// Unlocks keep their old numeric "lvl" requirement and map onto the five English levels:
+//   lvl 1-3 -> A1, 4-7 -> A2, 8-12 -> B1, 13-18 -> B2, 19+ -> C1.   S.lvl is kept equal to the highest number the current level opens.
+const TIER_MAX = [3, 7, 12, 18, 99];
+const tierOf = n => (n || 1) <= 3 ? 0 : n <= 7 ? 1 : n <= 12 ? 2 : n <= 18 ? 3 : 4;
+const needTag = n => `Cần ${LEVELS[tierOf(n)]}`;
+const lvIdx = () => Math.max(0, LEVELS.indexOf((S && S.cefr) || 'A1'));
+function syncLvl() { S.lvl = TIER_MAX[lvIdx()]; }
+
+// how ready the player is for the next level: 70% from mastered words of the current level, 30% from recent practice
+const READY_ANS = 30;
+function readiness() {
+  const i = lvIdx(); if (i >= LEVELS.length - 1) return {pct: 1, max: true, known: 0, target: 0, ans: 0};
+  const ws = levelWords(LEVELS[i], S.study.track), target = Math.max(4, Math.ceil(ws.length * 0.6));
+  const known = ws.filter(w => S.m[w.key] && S.m[w.key].m >= 3).length, ans = Math.min(READY_ANS, S.lvAns || 0);
+  const pct = Math.min(1, known / target) * 0.7 + (ans / READY_ANS) * 0.3;
+  return {pct: Math.min(1, pct), known: Math.min(known, target), target, ans, next: LEVELS[i + 1]};
+}
+const isReady = () => { const r = readiness(); return !r.max && r.pct >= 1; };
+const LVUP_COOLDOWN = 20 * 60000;
+function lvCooldown() { return Math.max(0, (S.lvFailAt || 0) + LVUP_COOLDOWN - Date.now()); }
+
+// called after every answered question
+function lvNoteAnswer() {
+  S.lvAns = (S.lvAns || 0) + 1;
+  if (isReady() && S.lvPrompted !== S.cefr) {
+    S.lvPrompted = S.cefr;
+    setTimeout(() => { sfx('level'); toast(`Bạn đã sẵn sàng thi lên <b>${readiness().next}</b>! Bấm vào huy hiệu trình độ ở góc trái để làm bài test.`, 6000); }, 900);
+  }
+}
+
+function buildLevelUp() {
+  const next = LEVELS[lvIdx() + 1], cur = S.cefr, qs = [];
+  let pool = shuf(levelWords(next, S.study.track)); if (pool.length < 10) pool = pool.concat(shuf(TRACK_WORDS.general[next] || []).filter(w => !pool.includes(w)));
+  pool.slice(0, 10).forEach(w => qs.push(vocabQ(w, next)));
+  shuf(GRAMMAR[next]).slice(0, 5).forEach(([q, o, a]) => qs.push(mcqFrom(q, o, a, {lv: next})));
+  return {id: 'levelup', kind: 'levelup', title: `Bài test lên trình độ ${next}`, target: next, sections: [{id: 'V', skill: 'grammar', title: 'Từ vựng & Ngữ pháp', minutes: 10,
+    note: `15 câu ở trình độ ${next}. Đúng từ 11/15 câu (70%) là lên ${next} và mở khoá đồ, cây trồng, vật nuôi của trình độ này. Bạn đang ở ${cur}.`, parts: [{title: 'Chọn đáp án đúng', questions: shuf(qs)}]}]};
+}
+function startLevelUp() {
+  if (!isReady()) { openLevel(); return; }
+  if (lvCooldown()) { toast(`Hãy ôn thêm ${Math.ceil(lvCooldown() / 60000)} phút nữa rồi thi lại.`); return; }
+  openExam(buildLevelUp());
+}
+// raise the certified level (from a level-up test, the weekly test or a monthly IELTS mock)
+function promoteTo(lv, why) {
+  const to = LEVELS.indexOf(lv), from = lvIdx(); if (to <= from) return false;
+  S.cefr = lv; syncLvl(); S.lvAns = 0; S.lvPrompted = null;
+  if (LEVELS.indexOf(S.study.level) < to) S.study.level = lv;
+  for (let i = 0; i <= to; i++) if (!S.study.unlocked.includes(LEVELS[i])) S.study.unlocked.push(LEVELS[i]);
+  const opened = [...CROPS.filter(c => !c.rare && tierOf(c.lvl) > from && tierOf(c.lvl) <= to).map(c => c.vi), ...ANIMALS.filter(a => tierOf(a.lvl) > from && tierOf(a.lvl) <= to).map(a => a.vi)];
+  const items = FASHION.filter(f => f.price > 0 && tierOf(f.lvl) > from && tierOf(f.lvl) <= to).length + HAIR_ITEMS.filter(h => tierOf(h.lvl) > from && tierOf(h.lvl) <= to).length;
+  giveGems(5 * (to - from), 2 * (to - from), why || `lên trình độ ${lv}`); giveKey(to - from, `lên trình độ ${lv}`);
+  queueFx({kind: 'spark', who: 'player'}); sfx('level');
+  setTimeout(() => toast(`<b>Lên trình độ ${lv}!</b> Mở khoá ${opened.length ? opened.slice(0, 6).join(', ') + (opened.length > 6 ? '…' : '') + ' và ' : ''}${items} món đồ, kiểu tóc mới.`, 6000), 400);
+  renderHUD(); markDirty(); saveNow(true);
+  return true;
+}
+
+function openLevel() {
+  const r = readiness(), cd = lvCooldown();
+  const hist = (S.tests || []).filter(t => t.kind === 'levelup' || t.kind === 'placement').slice(0, 5);
+  openModal(`<h2 class="ptitle">Trình độ tiếng Anh</h2>
+    <div class="lvhero"><span class="lvbig">${S.cefr}</span><div><b>${LEVEL_VI[S.cefr]}</b><small>${S.study.track === 'ielts' ? IELTS_BAND[S.cefr] : 'Cấp độ của nhân vật chính là trình độ tiếng Anh của bạn.'}</small></div></div>
+    <ol class="lvpath">${LEVELS.map((L, i) => `<li class="${i < lvIdx() ? 'done' : i === lvIdx() ? 'cur' : ''}"><b>${L}</b><small>${LEVEL_VI[L]}</small></li>`).join('')}</ol>
+    ${r.max ? '<div class="fb good"><strong>Trình độ cao nhất!</strong> Hãy thử đề IELTS đủ 4 kỹ năng trong Trung tâm thi.</div>' : `
+    <h3 class="ph3">Tiến độ lên ${r.next}</h3>
+    <div class="lvprog"><i style="--w:${Math.round(r.pct * 100)}%"></i><span>${Math.round(r.pct * 100)}%</span></div>
+    <ul class="rtasks"><li class="${r.known >= r.target ? 'ok' : ''}"><i></i><span>Thuộc từ vựng ${S.cefr} (3 sao trở lên)</span><em>${r.known}/${r.target}</em></li>
+    <li class="${r.ans >= READY_ANS ? 'ok' : ''}"><i></i><span>Trả lời câu hỏi khi chăm nông trại, học, mua đồ</span><em>${r.ans}/${READY_ANS}</em></li></ul>
+    <p class="note">Khi đủ 100%, game sẽ báo bạn đã sẵn sàng. Bài test có 15 câu ở trình độ ${r.next}, đúng từ 11 câu là lên cấp. Lên cấp mở khoá cây trồng, vật nuôi, đồ và kiểu tóc của trình độ mới, kèm ngọc, kim cương và chìa khoá rương.</p>
+    <div class="row-btns"><button class="btn gold" data-act="lv-test" ${!isReady() || cd ? 'disabled' : ''}>${cd ? `Thi lại sau ${Math.ceil(cd / 60000)} phút` : isReady() ? `Thi lên ${r.next}` : `Chưa sẵn sàng (${Math.round(r.pct * 100)}%)`}</button><button class="btn ghost" data-act="t-place">Kiểm tra xếp lớp</button><button class="btn ghost" data-act="study">Học từ vựng</button></div>`}
+    ${hist.length ? `<h3 class="ph3">Các bài test gần đây</h3><ul class="hist">${hist.map(h => `<li><span>${h.date}</span><b>${esc(h.title)}</b><em>${h.pct}%</em></li>`).join('')}</ul>` : ''}`, {label: 'Trình độ tiếng Anh', wide: true});
+}
+
+/* ===================== HAIR SALON: hairstyles and dyes are bought here, not at the clothes shop ===================== */
+// Shapes use the nemo head space (head x 25..120, y 34..117). {C} is the hair colour.
+const CAP = 'M25 66C25 46 40 34 58 34H87C105 34 120 46 120 66V74C110 72 100 64 96 54C88 62 62 64 52 54C46 64 36 72 25 74Z';
+const BASE_B = 'M19 70C19 50 36 33 56 33H89C109 33 126 50 126 70V112H19Z';
+const HP = d => `<path d="${d}" fill="{C}"/>`;
+Object.assign(NEMO.hairF, {
+  hime: HP('M25 66C25 46 40 32 60 32H85C105 32 120 46 120 66V104H110V70H35V104H25Z'),
+  sidesweep: HP('M25 70C25 46 40 32 60 32H85C105 32 120 46 120 62V70C104 66 90 56 84 44C74 60 46 72 25 78Z'),
+  messy: HP('M23 72L28 50L22 44L36 40L34 30L48 34L54 24L64 32L74 22L82 32L94 24L98 36L112 32L110 44L124 46L118 56L122 72C110 66 100 60 96 52C88 62 66 66 52 56C44 66 34 70 23 72Z'),
+  pompadour: HP('M25 70V58C25 40 36 22 58 16C84 8 116 18 120 46V70C116 64 112 56 108 50C92 52 66 50 50 42C40 52 32 62 25 70Z'),
+  centerpart: HP('M25 76V62C25 44 40 32 58 32H87C105 32 120 44 120 62V76C108 74 96 64 90 50L72.5 34L55 50C49 64 37 74 25 76Z'),
+  bowl: HP('M23 72C23 44 40 30 72.5 30C105 30 122 44 122 72Z'),
+  wolff: HP('M25 76L30 66L25 60C25 44 40 32 58 32H87C105 32 120 44 120 60L115 66L120 76L106 68L100 76L94 60C84 66 62 66 51 60L45 76L39 68Z'),
+  ahoge: HP(CAP) + HP('M70 36C64 18 74 4 88 8C78 12 76 22 80 36Z'),
+  halfup: '<circle cx="72.5" cy="22" r="13" fill="{C}"/>' + HP(CAP),
+  starclip: HP(CAP) + '<path d="M38 52l3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z" fill="#FFC83D"/><path d="M104 52l3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z" fill="#FFC83D"/>',
+  cathair: HP('M25 66C25 46 34 36 44 33L38 8L62 30H83L107 8L101 33C111 36 120 46 120 66V76C108 72 98 64 94 54C86 62 60 64 51 54C47 64 37 72 25 76Z'),
+  afro: HP('M14 70C8 50 14 26 34 16C50 4 96 4 112 16C132 26 138 50 132 70C120 64 110 58 104 50C90 58 56 58 42 50C34 58 24 64 14 70Z'),
+  flame: HP('M25 74C20 56 18 40 30 30C30 40 36 42 40 36C38 22 46 10 58 4C54 18 60 24 66 20C68 10 76 2 88 0C82 12 86 20 94 22C98 14 106 12 114 14C108 22 110 30 118 36C124 46 124 60 120 74C108 70 98 62 94 52C86 62 60 64 51 52C46 62 36 70 25 74Z'),
+  crystal: HP('M24 74L18 50L30 44L26 24L44 32L48 10L62 26L72.5 2L83 26L97 10L101 32L119 24L115 44L127 50L121 74L104 60L94 70L84 54L72.5 66L61 54L51 70L41 60Z') + '<path d="M72.5 2L83 26L72.5 30L62 26Z M48 10L62 26L52 30Z M97 10L83 26L93 30Z" fill="#FFFFFF" opacity=".45"/>'
+});
+Object.assign(NEMO.hairB, {
+  himeb: HP('M19 70C19 50 36 33 56 33H89C109 33 126 50 126 70V150H19Z'),
+  drill: HP(BASE_B) + [[14, 82, 12], [12, 102, 11], [14, 120, 10], [18, 136, 8], [131, 82, 12], [133, 102, 11], [131, 120, 10], [127, 136, 8]].map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="{C}"/>`).join(''),
+  braid: HP(BASE_B) + [[118, 96], [121, 110], [123, 124], [124, 138]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="9" ry="8" fill="{C}"/>`).join('') + '<rect x="117" y="145" width="14" height="5" rx="2" fill="#FF6FB5"/><path d="M118 150Q124 166 130 150Z" fill="{C}"/>',
+  mermaid: HP('M19 70C19 50 36 33 56 33H89C109 33 126 50 126 70V120C138 134 126 146 136 166H9C19 146 7 134 19 120Z'),
+  fluffy: HP(BASE_B) + [[14, 70, 16], [10, 96, 16], [18, 118, 14], [131, 70, 16], [135, 96, 16], [127, 118, 14], [40, 120, 14], [105, 120, 14]].map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="{C}"/>`).join(''),
+  afrob: '<circle cx="72.5" cy="68" r="64" fill="{C}"/>',
+  topbun: '<circle cx="72.5" cy="16" r="20" fill="{C}"/>' + HP(BASE_B),
+  longtwin: HP(BASE_B) + HP('M24 62C-2 74 -8 136 8 172C14 140 24 116 32 100Z') + HP('M121 62C147 74 153 136 137 172C131 140 121 116 113 100Z'),
+  lowpony: HP(BASE_B) + HP('M108 96C136 104 142 136 128 162C122 140 114 122 100 110Z'),
+  shag: HP('M17 70C17 48 35 30 58 30H87C110 30 128 48 128 70L130 96L120 92L122 116L110 106L104 120L96 108H49L41 120L35 106L23 116L25 92L15 96Z'),
+  galaxyflow: HP('M19 70C19 50 36 33 56 33H89C109 33 126 50 126 70C140 96 160 120 150 162C136 140 120 132 110 124H40C28 132 14 146 6 162C-2 128 10 96 19 70Z') + '<circle cx="30" cy="140" r="2.5" fill="#FFFFFF"/><circle cx="140" cy="146" r="2" fill="#FFFFFF"/><circle cx="20" cy="110" r="1.6" fill="#FFFFFF"/>'
+});
+// hair dye gradients (hg_*) are defined in RB_DEF in chibi.js
+
+// salon catalogue. f / b: front / back style it sets; c: dye colour. rar 0..4, cur 'gem' = diamonds, chest = only from the lucky chest.
+const HAIR_ITEMS = [
+  {id:'h_curtain', f:'curtain', en:'curtain bangs', vi:'Mái bay Hàn Quốc', price:120, rar:0, hot:1},
+  {id:'h_bowl', f:'bowl', en:'bowl cut', vi:'Tóc nấm', price:90, rar:0},
+  {id:'h_sidesweep', f:'sidesweep', en:'side-swept bangs', vi:'Mái lệch', price:110, rar:0},
+  {id:'h_centerpart', f:'centerpart', en:'middle part', vi:'Rẽ ngôi giữa idol', price:140, rar:0, hot:1},
+  {id:'h_bob', b:'bob', en:'bob', vi:'Tóc bob', price:120, rar:0},
+  {id:'h_pony', b:'pony', en:'high ponytail', vi:'Đuôi ngựa cao', price:130, rar:0},
+  {id:'h_lowpony', b:'lowpony', en:'low ponytail', vi:'Đuôi ngựa thấp', price:120, rar:0},
+  {id:'h_spiky', f:'spiky', en:'spiky hair', vi:'Tóc dựng anime', price:220, rar:1, lvl:3, hot:1},
+  {id:'h_quiff', f:'quiff', en:'quiff', vi:'Tóc vuốt ngược', price:200, rar:1, lvl:3},
+  {id:'h_messy', f:'messy', en:'messy hair', vi:'Tóc rối nghệ sĩ', price:240, rar:1, lvl:4},
+  {id:'h_buns', f:'buns', en:'space buns', vi:'Búi hai bên', price:260, rar:1, lvl:4, hot:1},
+  {id:'h_ahoge', f:'ahoge', en:'cowlick', vi:'Tóc ăng-ten', price:180, rar:1, lvl:3},
+  {id:'h_halfup', f:'halfup', en:'half-up bun', vi:'Búi nửa đầu', price:230, rar:1, lvl:4},
+  {id:'h_wavy', b:'wavy', en:'long wavy hair', vi:'Dài gợn sóng', price:250, rar:1, lvl:4},
+  {id:'h_twin', b:'twin', en:'twin tails', vi:'Tóc hai bím', price:260, rar:1, lvl:4, hot:1},
+  {id:'h_wolf', b:'wolf', en:'wolf cut', vi:'Tóc wolf cut', price:280, rar:1, lvl:5},
+  {id:'h_shag', b:'shag', en:'shag cut', vi:'Tóc shag tỉa tầng', price:280, rar:1, lvl:5},
+  {id:'h_topbun', b:'topbun', en:'top bun', vi:'Búi củ tỏi', price:240, rar:1, lvl:4},
+  {id:'h_mohawk', f:'mohawk', en:'mohawk', vi:'Tóc mohican', price:12, cur:'gem', rar:2, lvl:6},
+  {id:'h_pompadour', f:'pompadour', en:'pompadour', vi:'Tóc pompadour', price:12, cur:'gem', rar:2, lvl:6},
+  {id:'h_wolff', f:'wolff', en:'layered fringe', vi:'Mái wolf tỉa tầng', price:10, cur:'gem', rar:2, lvl:6, hot:1},
+  {id:'h_hime', f:'hime', b:'himeb', en:'hime cut', vi:'Tóc công chúa Nhật', price:18, cur:'gem', rar:2, lvl:8, hot:1},
+  {id:'h_braid', b:'braid', en:'side braid', vi:'Bím lệch một bên', price:14, cur:'gem', rar:2, lvl:7},
+  {id:'h_longtwin', b:'longtwin', en:'long twin tails', vi:'Hai bím dài ngang lưng', price:16, cur:'gem', rar:2, lvl:8},
+  {id:'h_starclip', f:'starclip', en:'star hair clips', vi:'Mái kẹp sao', price:15, cur:'gem', rar:2, lvl:7},
+  {id:'h_drill', b:'drill', en:'ringlet curls', vi:'Tóc xoắn tiểu thư', price:30, cur:'gem', rar:3, lvl:12, hot:1},
+  {id:'h_fluffy', b:'fluffy', en:'fluffy curls', vi:'Tóc mây bồng bềnh', price:28, cur:'gem', rar:3, lvl:10},
+  {id:'h_afro', f:'afro', b:'afrob', en:'afro', vi:'Tóc xù afro', price:32, cur:'gem', rar:3, lvl:12},
+  {id:'h_cathair', f:'cathair', en:'cat-ear hair', vi:'Tóc tai mèo', price:35, cur:'gem', rar:3, lvl:12, hot:1},
+  {id:'h_mermaid', b:'mermaid', en:'mermaid hair', vi:'Tóc tiên cá chấm đất', price:45, cur:'gem', rar:3, lvl:14},
+  {id:'h_flame', f:'flame', en:'flame hair', vi:'Tóc lửa', price:90, cur:'gem', rar:4, lvl:18, hot:1},
+  {id:'h_crystal', f:'crystal', en:'crystal hair', vi:'Tóc pha lê', price:0, rar:4, chest:1},
+  {id:'h_galaxyflow', b:'galaxyflow', en:'flowing galaxy hair', vi:'Tóc ngân hà bay', price:0, rar:4, chest:1},
+  // dyes
+  {id:'hc_lilac', c:'#C8A2FF', en:'lilac dye', vi:'Nhuộm tím oải hương', price:80, rar:0},
+  {id:'hc_mint', c:'#7EF0C4', en:'mint dye', vi:'Nhuộm xanh bạc hà', price:80, rar:0},
+  {id:'hc_peach', c:'#FFB38A', en:'peach dye', vi:'Nhuộm cam đào', price:80, rar:0},
+  {id:'hc_sky', c:'#8EC9FF', en:'sky blue dye', vi:'Nhuộm xanh da trời', price:80, rar:0},
+  {id:'hc_ash', c:'#9AA0B5', en:'ash grey dye', vi:'Nhuộm xám khói', price:120, rar:1, lvl:3, hot:1},
+  {id:'hc_pink', c:'url(#hg_pink)', en:'pink ombre', vi:'Ombre hồng tím', price:260, rar:1, lvl:4, hot:1},
+  {id:'hc_ocean', c:'url(#hg_ocean)', en:'ocean ombre', vi:'Ombre đại dương', price:260, rar:1, lvl:4},
+  {id:'hc_silver', c:'url(#hg_silver)', en:'silver frost', vi:'Bạc sương', price:10, cur:'gem', rar:2, lvl:7},
+  {id:'hc_fire', c:'url(#hg_fire)', en:'fire ombre', vi:'Ombre lửa', price:12, cur:'gem', rar:2, lvl:8},
+  {id:'hc_gold', c:'url(#hg_gold)', en:'liquid gold', vi:'Vàng ánh kim', price:30, cur:'gem', rar:3, lvl:12},
+  {id:'hc_galaxy', c:'url(#hg_galaxy)', en:'galaxy dye', vi:'Ngân hà', price:40, cur:'gem', rar:3, lvl:14, hot:1},
+  {id:'hc_rainbow', c:'url(#rb)', en:'rainbow dye', vi:'Cầu vồng', price:150, cur:'gem', rar:4, lvl:20},
+  {id:'hc_aurora', c:'url(#hg_aurora)', en:'aurora dye', vi:'Cực quang', price:0, rar:4, chest:1}
+];
+const HAIR = Object.fromEntries(HAIR_ITEMS.map(h => [h.id, h]));
+const FREE_HF = ['regular', 'straight', 'chupchik', 'elegant', 'curly', 'none'], FREE_HB = [null, 'short', 'long', 'curly'];
+const hairKind = h => h.c ? 'dye' : 'style';
+const ownsHairF = v => FREE_HF.includes(v) || HAIR_ITEMS.some(h => h.f === v && (S.hair || []).includes(h.id));
+const ownsHairB = v => FREE_HB.includes(v) || HAIR_ITEMS.some(h => h.b === v && (S.hair || []).includes(h.id));
+const ownedDyes = () => HAIR_ITEMS.filter(h => h.c && (S.hair || []).includes(h.id)).map(h => h.c);
+function hairPatch(h) { const p = {}; if (h.f) p.hairF = h.f; if (h.b !== undefined) p.hairB = h.b; if (h.c) p.hairC = h.c; return p; }
+function hairPreview(h, L) { return portraitSVG(Object.assign({}, L || fullLook(S.look), hairPatch(h), {hat: null})); }
+
+let SAL = {tab: 'style', buy: null};
+const salPrice = h => h.chest ? 'Chỉ có trong rương' : (h.cur === 'gem' ? gemIcon('di') : coinIcon) + h.price;
+const salAfford = h => !h.chest && (h.cur === 'gem' ? S.di >= h.price : S.coins >= h.price);
+function salonHTML() {
+  if (SAL.buy) return salonBuyHTML();
+  const L = fullLook(S.look), list = HAIR_ITEMS.filter(h => hairKind(h) === SAL.tab), own = S.hair || [];
+  const card = h => { const has = own.includes(h.id), lock = (h.lvl || 1) > S.lvl, worn = (h.f && L.hairF === h.f) || (h.b && L.hairB === h.b && !h.f) || (h.c && L.hairC === h.c);
+    return `<button class="card r${h.rar}" data-act="${has ? 'hair-wear' : 'hair-pick'}" data-id="${h.id}" ${!has && (lock || !salAfford(h)) ? 'disabled' : ''}><span class="rar">${RARITY[h.rar].vi}</span>${h.hot ? '<span class="hot">HOT</span>' : ''}<img class="pv" src="${hairPreview(h, L)}" alt=""><b>${has ? esc(h.en) : '???'}</b><small>${esc(h.vi)}</small><span class="price">${has ? (worn ? 'Đang dùng' : 'Đã có · bấm để dùng') : lock ? needTag(h.lvl) : salPrice(h)}</span></button>`; };
+  return `<p class="note">Kiểu tóc và màu nhuộm đẹp chỉ có ở tiệm tóc. Chị Ngân sẽ hỏi tên kiểu tóc bằng tiếng Anh, trả lời đúng mới làm được. Tóc <b>Thần thoại</b> có món giá hàng trăm kim cương, có món chỉ rơi ra từ Rương may mắn.</p>
+    <div class="seg"><button class="segb" data-act="sal-tab" data-t="style" aria-pressed="${SAL.tab === 'style'}">Kiểu tóc</button><button class="segb" data-act="sal-tab" data-t="dye" aria-pressed="${SAL.tab === 'dye'}">Nhuộm màu</button></div>
+    <div class="cards">${list.map(card).join('')}</div>`;
+}
+function salonBuyHTML() {
+  const h = HAIR[SAL.buy.id], B = SAL.buy;
+  return `<div class="buyq"><img class="pv big" src="${hairPreview(h)}" alt=""><div><p class="q-ask">Chị Ngân hỏi: “What is this called in English?” ${sayBtn('What is this called in English?')}</p><div class="q-word vi">${esc(h.vi)}</div><span class="price">${salPrice(h)}</span></div></div>
+    <div class="opts">${B.opts.map((o, i) => `<button class="opt ${B.done ? (o === h.en ? 'right' : i === B.pick ? 'wrong' : '') : ''}" data-act="hair-ans" data-i="${i}" ${B.done ? 'disabled' : ''}><kbd>${i + 1}</kbd><span>${esc(o)}</span></button>`).join('')}</div>
+    ${B.done ? `<div class="fb ${B.ok ? 'good' : 'miss'}"><strong>${B.ok ? 'Đúng rồi!' : 'Chưa đúng'}</strong> ${B.ok ? `Tóc đã làm xong: <b>${esc(h.en)}</b>.` : `Đây là “${esc(h.en)}”. Thử lại sau nhé.`}</div><div class="row-btns"><button class="btn ghost sm" data-act="sal-back">Xem kiểu khác</button>${sayBtn(h.en)}</div>` : ''}`;
+}
+function salonRefresh() { if (CURNPC && CURNPC.def.role === 'salon' && $('#npc-body')) refreshNpc(); else openSalon(); }
+function openSalon() {
+  const n = NPCS.find(q => q.def.role === 'salon');
+  if (n && S.map === 'village') return talk(n);
+  openModal(`<h2 class="ptitle">Tiệm tóc Ngân</h2><div id="npc-body">${salonHTML()}</div>`, {label: 'Tiệm tóc', wide: true});
+}
+function hairPick(id) {
+  const h = HAIR[id]; if (!h || (S.hair || []).includes(id) || (h.lvl || 1) > S.lvl || !salAfford(h)) return;
+  const same = HAIR_ITEMS.filter(x => x.id !== id && hairKind(x) === hairKind(h) && x.en !== h.en);
+  SAL.buy = {id, opts: shuffle([h.en, ...shuffle(same).slice(0, 3).map(x => x.en)]), done: false}; salonRefresh(); speak('What is this called in English?', true);
+}
+function hairAnswer(i) {
+  const B = SAL.buy; if (!B || B.done) return; const h = HAIR[B.id];
+  B.done = true; B.pick = i; B.ok = B.opts[i] === h.en; S.stats.all++; lvNoteAnswer();
+  if (B.ok) { S.stats.ok++; if (h.cur === 'gem') S.di -= h.price; else S.coins -= h.price; S.hair = S.hair || []; S.hair.push(h.id); Object.assign(S.look, hairPatch(h)); sfx('coin'); speak(h.en, true); queueFx({kind: 'spark', who: 'player'}); }
+  else sfx('bad');
+  salonRefresh(); renderHUD(); markDirty();
+}
+function hairWear(id) { const h = HAIR[id]; if (!h || !(S.hair || []).includes(id)) return; Object.assign(S.look, hairPatch(h)); markDirty(); renderHUD(); salonRefresh(); toast(`Đã đổi sang <b>${esc(h.vi)}</b>.`); }
 
 /* ===================== VƯỜN CHỮ ACCOUNTS (Supabase): sign up, log in, cloud save shared by web and app ===================== */
 // The publishable key is meant to ship inside the app; row-level security on the server keeps each save private.
@@ -2582,7 +2967,7 @@ async function sbSave(force) {
 }
 async function sbProfile() {
   if (!S.created) return; Store.lastPublic = Date.now();
-  try { await sbApi('/rest/v1/profiles?on_conflict=user_id', {method: 'POST', headers: {Prefer: 'resolution=merge-duplicates,return=minimal'}, body: JSON.stringify({user_id: Store.uid, username: SB.sess.username, name: (S.name || SB.sess.username).slice(0, 16), lvl: S.lvl, xp: S.xp, words: Object.values(S.m).filter(r => r.m >= 4).length, look: S.look, track: S.study.track, level: S.study.level, updated_at: new Date().toISOString()})}); } catch (e) { console.warn('profile', e); }
+  try { await sbApi('/rest/v1/profiles?on_conflict=user_id', {method: 'POST', headers: {Prefer: 'resolution=merge-duplicates,return=minimal'}, body: JSON.stringify({user_id: Store.uid, username: SB.sess.username, name: (S.name || SB.sess.username).slice(0, 16), lvl: lvIdx() + 1, xp: S.xp, words: Object.values(S.m).filter(r => r.m >= 4).length, look: S.look, track: S.study.track, level: S.study.level, updated_at: new Date().toISOString()})}); } catch (e) { console.warn('profile', e); }
 }
 async function sbBoard() {
   const rows = await sbRaw('/rest/v1/profiles?select=user_id,username,name,lvl,xp,words,look,track,level&order=lvl.desc,xp.desc&limit=30');
@@ -3019,7 +3404,7 @@ function finalizeResult() {
   const R = EX.result, secs = Object.values(R.sections);
   if (R.kind === 'ielts') { const bands = secs.map(s => s.band).filter(b => typeof b === 'number'); R.overall = bands.length ? roundBand(bands.reduce((a, b) => a + b, 0) / bands.length) : null; R.complete = secs.length === 4 && bands.length === 4; }
   if (R.kind === 'toeic') R.overall = secs.reduce((a, s) => a + (s.score || 0), 0);
-  if (R.kind === 'placement' || R.kind === 'auto') { const s = secs.reduce((a, x) => [a[0] + x.raw, a[1] + x.total], [0, 0]); R.raw = s[0]; R.total = s[1]; R.pct = Math.round(s[0] / s[1] * 100); }
+  if (R.kind === 'placement' || R.kind === 'auto' || R.kind === 'levelup') { const s = secs.reduce((a, x) => [a[0] + x.raw, a[1] + x.total], [0, 0]); R.raw = s[0]; R.total = s[1]; R.pct = Math.round(s[0] / s[1] * 100); }
   if (R.kind === 'placement') {
     const lv = {}; secs.forEach(x => Object.entries(x.byLv).forEach(([k, [a, b]]) => { lv[k] = lv[k] || [0, 0]; lv[k][0] += a; lv[k][1] += b; }));
     let got = null; for (const L of LEVELS) { const [a, b] = lv[L] || [0, 1]; if (a / b >= 0.75) got = L; else break; }
@@ -3032,12 +3417,13 @@ function recordResult() {
   S.tests = S.tests.slice(0, 40);
   if (R.kind === 'ielts') { S.bestBand = S.bestBand || {}; for (const v of Object.values(R.sections)) if (typeof v.band === 'number') S.bestBand[v.skill + (v.task ? v.task : '')] = Math.max(S.bestBand[v.skill + (v.task ? v.task : '')] || 0, v.band);
     for (const v of Object.values(R.sections)) if (v.tasks) for (const [k, b] of Object.entries(v.tasks)) S.bestBand['writing' + k] = Math.max(S.bestBand['writing' + k] || 0, b);
-    if (R.complete) { S.bestBand.overall = Math.max(S.bestBand.overall || 0, R.overall); if (daysSince(S.monthTest) >= 30) { S.monthTest = today(); giveGems(5, 3, 'bài thi tháng'); const cefr = bandToCEFR(R.overall); if (LEVELS.indexOf(cefr) > LEVELS.indexOf(S.study.level)) { S.study.level = cefr; if (!S.study.unlocked.includes(cefr)) S.study.unlocked.push(cefr); R.promoted = cefr; } } } }
+    if (R.complete) { S.bestBand.overall = Math.max(S.bestBand.overall || 0, R.overall); if (daysSince(S.monthTest) >= 30) { S.monthTest = today(); giveGems(5, 3, 'bài thi tháng'); const cefr = bandToCEFR(R.overall); if (promoteTo(cefr, 'bài thi IELTS tháng')) R.promoted = cefr; } } }
   if (R.kind === 'toeic' && daysSince(S.monthToeic) >= 30) { S.monthToeic = today(); giveGems(5, 2, 'bài thi TOEIC tháng'); }
   if (R.kind === 'placement') {
     const weekly = daysSince(S.weekTest) >= 7; R.official = weekly;
-    if (weekly) { S.weekTest = today(); giveGems(3, 1, 'kiểm tra tuần'); giveKey(1, 'kiểm tra tuần'); if (LEVELS.indexOf(R.level) > LEVELS.indexOf(S.study.level)) { S.study.level = R.level; if (!S.study.unlocked.includes(R.level)) S.study.unlocked.push(R.level); R.promoted = R.level; } }
+    if (weekly) { S.weekTest = today(); giveGems(3, 1, 'kiểm tra tuần'); giveKey(1, 'kiểm tra tuần'); if (promoteTo(R.level, 'kiểm tra xếp lớp')) R.promoted = R.level; }
   }
+  if (R.kind === 'levelup') { R.passed = R.raw >= 11; if (R.passed) { promoteTo(EX.test.target, `lên trình độ ${EX.test.target}`); R.promoted = EX.test.target; } else S.lvFailAt = Date.now(); }
   if (R.kind === 'auto' && R.pct >= 70) { const hours = R.pct >= 90 ? 48 : 24; S.auto = {until: Date.now() + hours * 3600e3, log: {}, hours}; R.autoHours = hours; }
   if (EX.onFinish) try { EX.onFinish(R); } catch (e) {}
   addXP(Math.round((R.pct || 60) / 5)); renderHUD(); markDirty(); saveNow(true);
@@ -3088,6 +3474,7 @@ function showReport() {
   if (R.kind === 'ielts') head = `<div class="score big"><small>Band tổng (ước tính)</small><b>${R.overall != null ? R.overall.toFixed(1) : '…'}</b>${R.complete ? '' : '<span class="note">Chỉ tính các kỹ năng đã làm</span>'}</div>`;
   if (R.kind === 'toeic') head = `<div class="score big"><small>Điểm TOEIC (ước tính)</small><b>${R.overall}</b><span class="note">/ ${Object.keys(R.sections).length * 495}</span></div>`;
   if (R.kind === 'placement') head = `<div class="score big"><small>Trình độ đánh giá được</small><b>${R.level}</b><span class="note">${R.raw}/${R.total} câu đúng (${R.pct}%)</span></div>`;
+  if (R.kind === 'levelup') head = `<div class="score big ${R.raw >= 11 ? 'pass' : 'fail'}"><small>Bài test lên ${esc(EX.test.target)}</small><b>${R.raw}/${R.total}</b><span class="note">${R.pct}% · cần 11/15 câu</span></div>`;
   if (R.kind === 'auto') head = `<div class="score big ${R.pct >= 70 ? 'pass' : 'fail'}"><small>Điểm bài test Auto Farm</small><b>${R.raw}/${R.total}</b><span class="note">${R.pct}% · cần 70% để mở</span></div>`;
   const cards = Object.entries(R.sections).map(([id, r]) => {
     const sec = T.sections.find(s => s.id === id);
@@ -3101,6 +3488,7 @@ function showReport() {
   }).join('');
   let tail = '';
   if (R.kind === 'placement') tail = `<div class="lvbars">${LEVELS.map(L => { const [a, b] = R.byLevel[L] || [0, 0]; return `<div><span>${L}</span><i style="--w:${b ? a / b * 100 : 0}%"></i><small>${a}/${b}</small></div>`; }).join('')}</div>` + (R.official === undefined ? '' : R.official ? (R.promoted ? `<div class="fb good"><strong>Lên trình độ!</strong> Hệ thống đã tự nâng bạn lên <b>${R.promoted}</b>. Thưởng 3 ngọc lục bảo và 1 kim cương.</div>` : `<div class="fb good"><strong>Đã ghi nhận bài kiểm tra tuần.</strong> Trình độ đánh giá: ${R.level}. ${LEVELS.indexOf(R.level) < LEVELS.indexOf(S.study.level) ? `Bạn đang học ${S.study.level}, có thể hạ xuống ${R.level} trong mục Học tập nếu thấy khó.` : 'Giữ trình độ hiện tại.'}</div>`) : `<div class="fb miss"><strong>Bài luyện tập.</strong> Bài kiểm tra tuần chính thức (tự nâng trình độ, có thưởng) mở lại sau ${Math.ceil(7 - daysSince(S.weekTest))} ngày.</div>`);
+  if (R.kind === 'levelup') tail = R.raw >= 11 ? `<div class="fb good"><strong>Chúc mừng, bạn đã lên ${esc(EX.test.target)}!</strong> Nhân vật đã lên cấp. Đồ, kiểu tóc, cây trồng và vật nuôi của trình độ mới đã mở khoá.</div>` : `<div class="fb miss"><strong>Chưa đạt.</strong> Ôn lại từ vựng ${esc(EX.test.target)} trong mục Học tập, sau 20 phút có thể thi lại.</div>`;
   if (R.kind === 'auto') tail = R.pct >= 70 ? `<div class="fb good"><strong>Đã mở Auto Farm ${R.autoHours || (R.pct >= 90 ? 48 : 24)} giờ!</strong> Nông trại sẽ tự tưới, nhổ cỏ, thu hoạch, gieo lại hạt và chăm vật nuôi, kể cả khi bạn tắt game.</div>` : `<div class="fb miss"><strong>Chưa đạt.</strong> Cần đúng ít nhất 11/15 câu. Ôn lại từ vựng trong mục Học tập rồi thử lại.</div>`;
   if (R.promoted && R.kind === 'ielts') tail += `<div class="fb good"><strong>Lên trình độ!</strong> Band ${R.overall} tương đương ${R.promoted}, hệ thống đã nâng trình độ học của bạn.</div>`;
   openModal(`<h2 class="ptitle">Kết quả${R.timeout ? ' (hết giờ)' : ''}</h2><p class="psub">${esc(T.title)}</p>${head}<div class="rcards">${cards}</div>${tail}<div class="row-btns end"><button class="btn ghost" data-act="tests">Trung tâm thi</button><button class="btn" data-act="close">Xong</button></div>`, {label: 'Kết quả', wide: true});
@@ -3146,7 +3534,7 @@ function openTests() {
       <div class="tcard"><b>Đề mới do Claude soạn</b><p>Mỗi lần bấm là một đề hoàn toàn mới theo trình độ của bạn, làm bao nhiêu cũng được.</p>${CAPS.sample ? '' : '<small>Cần mở game trong Claude để dùng.</small>'}<div class="row-btns"><button class="btn ghost sm" data-act="t-ai" data-v="ielts_r" ${CAPS.sample ? '' : 'disabled'}>IELTS Reading</button><button class="btn ghost sm" data-act="t-ai" data-v="ielts_l" ${CAPS.sample ? '' : 'disabled'}>IELTS Listening</button><button class="btn ghost sm" data-act="t-ai" data-v="toeic_5" ${CAPS.sample ? '' : 'disabled'}>TOEIC Part 5</button><button class="btn ghost sm" data-act="t-ai" data-v="toeic_7" ${CAPS.sample ? '' : 'disabled'}>TOEIC Part 7</button></div></div>
       <div class="tcard road"><b>Lộ trình IELTS</b><p>5 chặng từ Band 4.0 đến 7.0+, tự theo dõi tiến độ từ vựng, thử thách và bài thi.</p><button class="btn" data-act="roadmap">Xem lộ trình</button></div>
     </div>
-    <h3 class="ph3">Lịch sử điểm</h3>${hist.length ? `<ul class="hist">${hist.map(h => `<li><span>${h.date}</span><b>${esc(h.title)}</b><em>${h.kind === 'ielts' ? (h.overall != null ? 'Band ' + h.overall.toFixed(1) : '') : h.kind === 'toeic' ? h.overall + ' điểm' : h.kind === 'placement' ? h.level + ' · ' + h.pct + '%' : h.pct + '%'}</em></li>`).join('')}</ul>` : '<p class="empty">Chưa có bài thi nào.</p>'}`, {label: 'Trung tâm thi', wide: true});
+    <h3 class="ph3">Lịch sử điểm</h3>${hist.length ? `<ul class="hist">${hist.map(h => `<li><span>${h.date}</span><b>${esc(h.title)}</b><em>${h.kind === 'ielts' ? (h.overall != null ? 'Band ' + h.overall.toFixed(1) : '') : h.kind === 'toeic' ? h.overall + ' điểm' : h.kind === 'placement' ? h.level + ' · ' + h.pct + '%' : h.kind === 'levelup' ? 'Lên cấp · ' + h.pct + '%' : h.pct + '%'}</em></li>`).join('')}</ul>` : '<p class="empty">Chưa có bài thi nào.</p>'}`, {label: 'Trung tâm thi', wide: true});
 }
 
 /* ---------- IELTS roadmap ---------- */
@@ -3445,8 +3833,8 @@ function drawPet(id, lv, x, y, tnow, moving) {
 function renderHUD() {
   if (!S) return;
   $('#hud-name').textContent = S.name || 'Bạn';
-  $('#hud-lvl').textContent = S.lvl;
-  const pct = Math.min(100, S.xp / need(S.lvl) * 100); $('#hud-xp').style.width = pct + '%'; $('#hud-ring').style.setProperty('--p', pct);
+  $('#hud-lvl').textContent = S.cefr || 'A1';
+  const rd = readiness(), pct = Math.round(rd.pct * 100); $('#hud-ring').classList.toggle('ready', !rd.max && rd.pct >= 1); $('#hud-xp').style.width = pct + '%'; $('#hud-ring').style.setProperty('--p', pct);
   $('#hud-em').textContent = S.em; $('#hud-di').textContent = S.di;
   $('#hud-coins').textContent = S.coins;
   $('#hud-study').textContent = `${TRACKS[S.study.track].vi} · ${S.study.track === 'ielts' ? IELTS_BAND[S.study.level] : S.study.level}`;
@@ -3470,7 +3858,7 @@ function renderHint() {
     else if (S.animals.some(a => a && a.st === 'hungry')) h = 'Vật nuôi đang đói. Vào chuồng, chạm vào con vật để cho ăn.';
     else if (sts.includes('E')) h = Object.values(S.seeds).some(n => n > 0) ? 'Còn ô đất trống. Chạm vào để gieo hạt.' : 'Hết hạt giống. Sang <b>Làng</b> mua ở cửa hàng SEEDS.';
     else h = 'Cây đang lớn, vài giờ nữa mới chín. Chạm vào ô ruộng để bón phân, hoặc mở <b>Bản đồ</b> đi dạo.';
-  } else if (S.map === 'village') h = 'Chú Ba (MARKET) nhận đơn hàng, Cô Mai (CLOTHES SHOP) bán quần áo, Ông Tư (SEEDS) bán hạt, Cô Lan (SCHOOL) dạy học. Bảng tin ở quảng trường.';
+  } else if (S.map === 'village') h = 'Chú Ba (MARKET) nhận đơn hàng, Cô Mai (CLOTHES SHOP) bán quần áo, Ông Tư (SEEDS) bán hạt, Cô Lan (SCHOOL) dạy học, Chị Ngân (HAIR SALON) làm tóc. Bảng tin ở quảng trường.';
   else if (S.map === 'park') h = 'Gặp Chị Hà ở bảng IELTS CHALLENGE để làm thử thách IELTS hằng ngày, nhận kim cương.';
   else h = 'Chạm vào mặt nước để thả câu. Ông Sáu ở cầu tàu cũng thích nói chuyện.';
   if (h !== hintKey) { hintKey = h; $('#hint').innerHTML = h; }
@@ -3585,6 +3973,15 @@ document.addEventListener('click', e => {
     case 'cc-done': return ccDone();
     case 'bag': return openBag();
     case 'study': return openStudy();
+    case 'lvinfo': return openLevel();
+    case 'lv-test': return startLevelUp();
+    case 'salon': return openSalon();
+    case 'sal-tab': SAL.tab = d.t; SAL.buy = null; return salonRefresh();
+    case 'sal-back': SAL.buy = null; return salonRefresh();
+    case 'hair-pick': return hairPick(d.id);
+    case 'hair-wear': return hairWear(d.id);
+    case 'hair-ans': return hairAnswer(+d.i);
+    case 'hair-now': { const h = HAIR[d.id]; if (h && (S.hair || []).includes(h.id)) { Object.assign(S.look, hairPatch(h)); markDirty(); renderHUD(); } return closeModal(); }
     case 'tests': return openTests();
     case 'roadmap': return openRoadmap();
     case 'road-claim': return claimRoad(+d.v);
@@ -3654,6 +4051,11 @@ function normalize(d) {
   if (!MAPS[s.map]) s.map = 'farm';
   if (!Array.isArray(s.orders) || !s.orders.length) s.orders = [genOrder(['carrot']), genOrder(['radish']), genOrder(['egg'])];
   if (typeof s.last !== 'number') s.last = Date.now();
+  // English level replaces the XP level; hairstyles become salon items (keep whatever the player already wears)
+  if (!s.cefr) { const t = s.created ? tierOf(s.lvl || 1) : 0, st = Math.max(0, LEVELS.indexOf(s.study.level)); s.cefr = LEVELS[Math.min(t, st)]; }
+  s.hair = Array.isArray(s.hair) ? s.hair : [];
+  for (const h of HAIR_ITEMS) if (((h.f && s.look.hairF === h.f) || (h.b && s.look.hairB === h.b) || (h.c && s.look.hairC === h.c)) && !s.hair.includes(h.id)) s.hair.push(h.id);
+  s.lvl = TIER_MAX[Math.max(0, LEVELS.indexOf(s.cefr))];
   s.tests = Array.isArray(s.tests) ? s.tests : []; s.bestBand = s.bestBand || {}; s.road = s.road || {claimed: []}; s.ieltsCount = s.ieltsCount || 0;
   if (s.auto && !s.auto.log) s.auto.log = {};
   return s;
@@ -3691,7 +4093,7 @@ async function boot(hotData) {
     console.error(e); $('#loadmsg').textContent = 'Không tải được game: ' + (e.message || e);
   }
 }
-if (location.hostname === '127.0.0.1') window.__vc = () => ({S, P, ANIMS, NPCS, MAPS, view, approach, changeMap, talk, spawnAnimals, onPlot, ex: () => EX, autoSimulate, step: (sec) => { let t = performance.now(); for (let i = 0; i < sec * 20; i++) { t += 50; update(0.05, t); } draw(t); }});
+if (location.hostname === '127.0.0.1') window.__vc = () => ({S, P, ANIMS, NPCS, MAPS, view, approach, changeMap, talk, spawnAnimals, onPlot, ex: () => EX, autoSimulate, TW: TRACK_WORDS, readiness, renderHUD, FASHION, HAIR_ITEMS, chibiSVG, petSVG, hairPreview, fullLook, step: (sec) => { let t = performance.now(); for (let i = 0; i < sec * 20; i++) { t += 50; update(0.05, t); } draw(t); }});
 try { window.claude && window.claude.hot && window.claude.hot.snapshot && window.claude.hot.snapshot(() => { if (P && S) { S.px = P.x; S.py = P.y; } return {S}; }); } catch (e) {}
 const HOT = window.claude && window.claude.hot;
 if (HOT && HOT.ready) HOT.ready(boot); else boot((HOT && HOT.data) || {});

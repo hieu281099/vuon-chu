@@ -91,7 +91,7 @@ async function sbSave(force) {
 }
 async function sbProfile() {
   if (!S.created) return; Store.lastPublic = Date.now();
-  try { await sbApi('/rest/v1/profiles?on_conflict=user_id', {method: 'POST', headers: {Prefer: 'resolution=merge-duplicates,return=minimal'}, body: JSON.stringify({user_id: Store.uid, username: SB.sess.username, name: (S.name || SB.sess.username).slice(0, 16), lvl: S.lvl, xp: S.xp, words: Object.values(S.m).filter(r => r.m >= 4).length, look: S.look, track: S.study.track, level: S.study.level, updated_at: new Date().toISOString()})}); } catch (e) { console.warn('profile', e); }
+  try { await sbApi('/rest/v1/profiles?on_conflict=user_id', {method: 'POST', headers: {Prefer: 'resolution=merge-duplicates,return=minimal'}, body: JSON.stringify({user_id: Store.uid, username: SB.sess.username, name: (S.name || SB.sess.username).slice(0, 16), lvl: lvIdx() + 1, xp: S.xp, words: Object.values(S.m).filter(r => r.m >= 4).length, look: S.look, track: S.study.track, level: S.study.level, updated_at: new Date().toISOString()})}); } catch (e) { console.warn('profile', e); }
 }
 async function sbBoard() {
   const rows = await sbRaw('/rest/v1/profiles?select=user_id,username,name,lvl,xp,words,look,track,level&order=lvl.desc,xp.desc&limit=30');

@@ -2,8 +2,8 @@
 function renderHUD() {
   if (!S) return;
   $('#hud-name').textContent = S.name || 'Bạn';
-  $('#hud-lvl').textContent = S.lvl;
-  const pct = Math.min(100, S.xp / need(S.lvl) * 100); $('#hud-xp').style.width = pct + '%'; $('#hud-ring').style.setProperty('--p', pct);
+  $('#hud-lvl').textContent = S.cefr || 'A1';
+  const rd = readiness(), pct = Math.round(rd.pct * 100); $('#hud-ring').classList.toggle('ready', !rd.max && rd.pct >= 1); $('#hud-xp').style.width = pct + '%'; $('#hud-ring').style.setProperty('--p', pct);
   $('#hud-em').textContent = S.em; $('#hud-di').textContent = S.di;
   $('#hud-coins').textContent = S.coins;
   $('#hud-study').textContent = `${TRACKS[S.study.track].vi} · ${S.study.track === 'ielts' ? IELTS_BAND[S.study.level] : S.study.level}`;
@@ -27,7 +27,7 @@ function renderHint() {
     else if (S.animals.some(a => a && a.st === 'hungry')) h = 'Vật nuôi đang đói. Vào chuồng, chạm vào con vật để cho ăn.';
     else if (sts.includes('E')) h = Object.values(S.seeds).some(n => n > 0) ? 'Còn ô đất trống. Chạm vào để gieo hạt.' : 'Hết hạt giống. Sang <b>Làng</b> mua ở cửa hàng SEEDS.';
     else h = 'Cây đang lớn, vài giờ nữa mới chín. Chạm vào ô ruộng để bón phân, hoặc mở <b>Bản đồ</b> đi dạo.';
-  } else if (S.map === 'village') h = 'Chú Ba (MARKET) nhận đơn hàng, Cô Mai (CLOTHES SHOP) bán quần áo, Ông Tư (SEEDS) bán hạt, Cô Lan (SCHOOL) dạy học. Bảng tin ở quảng trường.';
+  } else if (S.map === 'village') h = 'Chú Ba (MARKET) nhận đơn hàng, Cô Mai (CLOTHES SHOP) bán quần áo, Ông Tư (SEEDS) bán hạt, Cô Lan (SCHOOL) dạy học, Chị Ngân (HAIR SALON) làm tóc. Bảng tin ở quảng trường.';
   else if (S.map === 'park') h = 'Gặp Chị Hà ở bảng IELTS CHALLENGE để làm thử thách IELTS hằng ngày, nhận kim cương.';
   else h = 'Chạm vào mặt nước để thả câu. Ông Sáu ở cầu tàu cũng thích nói chuyện.';
   if (h !== hintKey) { hintKey = h; $('#hint').innerHTML = h; }
@@ -142,6 +142,15 @@ document.addEventListener('click', e => {
     case 'cc-done': return ccDone();
     case 'bag': return openBag();
     case 'study': return openStudy();
+    case 'lvinfo': return openLevel();
+    case 'lv-test': return startLevelUp();
+    case 'salon': return openSalon();
+    case 'sal-tab': SAL.tab = d.t; SAL.buy = null; return salonRefresh();
+    case 'sal-back': SAL.buy = null; return salonRefresh();
+    case 'hair-pick': return hairPick(d.id);
+    case 'hair-wear': return hairWear(d.id);
+    case 'hair-ans': return hairAnswer(+d.i);
+    case 'hair-now': { const h = HAIR[d.id]; if (h && (S.hair || []).includes(h.id)) { Object.assign(S.look, hairPatch(h)); markDirty(); renderHUD(); } return closeModal(); }
     case 'tests': return openTests();
     case 'roadmap': return openRoadmap();
     case 'road-claim': return claimRoad(+d.v);
@@ -211,6 +220,11 @@ function normalize(d) {
   if (!MAPS[s.map]) s.map = 'farm';
   if (!Array.isArray(s.orders) || !s.orders.length) s.orders = [genOrder(['carrot']), genOrder(['radish']), genOrder(['egg'])];
   if (typeof s.last !== 'number') s.last = Date.now();
+  // English level replaces the XP level; hairstyles become salon items (keep whatever the player already wears)
+  if (!s.cefr) { const t = s.created ? tierOf(s.lvl || 1) : 0, st = Math.max(0, LEVELS.indexOf(s.study.level)); s.cefr = LEVELS[Math.min(t, st)]; }
+  s.hair = Array.isArray(s.hair) ? s.hair : [];
+  for (const h of HAIR_ITEMS) if (((h.f && s.look.hairF === h.f) || (h.b && s.look.hairB === h.b) || (h.c && s.look.hairC === h.c)) && !s.hair.includes(h.id)) s.hair.push(h.id);
+  s.lvl = TIER_MAX[Math.max(0, LEVELS.indexOf(s.cefr))];
   s.tests = Array.isArray(s.tests) ? s.tests : []; s.bestBand = s.bestBand || {}; s.road = s.road || {claimed: []}; s.ieltsCount = s.ieltsCount || 0;
   if (s.auto && !s.auto.log) s.auto.log = {};
   return s;
@@ -248,7 +262,7 @@ async function boot(hotData) {
     console.error(e); $('#loadmsg').textContent = 'Không tải được game: ' + (e.message || e);
   }
 }
-if (location.hostname === '127.0.0.1') window.__vc = () => ({S, P, ANIMS, NPCS, MAPS, view, approach, changeMap, talk, spawnAnimals, onPlot, ex: () => EX, autoSimulate, step: (sec) => { let t = performance.now(); for (let i = 0; i < sec * 20; i++) { t += 50; update(0.05, t); } draw(t); }});
+if (location.hostname === '127.0.0.1') window.__vc = () => ({S, P, ANIMS, NPCS, MAPS, view, approach, changeMap, talk, spawnAnimals, onPlot, ex: () => EX, autoSimulate, TW: TRACK_WORDS, readiness, renderHUD, FASHION, HAIR_ITEMS, chibiSVG, petSVG, hairPreview, fullLook, step: (sec) => { let t = performance.now(); for (let i = 0; i < sec * 20; i++) { t += 50; update(0.05, t); } draw(t); }});
 try { window.claude && window.claude.hot && window.claude.hot.snapshot && window.claude.hot.snapshot(() => { if (P && S) { S.px = P.x; S.py = P.y; } return {S}; }); } catch (e) {}
 const HOT = window.claude && window.claude.hot;
 if (HOT && HOT.ready) HOT.ready(boot); else boot((HOT && HOT.data) || {});

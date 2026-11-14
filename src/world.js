@@ -64,10 +64,11 @@ function buildMaps() {
   house(v, 'school', 11, 19, 9, 5, {sign: 'SCHOOL', role: 'teacher'});
   house(v, 'forge', 30, 15, 5, 5, {sign: 'UPGRADE', role: 'forge'});
   house(v, 'post', 23, 18, 5, 4, {sign: 'POST'});
+  house(v, 'salon', 2, 18, 6, 4, {sign: 'HAIR SALON', role: 'salon'});
   prop(v, 'board', 12, 11); prop(v, 'well', 23, 14);
   for (const [x, y] of [[10, 9], [25, 9], [10, 17], [25, 17]]) prop(v, 'lamp', x, y);
   prop(v, 'bench', 14, 16); prop(v, 'bench', 21, 16); prop(v, 'crate', 15, 7); prop(v, 'sacks', 20, 7);
-  for (const [x, y, k] of [[8, 16, 'round'], [5, 21, 'fruit'], [30, 24, 'pine'], [33, 9, 'round'], [3, 16, 'blossom']]) tree(v, x, y, k);
+  for (const [x, y, k] of [[8, 16, 'round'], [9, 25, 'fruit'], [30, 24, 'pine'], [33, 9, 'round'], [3, 15, 'blossom']]) tree(v, x, y, k);
   prop(v, 'flowers', 9, 11, false); prop(v, 'flowers', 26, 11, false);
   v.exits.push({x: 0, y: 12, w: 1, h: 2, to: 'farm', tx: 34, ty: 12});
   v.exits.push({x: 35, y: 12, w: 1, h: 2, to: 'river', tx: 1, ty: 9});

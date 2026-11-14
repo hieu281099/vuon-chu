@@ -173,7 +173,7 @@ function finalizeResult() {
   const R = EX.result, secs = Object.values(R.sections);
   if (R.kind === 'ielts') { const bands = secs.map(s => s.band).filter(b => typeof b === 'number'); R.overall = bands.length ? roundBand(bands.reduce((a, b) => a + b, 0) / bands.length) : null; R.complete = secs.length === 4 && bands.length === 4; }
   if (R.kind === 'toeic') R.overall = secs.reduce((a, s) => a + (s.score || 0), 0);
-  if (R.kind === 'placement' || R.kind === 'auto') { const s = secs.reduce((a, x) => [a[0] + x.raw, a[1] + x.total], [0, 0]); R.raw = s[0]; R.total = s[1]; R.pct = Math.round(s[0] / s[1] * 100); }
+  if (R.kind === 'placement' || R.kind === 'auto' || R.kind === 'levelup') { const s = secs.reduce((a, x) => [a[0] + x.raw, a[1] + x.total], [0, 0]); R.raw = s[0]; R.total = s[1]; R.pct = Math.round(s[0] / s[1] * 100); }
   if (R.kind === 'placement') {
     const lv = {}; secs.forEach(x => Object.entries(x.byLv).forEach(([k, [a, b]]) => { lv[k] = lv[k] || [0, 0]; lv[k][0] += a; lv[k][1] += b; }));
     let got = null; for (const L of LEVELS) { const [a, b] = lv[L] || [0, 1]; if (a / b >= 0.75) got = L; else break; }
@@ -186,12 +186,13 @@ function recordResult() {
   S.tests = S.tests.slice(0, 40);
   if (R.kind === 'ielts') { S.bestBand = S.bestBand || {}; for (const v of Object.values(R.sections)) if (typeof v.band === 'number') S.bestBand[v.skill + (v.task ? v.task : '')] = Math.max(S.bestBand[v.skill + (v.task ? v.task : '')] || 0, v.band);
     for (const v of Object.values(R.sections)) if (v.tasks) for (const [k, b] of Object.entries(v.tasks)) S.bestBand['writing' + k] = Math.max(S.bestBand['writing' + k] || 0, b);
-    if (R.complete) { S.bestBand.overall = Math.max(S.bestBand.overall || 0, R.overall); if (daysSince(S.monthTest) >= 30) { S.monthTest = today(); giveGems(5, 3, 'bài thi tháng'); const cefr = bandToCEFR(R.overall); if (LEVELS.indexOf(cefr) > LEVELS.indexOf(S.study.level)) { S.study.level = cefr; if (!S.study.unlocked.includes(cefr)) S.study.unlocked.push(cefr); R.promoted = cefr; } } } }
+    if (R.complete) { S.bestBand.overall = Math.max(S.bestBand.overall || 0, R.overall); if (daysSince(S.monthTest) >= 30) { S.monthTest = today(); giveGems(5, 3, 'bài thi tháng'); const cefr = bandToCEFR(R.overall); if (promoteTo(cefr, 'bài thi IELTS tháng')) R.promoted = cefr; } } }
   if (R.kind === 'toeic' && daysSince(S.monthToeic) >= 30) { S.monthToeic = today(); giveGems(5, 2, 'bài thi TOEIC tháng'); }
   if (R.kind === 'placement') {
     const weekly = daysSince(S.weekTest) >= 7; R.official = weekly;
-    if (weekly) { S.weekTest = today(); giveGems(3, 1, 'kiểm tra tuần'); giveKey(1, 'kiểm tra tuần'); if (LEVELS.indexOf(R.level) > LEVELS.indexOf(S.study.level)) { S.study.level = R.level; if (!S.study.unlocked.includes(R.level)) S.study.unlocked.push(R.level); R.promoted = R.level; } }
+    if (weekly) { S.weekTest = today(); giveGems(3, 1, 'kiểm tra tuần'); giveKey(1, 'kiểm tra tuần'); if (promoteTo(R.level, 'kiểm tra xếp lớp')) R.promoted = R.level; }
   }
+  if (R.kind === 'levelup') { R.passed = R.raw >= 11; if (R.passed) { promoteTo(EX.test.target, `lên trình độ ${EX.test.target}`); R.promoted = EX.test.target; } else S.lvFailAt = Date.now(); }
   if (R.kind === 'auto' && R.pct >= 70) { const hours = R.pct >= 90 ? 48 : 24; S.auto = {until: Date.now() + hours * 3600e3, log: {}, hours}; R.autoHours = hours; }
   if (EX.onFinish) try { EX.onFinish(R); } catch (e) {}
   addXP(Math.round((R.pct || 60) / 5)); renderHUD(); markDirty(); saveNow(true);
@@ -242,6 +243,7 @@ function showReport() {
   if (R.kind === 'ielts') head = `<div class="score big"><small>Band tổng (ước tính)</small><b>${R.overall != null ? R.overall.toFixed(1) : '…'}</b>${R.complete ? '' : '<span class="note">Chỉ tính các kỹ năng đã làm</span>'}</div>`;
   if (R.kind === 'toeic') head = `<div class="score big"><small>Điểm TOEIC (ước tính)</small><b>${R.overall}</b><span class="note">/ ${Object.keys(R.sections).length * 495}</span></div>`;
   if (R.kind === 'placement') head = `<div class="score big"><small>Trình độ đánh giá được</small><b>${R.level}</b><span class="note">${R.raw}/${R.total} câu đúng (${R.pct}%)</span></div>`;
+  if (R.kind === 'levelup') head = `<div class="score big ${R.raw >= 11 ? 'pass' : 'fail'}"><small>Bài test lên ${esc(EX.test.target)}</small><b>${R.raw}/${R.total}</b><span class="note">${R.pct}% · cần 11/15 câu</span></div>`;
   if (R.kind === 'auto') head = `<div class="score big ${R.pct >= 70 ? 'pass' : 'fail'}"><small>Điểm bài test Auto Farm</small><b>${R.raw}/${R.total}</b><span class="note">${R.pct}% · cần 70% để mở</span></div>`;
   const cards = Object.entries(R.sections).map(([id, r]) => {
     const sec = T.sections.find(s => s.id === id);
@@ -255,6 +257,7 @@ function showReport() {
   }).join('');
   let tail = '';
   if (R.kind === 'placement') tail = `<div class="lvbars">${LEVELS.map(L => { const [a, b] = R.byLevel[L] || [0, 0]; return `<div><span>${L}</span><i style="--w:${b ? a / b * 100 : 0}%"></i><small>${a}/${b}</small></div>`; }).join('')}</div>` + (R.official === undefined ? '' : R.official ? (R.promoted ? `<div class="fb good"><strong>Lên trình độ!</strong> Hệ thống đã tự nâng bạn lên <b>${R.promoted}</b>. Thưởng 3 ngọc lục bảo và 1 kim cương.</div>` : `<div class="fb good"><strong>Đã ghi nhận bài kiểm tra tuần.</strong> Trình độ đánh giá: ${R.level}. ${LEVELS.indexOf(R.level) < LEVELS.indexOf(S.study.level) ? `Bạn đang học ${S.study.level}, có thể hạ xuống ${R.level} trong mục Học tập nếu thấy khó.` : 'Giữ trình độ hiện tại.'}</div>`) : `<div class="fb miss"><strong>Bài luyện tập.</strong> Bài kiểm tra tuần chính thức (tự nâng trình độ, có thưởng) mở lại sau ${Math.ceil(7 - daysSince(S.weekTest))} ngày.</div>`);
+  if (R.kind === 'levelup') tail = R.raw >= 11 ? `<div class="fb good"><strong>Chúc mừng, bạn đã lên ${esc(EX.test.target)}!</strong> Nhân vật đã lên cấp. Đồ, kiểu tóc, cây trồng và vật nuôi của trình độ mới đã mở khoá.</div>` : `<div class="fb miss"><strong>Chưa đạt.</strong> Ôn lại từ vựng ${esc(EX.test.target)} trong mục Học tập, sau 20 phút có thể thi lại.</div>`;
   if (R.kind === 'auto') tail = R.pct >= 70 ? `<div class="fb good"><strong>Đã mở Auto Farm ${R.autoHours || (R.pct >= 90 ? 48 : 24)} giờ!</strong> Nông trại sẽ tự tưới, nhổ cỏ, thu hoạch, gieo lại hạt và chăm vật nuôi, kể cả khi bạn tắt game.</div>` : `<div class="fb miss"><strong>Chưa đạt.</strong> Cần đúng ít nhất 11/15 câu. Ôn lại từ vựng trong mục Học tập rồi thử lại.</div>`;
   if (R.promoted && R.kind === 'ielts') tail += `<div class="fb good"><strong>Lên trình độ!</strong> Band ${R.overall} tương đương ${R.promoted}, hệ thống đã nâng trình độ học của bạn.</div>`;
   openModal(`<h2 class="ptitle">Kết quả${R.timeout ? ' (hết giờ)' : ''}</h2><p class="psub">${esc(T.title)}</p>${head}<div class="rcards">${cards}</div>${tail}<div class="row-btns end"><button class="btn ghost" data-act="tests">Trung tâm thi</button><button class="btn" data-act="close">Xong</button></div>`, {label: 'Kết quả', wide: true});
@@ -300,7 +303,7 @@ function openTests() {
       <div class="tcard"><b>Đề mới do Claude soạn</b><p>Mỗi lần bấm là một đề hoàn toàn mới theo trình độ của bạn, làm bao nhiêu cũng được.</p>${CAPS.sample ? '' : '<small>Cần mở game trong Claude để dùng.</small>'}<div class="row-btns"><button class="btn ghost sm" data-act="t-ai" data-v="ielts_r" ${CAPS.sample ? '' : 'disabled'}>IELTS Reading</button><button class="btn ghost sm" data-act="t-ai" data-v="ielts_l" ${CAPS.sample ? '' : 'disabled'}>IELTS Listening</button><button class="btn ghost sm" data-act="t-ai" data-v="toeic_5" ${CAPS.sample ? '' : 'disabled'}>TOEIC Part 5</button><button class="btn ghost sm" data-act="t-ai" data-v="toeic_7" ${CAPS.sample ? '' : 'disabled'}>TOEIC Part 7</button></div></div>
       <div class="tcard road"><b>Lộ trình IELTS</b><p>5 chặng từ Band 4.0 đến 7.0+, tự theo dõi tiến độ từ vựng, thử thách và bài thi.</p><button class="btn" data-act="roadmap">Xem lộ trình</button></div>
     </div>
-    <h3 class="ph3">Lịch sử điểm</h3>${hist.length ? `<ul class="hist">${hist.map(h => `<li><span>${h.date}</span><b>${esc(h.title)}</b><em>${h.kind === 'ielts' ? (h.overall != null ? 'Band ' + h.overall.toFixed(1) : '') : h.kind === 'toeic' ? h.overall + ' điểm' : h.kind === 'placement' ? h.level + ' · ' + h.pct + '%' : h.pct + '%'}</em></li>`).join('')}</ul>` : '<p class="empty">Chưa có bài thi nào.</p>'}`, {label: 'Trung tâm thi', wide: true});
+    <h3 class="ph3">Lịch sử điểm</h3>${hist.length ? `<ul class="hist">${hist.map(h => `<li><span>${h.date}</span><b>${esc(h.title)}</b><em>${h.kind === 'ielts' ? (h.overall != null ? 'Band ' + h.overall.toFixed(1) : '') : h.kind === 'toeic' ? h.overall + ' điểm' : h.kind === 'placement' ? h.level + ' · ' + h.pct + '%' : h.kind === 'levelup' ? 'Lên cấp · ' + h.pct + '%' : h.pct + '%'}</em></li>`).join('')}</ul>` : '<p class="empty">Chưa có bài thi nào.</p>'}`, {label: 'Trung tâm thi', wide: true});
 }
 
 /* ---------- IELTS roadmap ---------- */

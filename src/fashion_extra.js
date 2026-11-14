@@ -92,7 +92,7 @@ function extraTop(s, c, b, d, tee, waist) {
     case 'top_gown': return `<path d="M58 113H87L89 127Q104 148 108 160H37Q41 148 56 127Z" fill="${c}"/><rect x="56" y="125" width="33" height="4" rx="2" fill="${shade(c, 0.4)}"/><path d="M48 150Q72.5 140 97 150" stroke="${shade(c, 0.3)}" stroke-width="2" fill="none"/>${starDots([[60, 140, 2.5], [86, 145, 2.5], [72, 152, 2]], '#FFFFFF')}`;
     case 'top_galaxy': return `<path d="M57 113H88L92 132L98 160H47L53 132Z" fill="#1E1B4B"/><path d="M57 113H88L86 120H59Z" fill="url(#rb)"/><path d="M47 160L53 132M98 160L92 132" stroke="url(#rb)" stroke-width="3"/>${starDots([[64, 128, 3], [80, 140, 3.5], [68, 150, 2.5], [84, 124, 2]], '#FFFFFF')}`;
   }
-  return '';
+  return extraTop2(s, c, b, d, tee, waist);
 }
 function extraHat(id, c, lv, t, d) {
   const g = lv ? t : null;
@@ -107,7 +107,7 @@ function extraHat(id, c, lv, t, d) {
     case 'hat_dragon': return `<path d="M24 60Q24 14 72.5 12Q121 14 121 60Q100 48 72.5 48Q45 48 24 60Z" fill="${c}"/><path d="M34 30Q10 10 18 -12Q30 10 48 20Z M111 30Q135 10 127 -12Q115 10 97 20Z" fill="${g || '#FFC83D'}"/><path d="M56 16L62 4L68 14L72.5 0L77 14L83 4L89 16" fill="${shade(c, -0.3)}"/><circle cx="72.5" cy="34" r="6" fill="#FF3552"/>`;
     case 'hat_starcrown': return `<path d="M30 48L26 12L50 30L72.5 -2L95 30L119 12L115 48Z" fill="url(#rb)"/><rect x="28" y="40" width="89" height="10" rx="5" fill="#FFC83D"/>${starDots([[72.5, -14, 9], [26, 2, 6], [119, 2, 6]], '#FFF3B0')}<circle cx="72.5" cy="30" r="7" fill="#FFFFFF"/>`;
   }
-  return '';
+  return extraHat2(id, c, lv, t, d);
 }
 function extraFace(id, c, lv) {
   const t = lv ? tierFill(lv, c) : c;
@@ -118,7 +118,7 @@ function extraFace(id, c, lv) {
     case 'face_visor': return `<rect x="28" y="70" width="89" height="24" rx="12" fill="${t}" opacity=".85"/><rect x="34" y="74" width="40" height="5" rx="2.5" fill="#FFFFFF" opacity=".5"/>`;
     case 'face_monocle': return `<circle cx="95" cy="82" r="13" fill="#FFFFFF" fill-opacity=".25" stroke="${t}" stroke-width="3.5"/><path d="M106 90Q114 110 104 124" stroke="${t}" stroke-width="1.5" fill="none"/>`;
   }
-  return '';
+  return extraFace2(id, c, lv);
 }
 function extraBack(id, c, lv, front, pair) {
   const t = tierFill(lv, c), d = shade(c, -0.2);
@@ -129,7 +129,7 @@ function extraBack(id, c, lv, front, pair) {
     case 'back_light': return pair(`<path d="M0 0C10 -60 70 -80 96 -40C80 -36 76 -26 84 -18C66 -16 62 -4 70 4C54 6 48 16 52 24C30 20 10 12 0 0Z" fill="url(#rb)" opacity=".75"/><path d="M6 -4C20 -44 62 -60 82 -36" stroke="#FFFFFF" stroke-width="4" fill="none"/>`, 80, 122);
     case 'back_phoenix': return pair(`<path d="M0 0C14 -50 60 -70 92 -50C78 -44 80 -34 90 -28C72 -26 70 -14 80 -6C62 -4 58 8 64 16C44 16 28 22 22 30C14 18 6 10 0 0Z" fill="#FF5A2E"/><path d="M8 -4C22 -38 56 -52 78 -42C62 -34 60 -22 66 -14C50 -12 44 0 46 10C30 8 18 6 8 -4Z" fill="#FFC83D"/><path d="M16 -8C28 -28 46 -34 58 -30C48 -22 46 -12 48 -4C36 -4 26 -4 16 -8Z" fill="#FFF3B0"/>`, 80, 122);
   }
-  return '';
+  return extraBack2(id, c, lv, front, pair);
 }
 function extraHand(id, c, lv) {
   const t = tierFill(lv, c);
@@ -141,5 +141,5 @@ function extraHand(id, c, lv) {
     case 'hand_saber': return `<rect x="1" y="16" width="9" height="16" rx="3" fill="#8E8AA8"/><rect x="1" y="16" width="9" height="3" fill="#1F1B24"/><rect x="2.5" y="-64" width="6" height="82" rx="3" fill="${lv ? t : c}"/><rect x="4.2" y="-62" width="2.6" height="78" rx="1.3" fill="#FFFFFF" opacity=".85"/>`;
     case 'hand_scepter': return `<path d="M6 30L18 -40" stroke="#FFC83D" stroke-width="5" stroke-linecap="round"/><circle cx="19" cy="-48" r="11" fill="url(#rb)"/>${starDots([[19, -48, 6]], '#FFFFFF')}<path d="M8 -36Q19 -30 30 -36" stroke="#FFC83D" stroke-width="3" fill="none"/>`;
   }
-  return '';
+  return extraHand2(id, c, lv);
 }

@@ -56,6 +56,7 @@ const BSTYLE = {
   post:   {wall:'#FFF8E6', roof:'#FFB547', roof2:'#F29A1F', trim:'#EEDDB6', door:'#C4703A'},
   house2: {wall:'#E8F7FF', roof:'#4FC3C9', roof2:'#36A8AE', trim:'#CBE7EE', door:'#2F8A8F'},
   barn:   {wall:'#E8584B', roof:'#B9483D', roof2:'#9E3B32', trim:'#FFFFFF', door:'#FFFFFF'},
+  salon:  {wall:'#FFF0FB', roof:'#C77DFF', roof2:'#A75BE8', trim:'#F2D4FF', door:'#FF6FB5', awning:['#FF8FC7','#FFFFFF']},
   coop:   {wall:'#FFD36B', roof:'#E8584B', roof2:'#C9473C', trim:'#FFF3D0', door:'#8B5A3C'}
 };
 function houseDef(style, tw, th) {

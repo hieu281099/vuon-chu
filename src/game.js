@@ -31,7 +31,9 @@ NPC_DEFS.push(
   {id:'ha', name:'Chị Hà', map:'park', home:[18, 16], role:'ielts', look:L_({skin:0, hairF:'elegant', hairB:'long', hairC:'#5B3423', top:'top_jacket', topC:'#545AF2', bottom:'bot_pants', bottomC:'#1F1B24', face2:'face_round', hand:'hand_lollipop'}),
     greet:['IELTS challenge today!','Band 7, here we come!'], line:() => ({en:`Hi ${S.name}! Ready for today's IELTS challenge?`, vi:`Chào ${S.name}! Sẵn sàng làm thử thách IELTS hôm nay chưa?`})},
   {id:'bao', name:'Anh Bảo', map:'park', home:[10, 11], role:'chat', wander:true, look:L_({skin:3, hairF:'straight', hairC:'#1F1B24', top:'top_hoodie', topC:'#FF6B35', bottom:'bot_shorts', bottomC:'#1F1B24', hat:'hat_cap', pet:'pet_puppy'}),
-    greet:['Morning run!','Nice weather today.'], line:() => ({en:`Hey ${S.name}! Do you jog in the park too?`, vi:`Chào ${S.name}! Bạn cũng chạy bộ trong công viên à?`})}
+    greet:['Morning run!','Nice weather today.'], line:() => ({en:`Hey ${S.name}! Do you jog in the park too?`, vi:`Chào ${S.name}! Bạn cũng chạy bộ trong công viên à?`})},
+  {id:'ngan', name:'Chị Ngân', map:'village', home:[8, 23], role:'salon', look:L_({skin:1, hairF:'elegant', hairB:'long', hairC:'#FF8FC7', top:'top_cardigan', topC:'#B05CFF', bottom:'bot_pleated', bottomC:'#1F1B24', face2:'face_star', hand:'hand_fan'}),
+    greet:['New hairstyles!','Try a new look!'], line:() => ({en:`Hi ${S.name}! Which hairstyle would you like today?`, vi:`Chào ${S.name}! Hôm nay em muốn làm kiểu tóc nào?`})}
 );
 const fullLook = L => Object.assign({}, DEFAULT_LOOK, L || {}, {lv: Object.assign({}, (L && L.lv) || {})});
 
@@ -44,8 +46,8 @@ function newGame() {
   const plots = Array.from({length: 24}, (_, i) => ({u: i < 8, c: null, p: 0, w: 0, weed: false, hw: false}));
   Object.assign(plots[0], {c: 'carrot', p: 1}); Object.assign(plots[1], {c: 'radish', p: 0.4, w: now + 20000}); Object.assign(plots[2], {c: 'carrot', p: 0.25});
   return {v: 4, created: false, name: '', look: fullLook(DEFAULT_LOOK), owned: [...FREE_ITEMS], map: 'farm', px: 0, py: 0,
-    coins: 80, em: 4, di: 1, daily: '', xp: 0, lvl: 1, plots, animals: [{t: 'chicken', st: 'hungry', r: 0}, ...Array(17).fill(null)], barnLv: 0, keys: 1, pity: 0,
-    seeds: {carrot: 6, radish: 4}, inv: {}, m: {}, orders: [], streak: 0, best: 0, stats: {ok: 0, all: 0, talks: 0, fish: 0},
+    coins: 80, em: 4, di: 1, daily: '', xp: 0, lvl: 3, plots, animals: [{t: 'chicken', st: 'hungry', r: 0}, ...Array(17).fill(null)], barnLv: 0, keys: 1, pity: 0,
+    cefr: 'A1', hair: [], lvAns: 0, seeds: {carrot: 6, radish: 4}, inv: {}, m: {}, orders: [], streak: 0, best: 0, stats: {ok: 0, all: 0, talks: 0, fish: 0},
     study: {track: 'general', level: 'A1', unlocked: ['A1']}, sound: true, last: now, caught: false};
 }
 async function initStore() {
@@ -103,7 +105,7 @@ async function publishProfile() {
   if (Store.mode !== 'cloud' || !S.created) return;
   Store.lastPublic = Date.now();
   try {
-    await Store.db.doc(`players/${Store.uid}`).set({name: S.name.slice(0, 16), lvl: S.lvl, xp: S.xp, words: Object.values(S.m).filter(r => r.m >= 4).length, look: S.look, track: S.study.track, level: S.study.level, updated: Date.now()});
+    await Store.db.doc(`players/${Store.uid}`).set({name: S.name.slice(0, 16), lvl: lvIdx() + 1, xp: S.xp, words: Object.values(S.m).filter(r => r.m >= 4).length, look: S.look, track: S.study.track, level: S.study.level, updated: Date.now()});
   } catch (e) { console.warn('profile', e); }
 }
 function setSaveBadge(s) {
@@ -257,6 +259,7 @@ function record(w, ok) {
   const r = S.m[w.key] || (S.m[w.key] = {m: 0, s: 0, w: 0}); r.s++; S.stats.all++;
   if (ok) { r.m = Math.min(5, r.m + 1); r.w = 0; S.stats.ok++; S.streak++; S.best = Math.max(S.best, S.streak); addXP(5); if (S.streak % 5 === 0) { S.coins += 10; giveGems(1, S.streak % 20 === 0 ? 1 : 0, `chuỗi ${S.streak} câu đúng`); } }
   else { r.m = Math.max(0, r.m - 1); r.w = 1; S.streak = 0; }
+  lvNoteAnswer();
 }
 function finish(ok, timeout) {
   stopTimer(); Q.done = true; const w = Q.w;
@@ -273,12 +276,7 @@ function finish(ok, timeout) {
 /* ===================== PROGRESSION ===================== */
 function addXP(n) {
   S.xp += n;
-  while (S.xp >= need(S.lvl)) {
-    S.xp -= need(S.lvl); S.lvl++;
-    const news = [...CROPS.filter(c => c.lvl === S.lvl && !c.rare).map(c => `hạt ${c.en}`), ...ANIMALS.filter(a => a.lvl === S.lvl).map(a => `con ${a.en}`)];
-    setTimeout(() => { sfx('level'); toast(`<b>Lên cấp ${S.lvl}!</b>${news.length ? ' Mở khoá ' + news.join(', ') + '.' : ''}`, 4200); }, 350);
-    queueFx({kind: 'spark', who: 'player'}); giveGems(3, S.lvl % 5 === 0 ? 1 : 0, 'lên cấp ' + S.lvl); if (S.lvl % 5 === 0) giveKey(1, 'lên cấp ' + S.lvl); saveNow(true);
-  }
+  // the character has no XP level any more: the English level (S.cefr) is its level
 }
 const unlockedCrops = () => CROPS.filter(c => c.lvl <= S.lvl && !c.rare);
 const unlockCost = () => 40 * (S.plots.filter(p => p.u).length - 7);
@@ -466,6 +464,7 @@ function npcBody(n) {
   if (role === 'shop') return BUY ? buyHTML() : shopHTML();
   if (role === 'teacher') return teacherHTML();
   if (role === 'ielts') return ieltsHTML();
+  if (role === 'salon') return salonHTML();
   return `<div class="row-btns"><button class="btn" data-act="chat">Nói chuyện</button><button class="btn ghost" data-act="close">Tạm biệt</button></div>`;
 }
 function orderHTML(o, k, canGive) {
@@ -482,11 +481,11 @@ function animalsHTML() {
   const free = freeSlot();
   if (free < 0) return `<p class="note">Chuồng đã đầy (${barnCount()}/${barnCap()} con). Nâng cấp chuồng ở cửa hàng nông trại để nuôi thêm.</p><div class="row-btns"><button class="btn" data-act="farmshop" data-t="barn">Nâng cấp chuồng</button></div>`;
   return `<p class="note">Vật nuôi sẽ về chuồng ở nông trại. Cho ăn bằng một câu hỏi tiếng Anh.</p><div class="list">${ANIMALS.map(A => { const lock = A.lvl > S.lvl, poor = S.coins < A.cost, P2 = PRODUCTS[A.product];
-    return `<button class="row-item ${lock ? 'locked' : ''}" data-act="buyanimal" data-s="${free}" data-a="${A.id}" ${lock || poor ? 'disabled' : ''}><img class="ii" src="${svgURL(animalDef(A.id, 0).svg)}" alt=""><span class="ri-main"><b>${A.en}</b><small>${A.vi} · cho ${P2.en} mỗi ${fmt(A.time)}</small></span><span class="ri-side">${lock ? `Cấp ${A.lvl}` : `${coinIcon}${A.cost}`}</span></button>`; }).join('')}</div>`;
+    return `<button class="row-item ${lock ? 'locked' : ''}" data-act="buyanimal" data-s="${free}" data-a="${A.id}" ${lock || poor ? 'disabled' : ''}><img class="ii" src="${svgURL(animalDef(A.id, 0).svg)}" alt=""><span class="ri-main"><b>${A.en}</b><small>${A.vi} · cho ${P2.en} mỗi ${fmt(A.time)}</small></span><span class="ri-side">${lock ? needTag(A.lvl) : `${coinIcon}${A.cost}`}</span></button>`; }).join('')}</div>`;
 }
 function seedsHTML() {
   return `<p class="note">Mỗi gói 5 hạt. Hạt giống sẽ vào túi, ra ruộng chạm ô đất trống để gieo.</p><div class="list">${CROPS.filter(c => !c.rare).map(c => { const lock = c.lvl > S.lvl, price = c.cost * 5, poor = S.coins < price;
-    return `<button class="row-item ${lock ? 'locked' : ''}" data-act="buyseed" data-crop="${c.id}" ${lock || poor ? 'disabled' : ''}>${itemImg(c.id)}<span class="ri-main"><b>${c.en} seeds</b><small>${c.vi} · chín sau ${fmt(c.time)} · bán ${c.sell} xu · đang có ${S.seeds[c.id] || 0}</small></span><span class="ri-side">${lock ? `Cấp ${c.lvl}` : `${coinIcon}${price}`}</span></button>`; }).join('')}</div>`;
+    return `<button class="row-item ${lock ? 'locked' : ''}" data-act="buyseed" data-crop="${c.id}" ${lock || poor ? 'disabled' : ''}>${itemImg(c.id)}<span class="ri-main"><b>${c.en} seeds</b><small>${c.vi} · chín sau ${fmt(c.time)} · bán ${c.sell} xu · đang có ${S.seeds[c.id] || 0}</small></span><span class="ri-side">${lock ? needTag(c.lvl) : `${coinIcon}${price}`}</span></button>`; }).join('')}</div>`;
 }
 function buySeed(id) { const c = CROP[id], price = c.cost * 5; if (!c || c.lvl > S.lvl || S.coins < price) return; S.coins -= price; S.seeds[id] = (S.seeds[id] || 0) + 5; sfx('coin'); speak(`${c.en} seeds`, true); toast(`Đã mua 5 hạt <b>${c.en}</b>.`); refreshNpc(); renderHUD(); markDirty(); }
 let SHOPTAB = 'top';
@@ -497,7 +496,7 @@ function itemCard(f, L, act, extra = '') {
   const own = S.owned.includes(f.id), lock = (f.lvl || 1) > S.lvl, lv = (S.look.lv || {})[f.id] || 0;
   const tryL = Object.assign({}, L, slotPatch(f)); if (lv) tryL.lv = Object.assign({}, L.lv, {[f.id]: lv});
   const img = f.slot === 'pet' ? `<img class="pv pet" src="${svgURL(petSVG(f.id, lv, 0))}" alt="">` : f.slot === 'aura' ? `<span class="pv aura" style="--c:${f.col}"></span>` : `<img class="pv" src="${portraitSVG(tryL, {full: ['back', 'hand'].includes(f.slot), hand: true})}" alt="">`;
-  return `<button class="card r${f.rar || 0}" data-act="${act}" data-id="${f.id}" ${extra}><span class="rar">${RARITY[f.rar || 0].vi}</span>${lv ? `<span class="plus t${lv}">+${lv}</span>` : ''}${img}<b>${act === 'shop-pick' && !own ? '???' : esc(f.en)}</b><small>${esc(f.vi)}</small>${act === 'shop-pick' ? `<span class="price">${own ? 'Đã có' : lock ? `Cấp ${f.lvl}` : priceTag(f)}</span>` : ''}</button>`;
+  return `<button class="card r${f.rar || 0}" data-act="${act}" data-id="${f.id}" ${extra}><span class="rar">${RARITY[f.rar || 0].vi}</span>${lv ? `<span class="plus t${lv}">+${lv}</span>` : ''}${img}<b>${act === 'shop-pick' && !own ? '???' : esc(f.en)}</b><small>${esc(f.vi)}</small>${act === 'shop-pick' ? `<span class="price">${own ? 'Đã có' : lock ? needTag(f.lvl) : priceTag(f)}</span>` : ''}</button>`;
 }
 function shopHTML() {
   const L = fullLook(S.look), list = FASHION.filter(f => f.slot === SHOPTAB && (f.price > 0 || f.chest));
@@ -518,7 +517,7 @@ function shopPick(id) {
 }
 function shopAnswer(i) {
   if (!BUY || BUY.done) return; const f = FASH[BUY.id];
-  BUY.done = true; BUY.pick = i; BUY.ok = BUY.opts[i] === f.en; S.stats.all++;
+  BUY.done = true; BUY.pick = i; BUY.ok = BUY.opts[i] === f.en; S.stats.all++; lvNoteAnswer();
   if (BUY.ok) { S.stats.ok++; if (f.cur === 'gem') S.di -= f.price; else S.coins -= f.price; S.owned.push(f.id); Object.assign(S.look, slotPatch(f)); addXP(4); sfx('coin'); speak(f.en, true); queueFx({kind: 'spark', who: 'player'}); } else sfx('bad');
   refreshNpc(); renderHUD(); markDirty();
 }
@@ -655,7 +654,7 @@ function openStudy() {
   openModal(`<h2 class="ptitle">Học tập</h2>
     <div class="stats3"><div><b>${seenAll}</b><small>từ đã gặp</small></div><div><b>${known}</b><small>từ đã thuộc</small></div><div><b>${acc}%</b><small>trả lời đúng</small></div></div>
     <h3 class="ph3">Chuyên ngành</h3><div class="chips">${Object.entries(TRACKS).map(([id, t]) => `<button class="chip" data-act="track" data-t="${id}" aria-pressed="${track === id}">${esc(t.vi)}</button>`).join('')}</div>
-    <h3 class="ph3">Trình độ</h3><div class="chips">${LEVELS.map(lv => { return `<button class="chip" data-act="level" data-t="${lv}" aria-pressed="${level === lv}">${lv} · ${track === 'ielts' ? IELTS_BAND[lv] : LEVEL_VI[lv]}</button>`; }).join('')}</div>
+    <div class="lvline" data-act="lvinfo" role="button"><span class="lvbig sm">${S.cefr}</span><span>Trình độ được công nhận (cấp độ nhân vật). Muốn lên cấp phải qua bài test. <b>Xem tiến độ</b></span></div><h3 class="ph3">Trình độ đang học (chọn tự do để luyện)</h3><div class="chips">${LEVELS.map(lv => { return `<button class="chip" data-act="level" data-t="${lv}" aria-pressed="${level === lv}">${lv} · ${track === 'ielts' ? IELTS_BAND[lv] : LEVEL_VI[lv]}</button>`; }).join('')}</div>
     ${track !== 'general' && !TRACK_WORDS[track][level] ? `<p class="note">Từ vựng chuyên ngành bắt đầu từ A2. Ở ${level}, câu hỏi chủ yếu là giao tiếp chung, có xen vài từ chuyên ngành dễ.</p>` : ''}
     <div class="row-btns"><button class="btn sm" data-act="tests">Trung tâm thi</button><button class="btn ghost sm" data-act="t-place">Kiểm tra trình độ</button>${track === 'ielts' ? '<button class="btn ghost sm" data-act="roadmap">Lộ trình IELTS</button>' : ''}</div><p class="note">Câu hỏi khi tưới cây, cho ăn, câu cá đều lấy từ chuyên ngành và trình độ bạn chọn. Bạn đổi trình độ bất cứ lúc nào. Bài kiểm tra tổng thể mỗi tuần sẽ tự nâng trình độ khi bạn tiến bộ. Thi ở trường (SCHOOL) với Cô Lan để nhận thưởng ngọc và kim cương.</p>
     <h3 class="ph3">Từ vựng ${level}</h3><ul class="words">${words.map(w => { const r = S.m[w.key], m = r ? r.m : 0; return `<li class="${r && r.w ? 'weak' : ''}">${sayBtn(w.en)}<span class="en">${esc(w.en)}</span><span class="vi">${r ? esc(w.vi) : '<i>chưa gặp</i>'}</span><span class="stars">${[1,2,3,4,5].map(k => `<i class="${k <= m ? 'on' : ''}"></i>`).join('')}</span></li>`; }).join('')}</ul>`, {label: 'Học tập', wide: true});
@@ -667,7 +666,7 @@ function openWardrobe() {
   const items = FASHION.filter(f => f.slot === WARD && S.owned.includes(f.id));
   const colorKey = {top: 'topC', bottom: 'bottomC'}[WARD];
   const optional = !['top', 'bottom'].includes(WARD), cur = WARD === 'face' ? L.face2 : L[WARD];
-  openModal(`<h2 class="ptitle">Tủ đồ</h2><div class="ward"><div class="ward-prev"><div class="stagebox"><img class="pv hero" src="${portraitSVG(L, {full: true, hand: true})}" alt="Nhân vật của bạn">${L.pet ? `<img class="petmini" src="${svgURL(petSVG(L.pet, (L.lv || {})[L.pet] || 0, 0))}" alt="">` : ''}</div><button class="btn ghost sm" data-act="creator">Sửa ngoại hình</button></div><div class="ward-main">
+  openModal(`<h2 class="ptitle">Tủ đồ</h2><div class="ward"><div class="ward-prev"><div class="stagebox"><img class="pv hero" src="${portraitSVG(L, {full: true, hand: true})}" alt="Nhân vật của bạn">${L.pet ? `<img class="petmini" src="${svgURL(petSVG(L.pet, (L.lv || {})[L.pet] || 0, 0))}" alt="">` : ''}</div><button class="btn ghost sm" data-act="creator">Sửa ngoại hình</button><button class="btn sm" data-act="salon">Tiệm tóc</button></div><div class="ward-main">
     <div class="seg">${SLOTS.map(([k, l]) => `<button class="segb" data-act="ward-slot" data-t="${k}" aria-pressed="${WARD === k}">${l}</button>`).join('')}</div>
     <div class="cards">${optional ? `<button class="card ${!cur ? 'on' : ''}" data-act="wear" data-id=""><span class="pv none">Trống</span><b>Bỏ ra</b><small>không dùng</small></button>` : ''}${items.map(f => itemCard(f, L, 'wear', cur === f.id ? 'aria-pressed="true"' : '')).join('') || '<p class="empty">Chưa có món nào. Mua ở CLOTHES SHOP trong Làng.</p>'}</div>
     ${colorKey ? `<h3 class="ph3">Đổi màu</h3><div class="swatches">${CLOTH_COLS.map(c => `<button class="sw" style="background:${c}" data-act="dye" data-c="${c}" aria-pressed="${L[colorKey] === c}" aria-label="${c}"></button>`).join('')}</div>` : ''}
@@ -681,7 +680,7 @@ async function openBoard() {
     try { const snap = await Store.db.collection('players').orderBy('lvl', 'desc').limit(20).get(); rows = snap.docs.map(d => Object.assign({id: d.id}, d.data())); } catch (e) { console.warn(e); }
   }
   openModal(`<h2 class="ptitle">Bảng tin làng</h2><p class="psub">Những người chơi chăm chỉ nhất. Bảng xếp hạng chung của mọi người chơi trên web và app.</p>
-    ${rows.length ? `<ol class="board">${rows.map((r, i) => `<li class="${r.id === Store.uid ? 'me' : ''}"><span class="rank">${i + 1}</span><img class="portrait xs" ${pimg(fullLook(r.look))} alt=""><span class="ri-main"><b class="pname"></b><small>${esc((TRACKS[r.track] || TRACKS.general).vi)} · ${esc(r.level || 'A1')} · thuộc ${r.words || 0} từ</small></span><span class="lv">Cấp ${r.lvl}</span></li>`).join('')}</ol>` : `<p class="empty">${Store.mode === 'cloud' ? 'Chưa có ai trên bảng. Chơi thêm một lúc rồi quay lại nhé.' : 'Bảng xếp hạng cần đăng nhập Claude. Bạn đang chơi chế độ lưu trên máy.'}</p>`}`, {label: 'Bảng tin'});
+    ${rows.length ? `<ol class="board">${rows.map((r, i) => `<li class="${r.id === Store.uid ? 'me' : ''}"><span class="rank">${i + 1}</span><img class="portrait xs" ${pimg(fullLook(r.look))} alt=""><span class="ri-main"><b class="pname"></b><small>${esc((TRACKS[r.track] || TRACKS.general).vi)} · ${esc(r.level || 'A1')} · thuộc ${r.words || 0} từ</small></span><span class="lv">${LEVELS[Math.min(4, Math.max(0, (r.lvl || 1) - 1))]}</span></li>`).join('')}</ol>` : `<p class="empty">${Store.mode === 'cloud' ? 'Chưa có ai trên bảng. Chơi thêm một lúc rồi quay lại nhé.' : 'Bảng xếp hạng cần đăng nhập Claude. Bạn đang chơi chế độ lưu trên máy.'}</p>`}`, {label: 'Bảng tin'});
   document.querySelectorAll('.board .pname').forEach((el, i) => { el.textContent = rows[i].name || 'Người chơi'; });
 }
 function openSettings() {
@@ -738,7 +737,7 @@ function renderCreator() {
   let body = '';
   if (CC.tab === 'body') body = `<span class="lbl">Màu da</span><div class="swatches">${SKIN_TONES.map((t, i) => `<button class="sw" style="background:${t.b}" data-act="cc" data-k="skin" data-v="${i}" aria-pressed="${L.skin === i}" aria-label="Màu da ${i + 1}"></button>`).join('')}</div>
     <span class="lbl">Kiểu áo</span>${chips('top', ['top_tee', 'top_dress'], v => FASH[v].vi)}<span class="lbl">Màu áo</span>${sw('topC', CLOTH_COLS)}<span class="lbl">Màu quần</span>${sw('bottomC', CLOTH_COLS)}`;
-  if (CC.tab === 'hair') body = `<span class="lbl">Tóc phía trước</span>${chips('hairF', HAIR_F, v => HAIR_F_VI[v])}<span class="lbl">Tóc phía sau</span>${chips('hairB', HAIR_B, v => HAIR_B_VI[v])}<span class="lbl">Màu tóc</span>${sw('hairC', HAIR_COLS)}`;
+  if (CC.tab === 'hair') body = `<span class="lbl">Tóc phía trước</span>${chips('hairF', Object.keys(NEMO.hairF).filter(v => v !== 'none').concat('none').filter(ownsHairF), v => HAIR_F_VI[v] || (HAIR_ITEMS.find(h => h.f === v) || {}).vi || v)}<span class="lbl">Tóc phía sau</span>${chips('hairB', [null, ...Object.keys(NEMO.hairB)].filter(ownsHairB), v => HAIR_B_VI[v] || (HAIR_ITEMS.find(h => h.b === v) || {}).vi || v)}<span class="lbl">Màu tóc</span>${sw('hairC', [...HAIR_COLS, ...ownedDyes()])}<p class="note">Kiểu tóc và màu nhuộm đẹp, hiếm có ở <b>Tiệm tóc</b> trong Làng. <button class="linkbtn" data-act="salon">Đến tiệm tóc</button></p>`;
   if (CC.tab === 'face') body = `<span class="lbl">Biểu cảm</span>${chips('face', FACES, v => FACE_VI[v])}<span class="lbl">Râu</span>${chips('beard', [null, 'short', 'middle', 'long'], v => ({null: 'Không', short: 'Ria mép', middle: 'Râu quai nón', long: 'Râu dài'})[v])}`;
   if (CC.tab === 'study') body = `<span class="lbl">Trình độ tiếng Anh hiện tại</span><div class="chips">${['A1','A2','B1','B2'].map(lv => `<button class="chip" data-act="cc-lv" data-v="${lv}" aria-pressed="${CC.level === lv}">${lv} · ${LEVEL_VI[lv]}</button>`).join('')}</div>
     <span class="lbl">Chuyên ngành muốn học</span><div class="chips">${Object.entries(TRACKS).map(([id, t]) => `<button class="chip" data-act="cc-tr" data-v="${id}" aria-pressed="${CC.track === id}">${esc(t.vi)}</button>`).join('')}</div>`;
@@ -758,6 +757,7 @@ function ccDone() {
   const first = CC.first; S.created = true;
   if (CC.look.top === 'top_dress' && !S.owned.includes('top_dress')) S.owned.push('top_dress');
   if (first) { S.study.level = CC.level; S.study.track = CC.track; S.study.unlocked = LEVELS.slice(0, LEVELS.indexOf(CC.level) + 1); S.orders = [genOrder(['carrot']), genOrder(['radish', 'carrot']), genOrder(['egg'])]; }
-  CC = null; closeModal(); saveNow(true);
+  const picked = CC.level; CC = null; closeModal(); saveNow(true);
+  if (first && picked !== 'A1') setTimeout(() => openModal(`<h2 class="ptitle">Được công nhận ${picked}?</h2><p class="psub">Cấp độ của nhân vật chính là trình độ tiếng Anh. Bạn bắt đầu ở <b>A1</b>. Làm bài kiểm tra xếp lớp 24 câu để được công nhận ngay ${picked} và mở khoá đồ, cây trồng, vật nuôi theo trình độ.</p><div class="row-btns"><button class="btn gold" data-act="t-place">Làm bài xếp lớp</button><button class="btn ghost" data-act="close">Để sau</button></div>`, {label: 'Xếp lớp'}), 4800);
   if (first) { speak(`Hello, ${S.name}! Welcome to the farm.`, true); toast(`Chào <b>${esc(S.name)}</b>! Cây cà rốt có ngôi sao đã chín, chạm vào để thu hoạch.`, 4500); }
 }
