@@ -504,7 +504,7 @@ function itemCard(f, L, act, extra = '') {
   return `<button class="card r${f.rar || 0}" data-act="${act}" data-id="${f.id}" ${extra}><span class="rar">${RARITY[f.rar || 0].vi}</span>${lv ? `<span class="plus t${lv}">+${lv}</span>` : ''}${img}<b>${act === 'shop-pick' && !own ? '???' : esc(f.en)}</b><small>${esc(f.vi)}</small>${act === 'shop-pick' ? `<span class="price">${own ? 'Đã có' : lock ? needTag(f.lvl) : priceTag(f)}</span>` : ''}</button>`;
 }
 function shopHTML() {
-  const L = fullLook(S.look), list = FASHION.filter(f => f.slot === SHOPTAB && (f.price > 0 || f.chest));
+  const L = fullLook(S.look), list = FASHION.filter(f => f.slot === SHOPTAB && (f.price > 0 || f.chest)).sort((a, b) => (a.rar || 0) - (b.rar || 0) || (a.cur === 'gem') - (b.cur === 'gem') || a.price - b.price);
   return `<p class="note">Chọn món muốn mua. Cô Mai sẽ hỏi tên món đó bằng tiếng Anh, trả lời đúng mới mua được. Đồ có biểu tượng kim cương thì trả bằng kim cương. Đồ <b>Thần thoại</b> cực hiếm: có món giá hàng trăm kim cương, có món chỉ rơi ra từ Rương may mắn.</p><div class="row-btns"><button class="btn gold sm" data-act="farmshop" data-t="chest">Rương may mắn</button></div>
     <div class="seg">${SLOTS.map(([k, l]) => `<button class="segb" data-act="shop-tab" data-t="${k}" aria-pressed="${SHOPTAB === k}">${l}</button>`).join('')}</div>
     <div class="cards">${list.map(f => itemCard(f, L, 'shop-pick', S.owned.includes(f.id) || (f.lvl || 1) > S.lvl || !canAfford(f) ? 'disabled' : '')).join('')}</div>`;
@@ -537,7 +537,7 @@ function forgeHTML() {
   const slots = SLOTS.filter(([k]) => UPGRADABLE(k));
   if (!FORGE || !FASH[FORGE.id]) { const first = all.find(f => own(f.id)) || all[0]; FORGE = {id: first.id, tab: first.slot, quiz: null, res: null}; }
   if (!FORGE.tab) FORGE.tab = FASH[FORGE.id].slot;
-  const list = all.filter(f => f.slot === FORGE.tab), mine = all.filter(f => own(f.id));
+  const list = all.filter(f => f.slot === FORGE.tab).sort((a, b) => (a.rar || 0) - (b.rar || 0) || (a.cur === 'gem') - (b.cur === 'gem') || a.price - b.price), mine = all.filter(f => own(f.id));
   const f = FASH[FORGE.id], have = own(f.id), lv = have ? ((S.look.lv || {})[f.id] || 0) : 0, nx = lv + 1, cost = UP_COST[nx];
   const look = (m, l) => { const x = Object.assign({}, L, slotPatch(m), {lv: Object.assign({}, L.lv, {[m.id]: l})}); if (FACE_SLOTS.includes(m.slot)) Object.assign(x, {back: null, hand: null}); return x; };
   const img = (m, l, cls) => m.slot === 'pet' ? `<img class="pv ${cls} pet" src="${svgURL(petSVG(m.id, l, 0))}" alt="">` : m.slot === 'aura' ? `<span class="pv ${cls} aura" style="--c:${l ? (TIER[l] === 'rainbow' ? '#FFB020' : TIER[l]) : m.col}"></span>` : `<img class="pv ${cls}" src="${portraitSVG(look(m, l), {full: ['back', 'hand', 'shoes', 'bag', 'neck'].includes(m.slot), hand: true})}" alt="">`;

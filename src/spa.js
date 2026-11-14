@@ -92,3 +92,18 @@ function spaReset(k) {
   if (k === 'skin' && S.look.skin >= BASE_SKINS) S.look.skin = 0;
   markDirty(); renderHUD(); spaRefresh();
 }
+SPA_ITEMS.push(
+  {id:'sp_doll', k:'shape', v:'doll', en:'doll face', vi:'Mặt búp bê', price:35, cur:'gem', rar:3, lvl:12, hot:1},
+  {id:'sp_elf', k:'shape', v:'elf', en:'elf face', vi:'Mặt tiên tộc tai nhọn', price:160, cur:'gem', rar:4, lvl:20},
+  {id:'sp_fairy', k:'shape', v:'fairy', en:'fairy face', vi:'Mặt tiên nữ', price:0, rar:4, chest:1},
+  {id:'se_starry', k:'eyes', v:'starry', en:'starry eyes', vi:'Mắt ngôi sao', price:35, cur:'gem', rar:3, lvl:12, hot:1},
+  {id:'se_dragon', k:'eyes', v:'dragon', en:'dragon eyes', vi:'Mắt rồng vàng', price:200, cur:'gem', rar:4, lvl:20},
+  {id:'sf_sparkles', k:'feat', v:'sparkles', en:'glitter lashes', vi:'Mi kim tuyến', price:30, cur:'gem', rar:3, lvl:10},
+  {id:'sf_moonmark', k:'feat', v:'moonmark', en:'moon mark', vi:'Ấn trăng trên trán', price:40, cur:'gem', rar:3, lvl:12},
+  {id:'sf_aurora', k:'feat', v:'aurora', en:'aurora blush', vi:'Má cực quang', price:180, cur:'gem', rar:4, lvl:20, hot:1},
+  {id:'sf_crystal', k:'feat', v:'crystal', en:'crystal gems', vi:'Pha lê điểm mặt', price:0, rar:4, chest:1},
+  {id:'sk_honey', k:'skin', v:'honey', en:'honey glow skin', vi:'Da mật ong ánh kim', price:12, cur:'gem', rar:2, lvl:6},
+  {id:'sk_mermaid', k:'skin', v:'mermaid', en:'mermaid skin', vi:'Da tiên cá óng ánh', price:220, cur:'gem', rar:4, lvl:22}
+);
+SPA_ITEMS.sort((a, b) => SPA_TABS.findIndex(t => t[0] === a.k) - SPA_TABS.findIndex(t => t[0] === b.k) || a.rar - b.rar);
+for (const x of SPA_ITEMS) SPA[x.id] = x;

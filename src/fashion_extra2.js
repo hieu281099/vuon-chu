@@ -108,7 +108,7 @@ function extraFace2(id, c, lv) {
     case 'face_butterfly': return `<path d="M72.5 82Q60 60 34 66Q26 84 40 94Q58 98 72.5 86Q87 98 105 94Q119 84 111 66Q85 60 72.5 82Z" fill="${t}"/><ellipse cx="52" cy="80" rx="8" ry="6" fill="#1F1B24" opacity=".75"/><ellipse cx="93" cy="80" rx="8" ry="6" fill="#1F1B24" opacity=".75"/>${starDots([[36, 70, 3], [109, 70, 3]], '#FFC83D')}`;
     case 'face_cyber': return `<path d="M26 72H119L113 92H32Z" fill="${t}" opacity=".8"/><path d="M32 80H113" stroke="#FFFFFF" stroke-width="2" opacity=".8"/><path d="M26 72H119" stroke="#1F1B24" stroke-width="3"/>`;
   }
-  return '';
+  return extraFace3(id, c, lv);
 }
 function extraBack2(id, c, lv, front, pair) {
   const t = tierFill(lv, c), d = shade(c, -0.2);
@@ -133,7 +133,7 @@ function extraHand2(id, c, lv) {
     case 'hand_starstaff': return `<path d="M6 30L18 -40" stroke="#B9BFCC" stroke-width="4" stroke-linecap="round"/>${starDots([[19, -50, 13]], lv ? t : c)}<circle cx="19" cy="-50" r="4" fill="#FFFFFF"/>`;
     case 'hand_trident': return `<path d="M6 32L20 -50" stroke="${lv ? t : c}" stroke-width="4" stroke-linecap="round"/><path d="M8 -56L20 -50L30 -42M14 -66L20 -50M20 -50L34 -58" stroke="${lv ? t : c}" stroke-width="4" stroke-linecap="round" fill="none"/><path d="M6 -60l2-6 2 6zM12 -70l2-6 2 6zM32 -62l2-6 2 6z" fill="${lv ? t : c}"/>`;
   }
-  return '';
+  return extraHand3(id, c, lv);
 }
 // pets with their own body shapes (called from petSVG for ids it does not draw itself)
 function petBody2(id, c, hop, eyes) {

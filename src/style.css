@@ -548,3 +548,11 @@ textarea.field{resize:vertical;line-height:1.5}
 .tcell.cur{border-color:var(--violet);background:#f3efff}.tcell.done{background:#f0fdf8}
 .forge-info .warn{color:var(--bad);font-weight:800}
 @media (max-width:600px){.fgrid{grid-template-columns:repeat(auto-fill,minmax(76px,1fr));max-height:240px}.pv.sm{width:54px;height:54px}.tierstrip{grid-template-columns:repeat(7,64px)}}
+
+/* ---------- tabs wrap into rows instead of a horizontal scroller ---------- */
+.seg{flex-wrap:wrap;overflow:visible}
+.segb{flex:1 1 auto;text-align:center}
+@media (max-width:600px){
+  .seg{flex-wrap:wrap;overflow:visible;margin:4px 0 10px;gap:4px}
+  .segb{flex:1 1 calc(25% - 4px);min-width:0;padding:7px 4px;font-size:12px;white-space:normal;line-height:1.2}
+}

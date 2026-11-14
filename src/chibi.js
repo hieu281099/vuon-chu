@@ -165,7 +165,7 @@ function legSVG(L, x, dy, skin) {
   s += `<rect x="${x}" y="${y + 15}" width="13" height="3" fill="#FFFFFF"/><path d="M${x} ${y + 18}H${x + 13}V${y + 21.5}C${x + 13} ${y + 25.1} ${x + 10.1} ${y + 28} ${x + 6.5} ${y + 28}S${x} ${y + 25.1} ${x} ${y + 21.5}Z" fill="${sh}"/>`;
   return s;
 }
-function skirtSVG(L) { if (DRESSES.includes(L.top)) return ''; const k = L.bottomC;
+function skirtSVG(L) { if (DRESSES.includes(L.top)) return ''; if (BOTTOM_ART[L.bottom]) return BOTTOM_ART[L.bottom](L); const k = L.bottomC;
   if (L.bottom === 'bot_pleated') return `<path d="M55 126H90L96 143H49Z" fill="${k}"/><path d="M60 127L57 143M66 127L65 143M72.5 127V143M79 127L80 143M85 127L88 143" stroke="${shade(k, -0.25)}" stroke-width="1.3"/>`;
   if (L.bottom === 'bot_tutu') return `<path d="M55 126H90Q108 134 100 140Q96 146 88 141Q80 147 72.5 142Q65 147 57 141Q49 146 45 140Q37 134 55 126Z" fill="${k}"/><path d="M52 132Q72.5 138 93 132" stroke="#FFFFFF" stroke-width="2" opacity=".6" fill="none"/>`;
   return L.bottom === 'bot_skirt' ? `<path d="M55 126H90L95 141C95.5 142.6 94.3 144 92.6 144H52.4C50.7 144 49.5 142.6 50 141Z" fill="${L.bottomC}"/>` : ''; }
@@ -177,7 +177,7 @@ function armSVG(L, x, rot, skin, hand) {
 }
 function headSVG(L, skin, back) {
   const shaped = L.shape && FACE_SHAPES[L.shape];
-  const head = shaped ? SHAPE_EARS(skin) + FACE_SHAPES[L.shape](skin.b) : `<rect x="11" y="76" width="123" height="29" rx="14.5" fill="${skin.b}"/><rect x="19" y="83" width="107" height="15" rx="7.5" fill="${skin.d}"/><rect x="25" y="34" width="95" height="83" rx="30" fill="${skin.b}"/>`;
+  const head = shaped ? (FACE_EARS[L.shape] || SHAPE_EARS)(skin) + FACE_SHAPES[L.shape](skin.b) : `<rect x="11" y="76" width="123" height="29" rx="14.5" fill="${skin.b}"/><rect x="19" y="83" width="107" height="15" rx="7.5" fill="${skin.d}"/><rect x="25" y="34" width="95" height="83" rx="30" fill="${skin.b}"/>`;
   if (back) return head + (L.hairF !== 'none' ? `<rect x="23" y="32" width="99" height="87" rx="31" fill="${L.hairC}"/>` : '');
   return head + `<circle cx="45" cy="99" r="10" fill="${skin.c}"/><circle cx="100" cy="99" r="10" fill="${skin.c}"/>`;
 }

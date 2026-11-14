@@ -77,7 +77,7 @@ function mouthSVG(id, c, lv) {
     case 'mouth_rose': return `<path d="M48 97H92" stroke="#3DBE6C" stroke-width="3" stroke-linecap="round"/><path d="M56 97q4 -6 8 0" fill="#3DBE6C"/><circle cx="96" cy="95" r="8" fill="${t}"/><path d="M96 95m-4 0a4 4 0 1 1 4 4" stroke="${shade(c, -0.3)}" stroke-width="1.6" fill="none"/>`;
     case 'mouth_fire': return `<path d="M78 94Q96 82 118 90Q132 80 140 92Q132 96 140 104Q124 100 118 106Q98 104 78 96Z" fill="url(#hg_fire)"/><path d="M84 95Q100 90 116 94Q104 98 84 96Z" fill="#FFF3B0"/>`;
   }
-  return '';
+  return mouth3(id, c, lv);
 }
 // stickers on the cheeks (45,99) and (100,99) and under the eyes
 function decoSVG(id, c, lv) {
@@ -94,7 +94,7 @@ function decoSVG(id, c, lv) {
     case 'deco_rune': return `<g opacity=".9"><path d="M46 92L50 98L46 104M99 92L95 98L99 104" stroke="${t}" stroke-width="2.4" fill="none" stroke-linecap="round"/><circle cx="72.5" cy="70" r="3.5" fill="${t}"/></g>`;
     case 'deco_galaxy': return both(x => `<ellipse cx="${x}" cy="98" rx="9" ry="6" fill="url(#hg_galaxy)" opacity=".75"/>${STARP(x - 3, 97, 2.2, '#FFFFFF')}<circle cx="${x + 4}" cy="100" r="1" fill="#FFFFFF"/>`);
   }
-  return '';
+  return deco3(id, c, lv);
 }
 // earrings hang from the lobes at (17,101) and (128,101)
 function earSVG(id, c, lv) {
@@ -111,7 +111,7 @@ function earSVG(id, c, lv) {
     case 'ear_moon': return `<path d="M17 102V106" stroke="${t}" stroke-width="1.4"/><path d="M21 108A7 7 0 1 1 21 120A5 5 0 1 0 21 108Z" fill="${t}"/><path d="M128 102V106" stroke="${t}" stroke-width="1.4"/>${STARP(128, 112, 6, t)}`;
     case 'ear_dragon': return both(x => `<path d="M${x} 102C${x + 8} 106 ${x - 8} 112 ${x} 116C${x + 8} 120 ${x - 6} 126 ${x} 128" stroke="${t}" stroke-width="2.6" fill="none" stroke-linecap="round"/><circle cx="${x}" cy="102" r="2.4" fill="#FFC83D"/><circle cx="${x}" cy="129" r="2.4" fill="#FF3552"/>`);
   }
-  return '';
+  return ear3(id, c, lv);
 }
 // necklaces sit just under the head (y 115..128) on the chest (x 55..90)
 function neckSVG(id, c, lv) {
@@ -128,7 +128,7 @@ function neckSVG(id, c, lv) {
     case 'neck_diamond': return `<path d="M58 113Q72.5 126 87 113" stroke="#E6EEF8" stroke-width="1.6" fill="none"/><path d="M72.5 119L78 124L72.5 132L67 124Z" fill="${t}" stroke="#FFFFFF" stroke-width="1"/><path d="M67 124H78" stroke="#FFFFFF" stroke-width=".8" opacity=".7"/>`;
     case 'neck_amulet': return `<path d="M58 113Q72.5 126 87 113" stroke="#FFC83D" stroke-width="2" fill="none"/><circle cx="72.5" cy="126" r="7" fill="url(#hg_gold)"/><circle cx="72.5" cy="126" r="4" fill="${t}"/><path d="M68 126Q72.5 120 77 126Q72.5 132 68 126" stroke="#FFF3B0" stroke-width="1" fill="none"/>`;
   }
-  return '';
+  return neck3(id, c, lv);
 }
 // shoes replace the default shoe at the bottom of each leg (leg x .. x+13, foot y+18 .. y+28)
 function shoeSVG(id, c, lv, x, y) {
@@ -145,7 +145,7 @@ function shoeSVG(id, c, lv, x, y) {
     case 'shoes_winged': return foot(17) + sole + `<path d="M${x + 13} ${y + 21}Q${x + 22} ${y + 12} ${x + 24} ${y + 20}Q${x + 20} ${y + 21} ${x + 22} ${y + 25}Q${x + 17} ${y + 23} ${x + 13} ${y + 25}Z" fill="#FFFFFF" stroke="#D9DDF0" stroke-width=".8"/>`;
     case 'shoes_cloud': return [[0, 26, 5], [6.5, 24, 6], [13, 26, 5], [3, 21, 4], [10, 21, 4]].map(([dx, dy, r]) => `<circle cx="${x + dx}" cy="${y + dy}" r="${r}" fill="${t}" stroke="#E2E6EF" stroke-width=".8"/>`).join('') + STARP(x + 6.5, y + 31, 2.4, '#FFE48A');
   }
-  return '';
+  return shoe3(id, c, lv, x, y);
 }
 // bags: across the body, at the waist, or hanging from the left hand (around 50, 141; it swings with that arm)
 const HANDBAGS = ['bag_tote', 'bag_luxury', 'bag_galaxy', 'bag_strawberry'];
@@ -165,5 +165,5 @@ function bagSVG(id, c, lv) {
     case 'bag_luxury': return `<path d="M44 138Q50 128 56 138" stroke="#FFC83D" stroke-width="2" fill="none"/><rect x="39" y="138" width="22" height="17" rx="4" fill="${t}"/><path d="M39 144H61M39 149H61M45 138V155M51 138V155M57 138V155" stroke="${shade(c, 0.15)}" stroke-width=".8" opacity=".6"/><rect x="47" y="141" width="6" height="4" rx="1" fill="#FFC83D"/>`;
     case 'bag_galaxy': return `<path d="M44 138Q50 126 56 138" stroke="#FFE48A" stroke-width="2" fill="none"/><rect x="38" y="138" width="24" height="18" rx="5" fill="url(#hg_galaxy)"/>${STARP(45, 145, 2.2, '#FFFFFF')}${STARP(56, 150, 1.8, '#FFFFFF')}<rect x="47" y="139" width="6" height="4" rx="1" fill="#FFE48A"/>`;
   }
-  return '';
+  return bag3(id, c, lv);
 }

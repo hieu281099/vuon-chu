@@ -98,7 +98,7 @@ const salPrice = h => h.chest ? 'Chỉ có trong rương' : (h.cur === 'gem' ? g
 const salAfford = h => !h.chest && (h.cur === 'gem' ? S.di >= h.price : S.coins >= h.price);
 function salonHTML() {
   if (SAL.buy) return salonBuyHTML();
-  const L = fullLook(S.look), list = HAIR_ITEMS.filter(h => hairKind(h) === SAL.tab), own = S.hair || [];
+  const L = fullLook(S.look), list = HAIR_ITEMS.filter(h => hairKind(h) === SAL.tab).sort((a, b) => (a.rar || 0) - (b.rar || 0) || (a.cur === 'gem') - (b.cur === 'gem') || a.price - b.price), own = S.hair || [];
   const card = h => { const has = own.includes(h.id), lock = (h.lvl || 1) > S.lvl, worn = (h.f && L.hairF === h.f) || (h.b && L.hairB === h.b && !h.f) || (h.c && L.hairC === h.c);
     return `<button class="card r${h.rar}" data-act="${has ? 'hair-wear' : 'hair-pick'}" data-id="${h.id}" ${!has && (lock || !salAfford(h)) ? 'disabled' : ''}><span class="rar">${RARITY[h.rar].vi}</span>${h.hot ? '<span class="hot">HOT</span>' : ''}<img class="pv" src="${hairPreview(h, L)}" alt=""><b>${has ? esc(h.en) : '???'}</b><small>${esc(h.vi)}</small><span class="price">${has ? (worn ? 'Đang dùng' : 'Đã có · bấm để dùng') : lock ? needTag(h.lvl) : salPrice(h)}</span></button>`; };
   return `<p class="note">Kiểu tóc và màu nhuộm đẹp chỉ có ở tiệm tóc. Chị Ngân sẽ hỏi tên kiểu tóc bằng tiếng Anh, trả lời đúng mới làm được. Tóc <b>Thần thoại</b> có món giá hàng trăm kim cương, có món chỉ rơi ra từ Rương may mắn.</p>

@@ -34,8 +34,12 @@ function featsSVG(L, skin, stage) {
     if (fs.includes('nose')) s += `<path d="M72.5 82V90Q72.5 92.5 75.5 92" stroke="${skin.d}" stroke-width="2" fill="none" stroke-linecap="round"/><ellipse cx="70.5" cy="86" rx="1.2" ry="3" fill="#FFFFFF" opacity=".5"/>`;
     if (fs.includes('dimples')) s += `<path d="M62 97q-2 2 0 4M83 97q2 2 0 4" stroke="${skin.d}" stroke-width="1.8" fill="none" stroke-linecap="round"/>`;
     if (fs.includes('mole')) s += `<circle cx="84" cy="99" r="1.4" fill="#3B2418"/>`;
+    s += FEAT_EXTRA(fs, skin);
     if (fs.includes('lashes')) s += `<path d="M51 79l-4 -2M51 82l-4.5 0M94 79l4 -2M94 82l4.5 0" stroke="#1F1B24" stroke-width="1.8" stroke-linecap="round"/>`;
   }
+  // forehead marks sit on top of the fringe so they stay visible
+  if (stage === 'hair' && fs.includes('moonmark')) s += `<path d="M76 62A6.5 6.5 0 1 0 76 74A5 5 0 1 1 76 62Z" fill="#FFE48A" stroke="#FFFFFF" stroke-width=".8"/>`;
+  if (stage === 'hair' && fs.includes('crystal')) s += `<path d="M72.5 62L76.5 68L72.5 76L68.5 68Z" fill="#B9E6FF" stroke="#FFFFFF" stroke-width="1"/>`;
   if (stage === 'hair' && fs.includes('brows')) s += `<path d="M51 71Q58 67 64 70M81 70Q87 67 94 71" stroke="#3B2418" stroke-width="3" fill="none" stroke-linecap="round"/>`;
   return s;
 }
@@ -51,3 +55,29 @@ const SPA_SKINS = {
 const BASE_SKINS = SKIN_TONES.length;
 for (const k of Object.keys(SPA_SKINS)) SKIN_TONES.push(SPA_SKINS[k]);
 const skinIndex = id => SKIN_TONES.findIndex(t => t.id === id);
+
+/* ---------- legendary / mythic spa looks ---------- */
+Object.assign(FACE_SHAPES, {
+  doll: f => `<path d="M24 64C24 46 40 33 58 33H87C105 33 121 46 121 64V90C121 108 98 119 72.5 119C47 119 24 108 24 90Z" fill="${f}"/>`,
+  elf: f => FACE_SHAPES.vline(f),
+  fairy: f => FACE_SHAPES.heart(f) + `<circle cx="40" cy="104" r="1.6" fill="#FFFFFF"/><circle cx="105" cy="104" r="1.6" fill="#FFFFFF"/>`
+});
+// pointed elf ears for the mythic shapes
+const ELF_EARS = s => `<path d="M30 80L2 62L18 96Z" fill="${s.b}"/><path d="M115 80L143 62L127 96Z" fill="${s.b}"/><path d="M26 82L10 70L19 92Z" fill="${s.d}"/><path d="M119 82L135 70L126 92Z" fill="${s.d}"/>`;
+const FACE_EARS = {elf: ELF_EARS, fairy: ELF_EARS};
+Object.assign(SPA_EYES, {
+  starry: () => EYE_PAIR(x => `<ellipse cx="${x}" cy="82" rx="6.5" ry="8" fill="#1F1B24"/>${starDots([[x, 83, 4.6]], '#FFE48A')}<circle cx="${x - 2.6}" cy="78" r="1.6" fill="#FFFFFF"/>`),
+  dragon: () => EYE_PAIR(x => `<path d="M${x - 8} 82Q${x} 72 ${x + 8} 82Q${x} 92 ${x - 8} 82Z" fill="url(#hg_gold)" stroke="#7A2E0E" stroke-width="1.6"/><ellipse cx="${x}" cy="82" rx="1.8" ry="6" fill="#1F1B24"/><circle cx="${x - 3}" cy="79" r="1.2" fill="#FFFFFF"/>`)
+});
+const FEAT_EXTRA = (fs, skin) => {
+  let s = '';
+  if (fs.includes('sparkles')) s += `<path d="M51 79l-4 -2M51 82l-4.5 0M94 79l4 -2M94 82l4.5 0" stroke="#FFC83D" stroke-width="1.8" stroke-linecap="round"/><circle cx="46" cy="76" r="1.2" fill="#FFE48A"/><circle cx="99" cy="76" r="1.2" fill="#FFE48A"/>`;
+  if (fs.includes('aurora')) s += `<ellipse cx="45" cy="99" rx="11" ry="6" fill="url(#hg_aurora)" opacity=".6"/><ellipse cx="100" cy="99" rx="11" ry="6" fill="url(#hg_aurora)" opacity=".6"/>`;
+  if (fs.includes('crystal')) s += `<path d="M44 104l2 3-2 3-2-3zM101 104l2 3-2 3-2-3z" fill="#B9E6FF"/>`;
+  return s;
+};
+Object.assign(SPA_SKINS, {
+  honey: {id: 'honey', b: '#E8B27A', d: '#D3955A', c: '#F08F70'},
+  mermaid: {id: 'mermaid', b: '#D6F4FF', d: '#B2E2F2', c: '#8EC9FF'}
+});
+SKIN_TONES.push(SPA_SKINS.honey, SPA_SKINS.mermaid);
