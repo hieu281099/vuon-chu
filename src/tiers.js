@@ -20,27 +20,31 @@ const TIER_ANCHOR = {
 };
 const sparkle = (x, y, r, col) => `<path d="M${x} ${y - r}Q${x + r * .18} ${y - r * .18} ${x + r} ${y}Q${x + r * .18} ${y + r * .18} ${x} ${y + r}Q${x - r * .18} ${y + r * .18} ${x - r} ${y}Q${x - r * .18} ${y - r * .18} ${x} ${y - r}Z" fill="${col}"/>`;
 const gem = (x, y, s, col) => `<path d="M${x} ${y - s}L${x + s * .8} ${y}L${x} ${y + s}L${x - s * .8} ${y}Z" fill="${col}" stroke="#FFFFFF" stroke-width="${s * .25}"/>`;
+// only the big statement pieces (wings, held item, hat) get glow discs, rays and orbit rings; small pieces just sparkle,
+// so a fully upgraded outfit stays readable
+const HEAVY_FX = ['back', 'hand', 'hat'];
 function tierBehind(slot, lv) {
-  const A = TIER_ANCHOR[slot]; if (!A || lv < 4) return '';
+  const A = TIER_ANCHOR[slot]; if (!A || lv < 4 || !HEAVY_FX.includes(slot)) return '';
   // items worn on the face must not haze over it: no glow disc or rays there, and hat rays only fan upwards
   const onFace = ['face', 'mouth', 'deco', 'ear'].includes(slot);
-  let s = onFace ? '' : `<circle cx="${A.x}" cy="${A.y}" r="${A.r * 1.05}" fill="${tierSolid(lv)}" opacity="${slot === 'hat' ? .1 : .16}"/><circle cx="${A.x}" cy="${A.y}" r="${A.r * .7}" fill="${tierSolid(lv)}" opacity="${slot === 'hat' ? .08 : .14}"/>`;
+  let s = onFace ? '' : `<circle cx="${A.x}" cy="${A.y}" r="${A.r * 1.05}" fill="${tierSolid(lv)}" opacity="${slot === 'hand' ? .16 : .08}"/><circle cx="${A.x}" cy="${A.y}" r="${A.r * .7}" fill="${tierSolid(lv)}" opacity="${slot === 'hat' ? .08 : .14}"/>`;
   if (lv >= 5 && !onFace) s += Array.from({length: 12}, (_, i) => { const a = i / 12 * Math.PI * 2, a1 = a - 0.07, a2 = a + 0.07, R = A.r * 1.45;
     if (slot === 'hat' && Math.sin(a) > -0.2) return '';
-    return `<path d="M${A.x} ${A.y}L${A.x + Math.cos(a1) * R} ${A.y + Math.sin(a1) * R}L${A.x + Math.cos(a2) * R} ${A.y + Math.sin(a2) * R}Z" fill="#FFE48A" opacity=".35"/>`; }).join('');
-  if (lv >= 6) s += `<circle cx="${A.x}" cy="${A.y}" r="${A.r * 1.22}" fill="none" stroke="url(#rb)" stroke-width="${Math.max(2, A.r * .07)}" opacity=".85"/>`;
+    return `<path d="M${A.x} ${A.y}L${A.x + Math.cos(a1) * R} ${A.y + Math.sin(a1) * R}L${A.x + Math.cos(a2) * R} ${A.y + Math.sin(a2) * R}Z" fill="#FFE48A" opacity=".22"/>`; }).join('');
+  if (lv >= 6 && slot === 'hand') s += `<circle cx="${A.x}" cy="${A.y}" r="${A.r * 1.1}" fill="none" stroke="url(#rb)" stroke-width="2.5" opacity=".75"/>`;
   return s;
 }
 function tierFront(slot, lv, tw) {
   const A = TIER_ANCHOR[slot]; if (!A || !lv) return '';
-  const col = tierSolid(lv), n = [0, 2, 4, 6, 8, 10, 12][lv], sz = Math.max(2.8, A.r * (0.07 + lv * 0.012)), off = ANIM_PH * 0.5;
+  const heavy = HEAVY_FX.includes(slot);
+  const col = tierSolid(lv), n = heavy ? [0, 2, 3, 4, 5, 6, 7][lv] : [0, 1, 1, 2, 2, 3, 3][lv], sz = Math.max(2.8, A.r * (0.07 + lv * 0.012)), off = ANIM_PH * 0.5;
   let s = '';
-  if (lv >= 3) s += `<ellipse cx="${A.x}" cy="${A.y}" rx="${A.r * 1.08}" ry="${A.r * .42}" fill="none" stroke="${col}" stroke-width="${Math.max(1, A.r * .03)}" stroke-dasharray="${A.r * .12} ${A.r * .08}" opacity=".8" transform="rotate(-14 ${A.x} ${A.y})"/>`;
+  if (lv >= 3 && (slot === 'hand' || slot === 'hat')) s += `<ellipse cx="${A.x}" cy="${A.y}" rx="${A.r * 1.08}" ry="${A.r * .42}" fill="none" stroke="${col}" stroke-width="${Math.max(1, A.r * .03)}" stroke-dasharray="${A.r * .12} ${A.r * .08}" opacity=".8" transform="rotate(-14 ${A.x} ${A.y})"/>`;
   for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2 + off + lv; const rr = A.r * (i % 2 ? 0.95 : 1.12);
     s += sparkle(A.x + Math.cos(a) * rr, A.y + Math.sin(a) * rr * 0.75, sz * (i % 3 === 0 ? 1.4 : 1), i % 2 && lv >= 6 ? '#FFFFFF' : col); }
-  if (lv >= 2) for (let i = 0; i < lv - 1; i++) { const a = i / (lv - 1) * Math.PI * 2 + 0.6 - off; const g = [null, null, '#3DDC84', '#4D8BFF', '#B05CFF', '#FFC83D', ['#FF3552', '#FFC83D', '#3DDC84', '#4D8BFF', '#B05CFF'][i % 5]][lv];
+  if (lv >= 2) for (let i = 0; i < (heavy ? lv - 1 : Math.min(2, lv - 1)); i++) { const a = i / (heavy ? lv - 1 : Math.min(2, lv - 1)) * Math.PI * 2 + 0.6 - off; const g = [null, null, '#3DDC84', '#4D8BFF', '#B05CFF', '#FFC83D', ['#FF3552', '#FFC83D', '#3DDC84', '#4D8BFF', '#B05CFF'][i % 5]][lv];
     s += gem(A.x + Math.cos(a) * A.r * 1.05, A.y + Math.sin(a) * A.r * 0.45, A.r * 0.085, g); }
-  if (lv >= 6) s += [[-0.9, -0.85], [0.95, -0.7], [-0.6, 0.9]].map(([dx, dy]) => sparkle(A.x + dx * A.r, A.y + dy * A.r, A.r * 0.2, '#FFFFFF') + sparkle(A.x + dx * A.r, A.y + dy * A.r, A.r * 0.11, 'url(#rb)')).join('');
+  if (lv >= 6 && slot === 'hand') s += [[-0.9, -0.85], [0.95, -0.7], [-0.6, 0.9]].map(([dx, dy]) => sparkle(A.x + dx * A.r, A.y + dy * A.r, A.r * 0.2, '#FFFFFF') + sparkle(A.x + dx * A.r, A.y + dy * A.r, A.r * 0.11, 'url(#rb)')).join('');
   return s;
 }
 // wraps an item's SVG with its tier effects (behind + glow + in front)

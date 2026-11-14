@@ -567,6 +567,18 @@ textarea.field{resize:vertical;line-height:1.5}
 .card .upg{position:absolute;top:8px;right:8px;font-size:9.5px;font-weight:900;color:#fff;background:linear-gradient(90deg,#7c5cff,#ff6fb5);border-radius:99px;padding:1px 6px}
 .card .hot + .upg{top:28px}
 
+/* ---------- minimap ---------- */
+.mm{position:absolute;top:calc(64px + env(safe-area-inset-top,0px));right:max(10px,env(safe-area-inset-right,0px));width:168px;padding:5px 5px 3px;border:1px solid rgba(255,255,255,.25);border-radius:16px;background:var(--glass);backdrop-filter:blur(10px);box-shadow:0 8px 22px rgba(0,0,0,.2);cursor:pointer;display:flex;flex-direction:column;gap:2px}
+.mm[hidden]{display:none}
+.mm canvas{width:100%;height:auto;border-radius:11px;display:block}
+.mm span{color:#fff;font-weight:800;font-size:11px;text-align:center}
+.mm:hover{border-color:#fff}
+.mmbigwrap{background:var(--surface-2);border-radius:18px;padding:8px;margin:8px 0}
+.mmbigwrap canvas{width:100%;height:auto;border-radius:12px;display:block}
+.mmdot{width:16px;height:16px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--line);flex:none}
+@media (max-width:600px){.mm{top:calc(86px + env(safe-area-inset-top,0px));right:8px;width:112px;padding:3px 3px 2px;border-radius:12px}.mm span{font-size:9.5px}}
+@media (max-height:480px) and (orientation:landscape){.mm{top:calc(52px + env(safe-area-inset-top,0px));width:120px}}
+
 </style>
 
 <div id="loading" class="loading">
@@ -598,6 +610,7 @@ textarea.field{resize:vertical;line-height:1.5}
       <span class="pill streak" title="Chuỗi câu đúng liên tiếp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c1 4 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-4-1-6 1-9z" fill="currentColor"/></svg><b id="hud-streak">0</b></span>
     </div>
     <div class="maplabel" id="maplabel"></div>
+    <button class="mm" id="mmwrap" data-act="minimap" aria-label="Bản đồ khu vực" hidden><canvas id="minimap"></canvas><span id="mmname"></span></button>
     <div class="banner" id="banner"></div>
     <div class="fade" id="fade"></div>
     <div class="hint" id="hint" aria-live="polite"></div>
@@ -1571,27 +1584,31 @@ const TIER_ANCHOR = {
 };
 const sparkle = (x, y, r, col) => `<path d="M${x} ${y - r}Q${x + r * .18} ${y - r * .18} ${x + r} ${y}Q${x + r * .18} ${y + r * .18} ${x} ${y + r}Q${x - r * .18} ${y + r * .18} ${x - r} ${y}Q${x - r * .18} ${y - r * .18} ${x} ${y - r}Z" fill="${col}"/>`;
 const gem = (x, y, s, col) => `<path d="M${x} ${y - s}L${x + s * .8} ${y}L${x} ${y + s}L${x - s * .8} ${y}Z" fill="${col}" stroke="#FFFFFF" stroke-width="${s * .25}"/>`;
+// only the big statement pieces (wings, held item, hat) get glow discs, rays and orbit rings; small pieces just sparkle,
+// so a fully upgraded outfit stays readable
+const HEAVY_FX = ['back', 'hand', 'hat'];
 function tierBehind(slot, lv) {
-  const A = TIER_ANCHOR[slot]; if (!A || lv < 4) return '';
+  const A = TIER_ANCHOR[slot]; if (!A || lv < 4 || !HEAVY_FX.includes(slot)) return '';
   // items worn on the face must not haze over it: no glow disc or rays there, and hat rays only fan upwards
   const onFace = ['face', 'mouth', 'deco', 'ear'].includes(slot);
-  let s = onFace ? '' : `<circle cx="${A.x}" cy="${A.y}" r="${A.r * 1.05}" fill="${tierSolid(lv)}" opacity="${slot === 'hat' ? .1 : .16}"/><circle cx="${A.x}" cy="${A.y}" r="${A.r * .7}" fill="${tierSolid(lv)}" opacity="${slot === 'hat' ? .08 : .14}"/>`;
+  let s = onFace ? '' : `<circle cx="${A.x}" cy="${A.y}" r="${A.r * 1.05}" fill="${tierSolid(lv)}" opacity="${slot === 'hand' ? .16 : .08}"/><circle cx="${A.x}" cy="${A.y}" r="${A.r * .7}" fill="${tierSolid(lv)}" opacity="${slot === 'hat' ? .08 : .14}"/>`;
   if (lv >= 5 && !onFace) s += Array.from({length: 12}, (_, i) => { const a = i / 12 * Math.PI * 2, a1 = a - 0.07, a2 = a + 0.07, R = A.r * 1.45;
     if (slot === 'hat' && Math.sin(a) > -0.2) return '';
-    return `<path d="M${A.x} ${A.y}L${A.x + Math.cos(a1) * R} ${A.y + Math.sin(a1) * R}L${A.x + Math.cos(a2) * R} ${A.y + Math.sin(a2) * R}Z" fill="#FFE48A" opacity=".35"/>`; }).join('');
-  if (lv >= 6) s += `<circle cx="${A.x}" cy="${A.y}" r="${A.r * 1.22}" fill="none" stroke="url(#rb)" stroke-width="${Math.max(2, A.r * .07)}" opacity=".85"/>`;
+    return `<path d="M${A.x} ${A.y}L${A.x + Math.cos(a1) * R} ${A.y + Math.sin(a1) * R}L${A.x + Math.cos(a2) * R} ${A.y + Math.sin(a2) * R}Z" fill="#FFE48A" opacity=".22"/>`; }).join('');
+  if (lv >= 6 && slot === 'hand') s += `<circle cx="${A.x}" cy="${A.y}" r="${A.r * 1.1}" fill="none" stroke="url(#rb)" stroke-width="2.5" opacity=".75"/>`;
   return s;
 }
 function tierFront(slot, lv, tw) {
   const A = TIER_ANCHOR[slot]; if (!A || !lv) return '';
-  const col = tierSolid(lv), n = [0, 2, 4, 6, 8, 10, 12][lv], sz = Math.max(2.8, A.r * (0.07 + lv * 0.012)), off = ANIM_PH * 0.5;
+  const heavy = HEAVY_FX.includes(slot);
+  const col = tierSolid(lv), n = heavy ? [0, 2, 3, 4, 5, 6, 7][lv] : [0, 1, 1, 2, 2, 3, 3][lv], sz = Math.max(2.8, A.r * (0.07 + lv * 0.012)), off = ANIM_PH * 0.5;
   let s = '';
-  if (lv >= 3) s += `<ellipse cx="${A.x}" cy="${A.y}" rx="${A.r * 1.08}" ry="${A.r * .42}" fill="none" stroke="${col}" stroke-width="${Math.max(1, A.r * .03)}" stroke-dasharray="${A.r * .12} ${A.r * .08}" opacity=".8" transform="rotate(-14 ${A.x} ${A.y})"/>`;
+  if (lv >= 3 && (slot === 'hand' || slot === 'hat')) s += `<ellipse cx="${A.x}" cy="${A.y}" rx="${A.r * 1.08}" ry="${A.r * .42}" fill="none" stroke="${col}" stroke-width="${Math.max(1, A.r * .03)}" stroke-dasharray="${A.r * .12} ${A.r * .08}" opacity=".8" transform="rotate(-14 ${A.x} ${A.y})"/>`;
   for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2 + off + lv; const rr = A.r * (i % 2 ? 0.95 : 1.12);
     s += sparkle(A.x + Math.cos(a) * rr, A.y + Math.sin(a) * rr * 0.75, sz * (i % 3 === 0 ? 1.4 : 1), i % 2 && lv >= 6 ? '#FFFFFF' : col); }
-  if (lv >= 2) for (let i = 0; i < lv - 1; i++) { const a = i / (lv - 1) * Math.PI * 2 + 0.6 - off; const g = [null, null, '#3DDC84', '#4D8BFF', '#B05CFF', '#FFC83D', ['#FF3552', '#FFC83D', '#3DDC84', '#4D8BFF', '#B05CFF'][i % 5]][lv];
+  if (lv >= 2) for (let i = 0; i < (heavy ? lv - 1 : Math.min(2, lv - 1)); i++) { const a = i / (heavy ? lv - 1 : Math.min(2, lv - 1)) * Math.PI * 2 + 0.6 - off; const g = [null, null, '#3DDC84', '#4D8BFF', '#B05CFF', '#FFC83D', ['#FF3552', '#FFC83D', '#3DDC84', '#4D8BFF', '#B05CFF'][i % 5]][lv];
     s += gem(A.x + Math.cos(a) * A.r * 1.05, A.y + Math.sin(a) * A.r * 0.45, A.r * 0.085, g); }
-  if (lv >= 6) s += [[-0.9, -0.85], [0.95, -0.7], [-0.6, 0.9]].map(([dx, dy]) => sparkle(A.x + dx * A.r, A.y + dy * A.r, A.r * 0.2, '#FFFFFF') + sparkle(A.x + dx * A.r, A.y + dy * A.r, A.r * 0.11, 'url(#rb)')).join('');
+  if (lv >= 6 && slot === 'hand') s += [[-0.9, -0.85], [0.95, -0.7], [-0.6, 0.9]].map(([dx, dy]) => sparkle(A.x + dx * A.r, A.y + dy * A.r, A.r * 0.2, '#FFFFFF') + sparkle(A.x + dx * A.r, A.y + dy * A.r, A.r * 0.11, 'url(#rb)')).join('');
   return s;
 }
 // wraps an item's SVG with its tier effects (behind + glow + in front)
@@ -3260,6 +3277,30 @@ function openChest(kind) {
 }
 function giveKey(n, why) { S.keys = (S.keys || 0) + n; setTimeout(() => toast(`<b>+${n} chìa khoá rương</b>${why ? ' · ' + why : ''}`), 600); markDirty(); }
 
+/* ===================== NPC OUTFITS: every villager wears a unique, fully upgraded set ===================== */
+// _lv: tier for every equipped piece (6 = Cầu vồng, 5 = Hoàng kim). No two NPCs share a hat, wings, held item, aura or pet.
+const NPC_GEAR = {
+  mai:  {hat: 'hat_tiara', face2: 'face_heart', back: 'back_butterfly', hand: 'hand_bouquet', aura: 'aura_sakura', pet: 'pet_kitty', neck: 'neck_pearl', ear: 'ear_pearl', shoes: 'shoes_glass', bag: 'bag_luxury', top: 'top_idol', topC: '#FF6FB5'},
+  ba:   {hat: 'hat_cowboy', face2: 'face_aviator', back: 'back_teddy', hand: 'hand_lantern', aura: 'aura_leaves', pet: 'pet_corgi', neck: 'neck_gold', shoes: 'shoes_boots', bag: 'bag_belt', mouth: 'mouth_pocky', _lv: 5},
+  tu:   {hat: 'hat_mushroom', face2: 'face_monocle', back: 'back_dragon', hand: 'hand_moonstaff', aura: 'aura_stars', pet: 'pet_owl', neck: 'neck_amulet', shoes: 'shoes_winged', bag: 'bag_treasure', _lv: 5},
+  nam:  {hat: 'hat_witch', face2: 'face_cyber', back: 'back_light', hand: 'hand_scepter', aura: 'aura_flame', pet: 'pet_dragon', neck: 'neck_diamond', ear: 'ear_dragon', shoes: 'shoes_flame', bag: 'bag_star', deco: 'deco_rune'},
+  lan:  {hat: 'hat_grad', face2: 'face_starshades', back: 'back_angel', hand: 'hand_magicbook', aura: 'aura_sparkle', pet: 'pet_bunny', neck: 'neck_medal', ear: 'ear_star', shoes: 'shoes_sneaker', bag: 'bag_crystal', top: 'top_school', topC: '#4D8BFF'},
+  na:   {hat: 'hat_bunny', back: 'back_fairy', hand: 'hand_balloon', aura: 'aura_hearts', pet: 'pet_hamster', ear: 'ear_cherry', shoes: 'shoes_bunny', bag: 'bag_strawberry', mouth: 'mouth_gum', deco: 'deco_blush'},
+  tom:  {hat: 'hat_cap', face2: 'face_goggles', back: 'back_jetpack', hand: 'hand_saber', aura: 'aura_bubbles', pet: 'pet_puppy', neck: 'neck_scarf', shoes: 'shoes_skates', mouth: 'mouth_lollipop'},
+  sau:  {hat: 'hat_pirate', face2: 'face_eyepatch', back: 'back_cape', hand: 'hand_trident', aura: 'aura_snow', pet: 'pet_penguin', neck: 'neck_lei', shoes: 'shoes_rain', mouth: 'mouth_rose', _lv: 5},
+  ha:   {hat: 'hat_halo', face2: 'face_visor', back: 'back_crystal', hand: 'hand_starstaff', aura: 'aura_galaxy', pet: 'pet_unicorn', neck: 'neck_ruby', ear: 'ear_moon', shoes: 'shoes_rainbow', bag: 'bag_galaxy'},
+  bao:  {hat: 'hat_headphones', face2: 'face_star', back: 'back_guitar', hand: 'hand_mic', aura: 'aura_rainbow', pet: 'pet_fox', neck: 'neck_choker', shoes: 'shoes_cloud', bag: 'bag_heart'},
+  ngan: {hat: 'hat_flower', face2: 'face_butterfly', back: 'back_phoenix', hand: 'hand_fan', aura: 'aura_butterfly', pet: 'pet_phoenix', neck: 'neck_heart', ear: 'ear_butterfly', shoes: 'shoes_sandals', bag: 'bag_tote'},
+  thu:  {hat: 'hat_unicorn', face2: 'face_rainbowshades', back: 'back_ninetails', hand: 'hand_cotton', aura: 'aura_dragon', pet: 'pet_panda', neck: 'neck_galaxy', ear: 'ear_galaxy', bag: 'bag_bear', deco: 'deco_heartglitter', shape: 'vline', feats: ['lashes', 'glow']}
+};
+const GEAR_SLOTS = ['hat', 'face2', 'back', 'hand', 'aura', 'pet', 'neck', 'ear', 'shoes', 'bag', 'mouth', 'deco'];
+for (const d of NPC_DEFS) {
+  const g = NPC_GEAR[d.id]; if (!g) continue;
+  const tier = g._lv || 6, gear = Object.assign({}, g); delete gear._lv;
+  Object.assign(d.look, gear); d.look.lv = {};
+  for (const k of GEAR_SLOTS) if (d.look[k] && FASH[d.look[k]]) d.look.lv[d.look[k]] = tier;
+}
+
 /* ===================== ENGLISH LEVEL = THE CHARACTER'S LEVEL ===================== */
 // The character has no XP level. Its level is the certified English level (S.cefr: A1..C1), which only goes up by passing a test.
 // Unlocks keep their old numeric "lvl" requirement and map onto the five English levels:
@@ -4432,8 +4473,8 @@ function draw(tnow) {
   }
   for (const n of NPCS) {
     const moving = n.path.length && !n.talking;
-    if (n.look.pet) { n.pet = n.pet || {x: n.x - 20, y: n.y}; n.pet.x += (n.x - 22 - n.pet.x) * 0.08; n.pet.y += (n.y + 2 - n.pet.y) * 0.08; ents.push({y: n.pet.y, d: () => drawPet(n.look.pet, 0, n.pet.x, n.pet.y, tnow, moving)}); }
-    ents.push({y: n.y, d: () => { shadow(n.x, n.y); drawChibi(ctx, n.look, chibiFrame(moving, n.phase, tnow, null, 0, n.def.id), n.dir, n.x, n.y, pxs, 'npc-' + n.def.id); }});
+    if (n.look.pet) { n.pet = n.pet || {x: n.x - 20, y: n.y}; n.pet.x += (n.x - 22 - n.pet.x) * 0.08; n.pet.y += (n.y + 2 - n.pet.y) * 0.08; ents.push({y: n.pet.y, d: () => drawPet(n.look.pet, (n.look.lv || {})[n.look.pet] || 0, n.pet.x, n.pet.y, tnow, moving)}); }
+    ents.push({y: n.y, d: () => { shadow(n.x, n.y); if (n.look.aura && FASH[n.look.aura]) drawAura(ctx, n.look.aura, (n.look.lv || {})[n.look.aura] || 0, n.x, n.y, tnow); drawChibi(ctx, n.look, chibiFrame(moving, n.phase, tnow, null, 0, n.def.id), n.dir, n.x, n.y, pxs, 'npc-' + n.def.id); }});
   }
   const L = fullLook(S.look);
   if (L.pet) { const tx = P.x + (P.dir === 'l' ? 24 : -24), ty = P.y + 2; P.pet = P.pet || {x: tx, y: ty}; P.pet.x += (tx - P.pet.x) * 0.07; P.pet.y += (ty - P.pet.y) * 0.07; ents.push({y: P.pet.y, d: () => drawPet(L.pet, (L.lv || {})[L.pet] || 0, P.pet.x, P.pet.y, tnow, P.moving)}); }
@@ -4532,6 +4573,64 @@ function drawPet(id, lv, x, y, tnow, moving) {
   ctx.fillStyle = 'rgba(30,40,20,.18)'; ctx.beginPath(); ctx.ellipse(x, y, 8, 2.6, 0, 0, Math.PI * 2); ctx.fill();
   const float = id === 'pet_dragon' ? Math.sin(tnow / 300) * 3 - 6 : 0;
   ctx.drawImage(im, x - 13, y - 30 + float, 26, 31);
+}
+
+/* ===================== MINIMAP: where you are and where the NPCs are; tap to open a larger map with a list ===================== */
+const MM_TER = {g: '#8FD16A', d: '#EBD3A0', c: '#F3E7D2', w: '#5AB7F0', s: '#F3E2A8', D: '#B98A5C'};
+const ROLE_VI = {shop: 'Quần áo', market: 'Chợ', seeds: 'Hạt giống', forge: 'Lò rèn', teacher: 'Trường học', ielts: 'IELTS', salon: 'Tiệm tóc', spa: 'Spa', chat: 'Trò chuyện', home: 'Nhà'};
+const ROLE_COL = {shop: '#FF6FB5', market: '#FF8A3D', seeds: '#3DBE6C', forge: '#9B5CFF', teacher: '#4D8BFF', ielts: '#FFB020', salon: '#E25BD8', spa: '#2DD4BF', chat: '#8E8AA8'};
+const MM_CACHE = {};
+// static layer of a map (terrain, buildings, trees, exits), drawn once per map at `k` px per tile
+function mmBase(m, k) {
+  const key = m.id + '|' + k; if (MM_CACHE[key]) return MM_CACHE[key];
+  const c = document.createElement('canvas'); c.width = m.w * k; c.height = m.h * k; const g = c.getContext('2d');
+  for (let y = 0; y < m.h; y++) for (let x = 0; x < m.w; x++) { g.fillStyle = MM_TER[m.ter[y * m.w + x]] || MM_TER.g; g.fillRect(x * k, y * k, k + 0.5, k + 0.5); }
+  for (const o of m.objs) {
+    if (o.t === 'tree') { g.fillStyle = '#3E8E4A'; g.beginPath(); g.arc((o.x + 0.5) * k, (o.y + 0.5) * k, k * 0.55, 0, Math.PI * 2); g.fill(); }
+    if (o.t === 'house') { const st = BSTYLE[o.style] || {}; g.fillStyle = st.roof || '#C77DFF'; g.fillRect(o.x * k, o.y * k, o.tw * k, o.th * k); g.fillStyle = 'rgba(255,255,255,.35)'; g.fillRect(o.x * k, o.y * k, o.tw * k, o.th * k * 0.3); }
+    if (o.t === 'fence') { g.strokeStyle = '#FFFFFF'; g.lineWidth = Math.max(1, k * 0.25); g.strokeRect(o.x * k + k / 2, o.y * k + k / 2, (o.w - 1) * k, (o.h - 1) * k); }
+  }
+  for (const p of m.plots || []) { g.fillStyle = '#9A6A44'; g.fillRect(p[0] * k, p[1] * k, k, k); }
+  for (const e of m.exits) { g.fillStyle = '#FFE48A'; g.fillRect(e.x * k, e.y * k, Math.max(1, e.w) * k, Math.max(1, e.h) * k); }
+  return (MM_CACHE[key] = c);
+}
+function mmDraw(cv, k, big) {
+  const m = MAPS && S && MAPS[S.map]; if (!m || !cv || !P) return;
+  const base = mmBase(m, k), dpr = Math.min(2, window.devicePixelRatio || 1);
+  if (cv.width !== base.width * dpr) { cv.width = base.width * dpr; cv.height = base.height * dpr; cv.style.aspectRatio = `${base.width} / ${base.height}`; }
+  const g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.drawImage(base, 0, 0);
+  const at = (px, py) => [px / TS * k, py / TS * k];
+  // shops and other buildings get a role colour dot on their door
+  for (const o of m.objs) if (o.t === 'house' && o.role && ROLE_COL[o.role]) { const [x, y] = [(o.door[0] + 0.5) * k, (o.door[1] - 0.2) * k]; g.fillStyle = ROLE_COL[o.role]; g.beginPath(); g.arc(x, y, Math.max(2, k * 0.35), 0, Math.PI * 2); g.fill(); }
+  for (const n of NPCS) { const [x, y] = at(n.x, n.y), r = Math.max(2.6, k * (big ? 0.6 : 0.55));
+    g.fillStyle = ROLE_COL[n.def.role] || '#8E8AA8'; g.strokeStyle = '#FFFFFF'; g.lineWidth = big ? 2 : 1.2; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill(); g.stroke();
+    if (big) { g.font = `800 ${Math.round(k * 1.1)}px Nunito, sans-serif`; g.textAlign = 'center'; g.lineWidth = 3; g.strokeStyle = 'rgba(30,27,58,.85)'; g.strokeText(n.def.name, x, y - r - 4); g.fillStyle = '#FFFFFF'; g.fillText(n.def.name, x, y - r - 4); } }
+  const [px, py] = at(P.x, P.y), pulse = 1 + 0.25 * Math.sin(performance.now() / 220), pr = Math.max(3.2, k * 0.7) * pulse;
+  g.fillStyle = 'rgba(255,111,181,.35)'; g.beginPath(); g.arc(px, py, pr * 1.9, 0, Math.PI * 2); g.fill();
+  g.fillStyle = '#FF3D8E'; g.strokeStyle = '#FFFFFF'; g.lineWidth = big ? 2.5 : 1.6; g.beginPath(); g.arc(px, py, pr, 0, Math.PI * 2); g.fill(); g.stroke();
+  if (big) { g.font = `900 ${Math.round(k * 1.15)}px Nunito, sans-serif`; g.textAlign = 'center'; g.lineWidth = 3; g.strokeStyle = 'rgba(30,27,58,.85)'; g.strokeText('Bạn', px, py - pr - 5); g.fillStyle = '#FFE48A'; g.fillText('Bạn', px, py - pr - 5); }
+}
+function mmTick() {
+  const cv = $('#minimap'); if (!cv || !S || !MAPS) return;
+  const m = MAPS[S.map], wrap = $('#mmwrap'); if (!m || !wrap) return;
+  wrap.hidden = $('#app').hidden; $('#mmname').textContent = m.vi;
+  mmDraw(cv, window.innerWidth < 600 ? 3 : 4, false);
+  const bigCv = $('#mmbig'); if (bigCv) mmDraw(bigCv, Math.max(8, Math.floor(Math.min(window.innerWidth - 60, 720) / m.w)), true);
+}
+setInterval(mmTick, 200);
+function openMinimap() {
+  const m = MAPS[S.map];
+  const list = NPCS.map(n => `<button class="row-item" data-act="mm-go" data-id="${n.def.id}"><span class="mmdot" style="background:${ROLE_COL[n.def.role] || '#8E8AA8'}"></span><span class="ri-main"><b>${esc(n.def.name)}</b><small>${esc(ROLE_VI[n.def.role] || 'Trò chuyện')}</small></span><span class="ri-side">Đi tới</span></button>`).join('');
+  const places = m.objs.filter(o => o.t === 'house' && o.sign).map(o => `<span class="chip">${esc(o.sign)}</span>`).join('');
+  openModal(`<h2 class="ptitle">Bản đồ ${esc(m.vi)}</h2><p class="psub">Chấm hồng là bạn, chấm màu là người trong làng. Ô vàng là lối sang khu khác.</p>
+    <div class="mmbigwrap"><canvas id="mmbig"></canvas></div>${places ? `<div class="chips">${places}</div>` : ''}
+    <h3 class="ph3">Mọi người ở khu này</h3>${list ? `<div class="list">${list}</div>` : '<p class="empty">Khu này không có ai.</p>'}
+    <div class="row-btns"><button class="btn ghost" data-act="map">Chuyển khu</button></div>`, {label: 'Bản đồ khu vực', wide: true});
+  mmTick();
+}
+function mmGo(id) {
+  const n = NPCS.find(q => q.def.id === id); if (!n) return; closeModal();
+  const [tx, ty] = tileOf(n.x, n.y); approach(tx, ty, 1.6, () => talk(n), true);
 }
 
 /* ===================== HUD, INPUT, BOOT ===================== */
@@ -4634,6 +4733,8 @@ document.addEventListener('click', e => {
     case 'unlock': return unlock(+d.p);
     case 'buyanimal': return buyAnimal(+d.s, d.a);
     case 'farmshop': return openFarmShop(d.t);
+    case 'minimap': return openMinimap();
+    case 'mm-go': return mmGo(d.id);
     case 'login': return openAuthInGame('login');
     case 'register': return openAuthInGame('register');
     case 'logout': if (t.dataset.armed) { saveNow(true).finally(() => sbLogout().then(() => location.reload())); } else { t.dataset.armed = 1; t.textContent = 'Bấm lần nữa để đăng xuất'; } return;
@@ -4808,7 +4909,7 @@ async function boot(hotData) {
     console.error(e); $('#loadmsg').textContent = 'Không tải được game: ' + (e.message || e);
   }
 }
-if (location.hostname === '127.0.0.1') window.__vc = () => ({S, P, ANIMS, NPCS, MAPS, view, approach, changeMap, talk, spawnAnimals, onPlot, ex: () => EX, autoSimulate, TW: TRACK_WORDS, readiness, renderHUD, FASHION, HAIR_ITEMS, SPA_ITEMS, spaPreview, chibiSVG, petSVG, hairPreview, fullLook, step: (sec) => { let t = performance.now(); for (let i = 0; i < sec * 20; i++) { t += 50; update(0.05, t); } draw(t); }});
+if (location.hostname === '127.0.0.1') window.__vc = () => ({S, P, ANIMS, NPCS, MAPS, view, approach, changeMap, talk, spawnAnimals, onPlot, ex: () => EX, autoSimulate, TW: TRACK_WORDS, NPC_DEFS, readiness, renderHUD, FASHION, HAIR_ITEMS, SPA_ITEMS, spaPreview, chibiSVG, petSVG, hairPreview, fullLook, step: (sec) => { let t = performance.now(); for (let i = 0; i < sec * 20; i++) { t += 50; update(0.05, t); } draw(t); }});
 try { window.claude && window.claude.hot && window.claude.hot.snapshot && window.claude.hot.snapshot(() => { if (P && S) { S.px = P.x; S.py = P.y; } return {S}; }); } catch (e) {}
 const HOT = window.claude && window.claude.hot;
 if (HOT && HOT.ready) HOT.ready(boot); else boot((HOT && HOT.data) || {});

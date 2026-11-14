@@ -98,6 +98,8 @@ document.addEventListener('click', e => {
     case 'unlock': return unlock(+d.p);
     case 'buyanimal': return buyAnimal(+d.s, d.a);
     case 'farmshop': return openFarmShop(d.t);
+    case 'minimap': return openMinimap();
+    case 'mm-go': return mmGo(d.id);
     case 'login': return openAuthInGame('login');
     case 'register': return openAuthInGame('register');
     case 'logout': if (t.dataset.armed) { saveNow(true).finally(() => sbLogout().then(() => location.reload())); } else { t.dataset.armed = 1; t.textContent = 'Bấm lần nữa để đăng xuất'; } return;
@@ -272,7 +274,7 @@ async function boot(hotData) {
     console.error(e); $('#loadmsg').textContent = 'Không tải được game: ' + (e.message || e);
   }
 }
-if (location.hostname === '127.0.0.1') window.__vc = () => ({S, P, ANIMS, NPCS, MAPS, view, approach, changeMap, talk, spawnAnimals, onPlot, ex: () => EX, autoSimulate, TW: TRACK_WORDS, readiness, renderHUD, FASHION, HAIR_ITEMS, SPA_ITEMS, spaPreview, chibiSVG, petSVG, hairPreview, fullLook, step: (sec) => { let t = performance.now(); for (let i = 0; i < sec * 20; i++) { t += 50; update(0.05, t); } draw(t); }});
+if (location.hostname === '127.0.0.1') window.__vc = () => ({S, P, ANIMS, NPCS, MAPS, view, approach, changeMap, talk, spawnAnimals, onPlot, ex: () => EX, autoSimulate, TW: TRACK_WORDS, NPC_DEFS, readiness, renderHUD, FASHION, HAIR_ITEMS, SPA_ITEMS, spaPreview, chibiSVG, petSVG, hairPreview, fullLook, step: (sec) => { let t = performance.now(); for (let i = 0; i < sec * 20; i++) { t += 50; update(0.05, t); } draw(t); }});
 try { window.claude && window.claude.hot && window.claude.hot.snapshot && window.claude.hot.snapshot(() => { if (P && S) { S.px = P.x; S.py = P.y; } return {S}; }); } catch (e) {}
 const HOT = window.claude && window.claude.hot;
 if (HOT && HOT.ready) HOT.ready(boot); else boot((HOT && HOT.data) || {});

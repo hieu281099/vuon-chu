@@ -113,8 +113,8 @@ function draw(tnow) {
   }
   for (const n of NPCS) {
     const moving = n.path.length && !n.talking;
-    if (n.look.pet) { n.pet = n.pet || {x: n.x - 20, y: n.y}; n.pet.x += (n.x - 22 - n.pet.x) * 0.08; n.pet.y += (n.y + 2 - n.pet.y) * 0.08; ents.push({y: n.pet.y, d: () => drawPet(n.look.pet, 0, n.pet.x, n.pet.y, tnow, moving)}); }
-    ents.push({y: n.y, d: () => { shadow(n.x, n.y); drawChibi(ctx, n.look, chibiFrame(moving, n.phase, tnow, null, 0, n.def.id), n.dir, n.x, n.y, pxs, 'npc-' + n.def.id); }});
+    if (n.look.pet) { n.pet = n.pet || {x: n.x - 20, y: n.y}; n.pet.x += (n.x - 22 - n.pet.x) * 0.08; n.pet.y += (n.y + 2 - n.pet.y) * 0.08; ents.push({y: n.pet.y, d: () => drawPet(n.look.pet, (n.look.lv || {})[n.look.pet] || 0, n.pet.x, n.pet.y, tnow, moving)}); }
+    ents.push({y: n.y, d: () => { shadow(n.x, n.y); if (n.look.aura && FASH[n.look.aura]) drawAura(ctx, n.look.aura, (n.look.lv || {})[n.look.aura] || 0, n.x, n.y, tnow); drawChibi(ctx, n.look, chibiFrame(moving, n.phase, tnow, null, 0, n.def.id), n.dir, n.x, n.y, pxs, 'npc-' + n.def.id); }});
   }
   const L = fullLook(S.look);
   if (L.pet) { const tx = P.x + (P.dir === 'l' ? 24 : -24), ty = P.y + 2; P.pet = P.pet || {x: tx, y: ty}; P.pet.x += (tx - P.pet.x) * 0.07; P.pet.y += (ty - P.pet.y) * 0.07; ents.push({y: P.pet.y, d: () => drawPet(L.pet, (L.lv || {})[L.pet] || 0, P.pet.x, P.pet.y, tnow, P.moving)}); }
