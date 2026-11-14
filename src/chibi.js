@@ -192,10 +192,11 @@ const HAND_FIT = {
 };
 // frame: {legs:[dl,dr], bob, arms:[rl,rr], face, tool, flap}
 function chibiInner(L, f, dir) {
+  ANIM_PH = f.ph || 0;
   const skin = SKIN_TONES[L.skin] || SKIN_TONES[0], lv = L.lv || {}, back = dir === 'u';
   const bob = f.bob || 0, face = f.face || L.face || 'smile';
-  const backItem = L.back ? tierWrap('back', lv[L.back] || 0, backSVG(L.back, FASH[L.back].col, lv[L.back] || 0, f.flap || 0, back), f.flap) : '';
-  const handItem = f.tool ? handSVG(f.tool, '#fff', 0) : (L.hand ? tierWrap('hand', lv[L.hand] || 0, handSVG(L.hand, FASH[L.hand].col, lv[L.hand] || 0), f.flap) : '');
+  const backItem = L.back ? tierWrap('back', lv[L.back] || 0, itemFx(L.back, lv[L.back] || 0, backSVG(L.back, FASH[L.back].col, lv[L.back] || 0, f.flap || 0, back)), f.flap) : '';
+  const handItem = f.tool ? handSVG(f.tool, '#fff', 0) : (L.hand ? tierWrap('hand', lv[L.hand] || 0, itemFx(L.hand, lv[L.hand] || 0, handSVG(L.hand, FASH[L.hand].col, lv[L.hand] || 0)), f.flap) : '');
   let s = '';
   if (!back) s += backItem;
   if (L.hairB && !back) s += `<g transform="translate(0 ${bob})">${tpl(NEMO.hairB[L.hairB], L.hairC)}</g>`;
@@ -206,7 +207,7 @@ function chibiInner(L, f, dir) {
   const tool = f.tool ? handItem : '';
   s += armSVG(L, 44, f.arms ? f.arms[0] : 0, skin, back ? tool : '');
   s += `<path d="M55 113H90V132C90 135.3 87.3 138 84 138H61C57.7 138 55 135.3 55 132V113Z" fill="${skin.b}"/>` + topSVG(L, f) + skirtSVG(L);
-  const acc = (k, fn) => L[k] && FASH[L[k]] ? tierWrap(k, lv[L[k]] || 0, fn(L[k], FASH[L[k]].col, lv[L[k]] || 0), f.flap) : '';
+  const acc = (k, fn) => L[k] && FASH[L[k]] ? tierWrap(k, lv[L[k]] || 0, itemFx(L[k], lv[L[k]] || 0, fn(L[k], FASH[L[k]].col, lv[L[k]] || 0)), f.flap) : '';
   if (!back) {
     if (L.bag && HANDBAGS.includes(L.bag)) s += `<g transform="rotate(${f.arms ? f.arms[0] : 0} 50 116)">${acc('bag', bagSVG)}</g>`;
   }
@@ -220,13 +221,13 @@ function chibiInner(L, f, dir) {
     s += featsSVG(L, skin, 'face');
     s += acc('deco', decoSVG);
     if (L.beard) s += tpl(NEMO.beards[L.beard], L.hairC);
-    if (L.face2) s += tierWrap('face', lv[L.face2] || 0, faceItemSVG(L.face2, FASH[L.face2].col, lv[L.face2] || 0), f.flap);
+    if (L.face2) s += tierWrap('face', lv[L.face2] || 0, itemFx(L.face2, lv[L.face2] || 0, faceItemSVG(L.face2, FASH[L.face2].col, lv[L.face2] || 0)), f.flap);
     s += acc('mouth', mouthSVG);
   }
   if (L.hairF && L.hairF !== 'none') s += tpl(NEMO.hairF[L.hairF], L.hairC);
   if (!back) s += acc('ear', earSVG) + featsSVG(L, skin, 'hair');
   if (L.hairB && back) s += tpl(NEMO.hairB[L.hairB], L.hairC);
-  if (L.hat) s += tierWrap('hat', lv[L.hat] || 0, hatSVG(L.hat, FASH[L.hat].col, lv[L.hat] || 0), f.flap) + hatAccent(lv[L.hat] || 0);
+  if (L.hat) s += tierWrap('hat', lv[L.hat] || 0, itemFx(L.hat, lv[L.hat] || 0, hatSVG(L.hat, FASH[L.hat].col, lv[L.hat] || 0)), f.flap) + hatAccent(lv[L.hat] || 0);
   // held item on top of everything, following the arm's swing and leaning away from the head
   if (handItem && !f.tool) {
     const fit = HAND_FIT[L.hand] || HAND_FIT._, ax = back ? 44 : 89, rot = f.arms ? f.arms[back ? 0 : 1] : 0, lean = (back ? -1 : 1) * fit[1];
@@ -252,9 +253,9 @@ function portraitSVG(L, opts = {}) {
 
 /* ---------- animation frames ---------- */
 const FRAMES = {
-  idle0: {}, idle1: {bob: 1, flap: 6}, blink: {face: 'sleepy'},
-  walk0: {legs: [-4, 0], bob: -2, arms: [14, -14], flap: 12}, walk1: {legs: [0, 0], bob: 0, arms: [0, 0], flap: 0},
-  walk2: {legs: [0, -4], bob: -2, arms: [-14, 14], flap: -10}, walk3: {legs: [0, 0], bob: 0, arms: [0, 0], flap: 4},
+  idle0: {flap: 0, ph: 0}, idle1: {bob: 1, flap: 10, ph: 1}, idle2: {bob: 1, flap: 18, ph: 2}, idle3: {flap: 10, ph: 3}, blink: {face: 'sleepy', flap: 8, ph: 1},
+  walk0: {legs: [-4, 0], bob: -2, arms: [14, -14], flap: 14, ph: 0}, walk1: {legs: [0, 0], bob: 0, arms: [0, 0], flap: 2, ph: 1},
+  walk2: {legs: [0, -4], bob: -2, arms: [-14, 14], flap: -10, ph: 2}, walk3: {legs: [0, 0], bob: 0, arms: [0, 0], flap: 4, ph: 3},
   water: {arms: [0, -55], tool: 'tool_can', bob: 0}, water2: {arms: [0, -75], tool: 'tool_can', bob: 1},
   hoe: {arms: [0, -120], tool: 'tool_hoe', bob: -1}, hoe2: {arms: [0, -30], tool: 'tool_hoe', bob: 2},
   fish: {arms: [0, -40], tool: 'tool_rod'},
@@ -276,7 +277,7 @@ function chibiImage(L, frame, dir, px) {
 const LAST_OK = new Map();
 function drawChibi(g, L, frame, dir, x, y, pxScale, id) {
   const w = VB.w * CHIBI_K, h = VB.h * CHIBI_K, px = Math.max(60, Math.round(w * pxScale));
-  let im = chibiImage(L, frame, dir === 'u' ? 'u' : dir === 'l' ? 'l' : 'd', px);
+  let im = chibiImage(L, frame, dir === 'l' ? 'l' : 'd', px);
   if (!im && id) im = LAST_OK.get(id); else if (im && id) LAST_OK.set(id, im);
   if (!im) return false;
   const smooth = g.imageSmoothingEnabled; g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';

@@ -1,6 +1,6 @@
 /* ===================== UPGRADE TIERS: every level adds something you can see (merged into chibi.js) ===================== */
 // Only Epic (rar 2) and better items can be upgraded.
-const CAN_UPGRADE = f => !!f && UPGRADABLE(f.slot) && (f.rar || 0) >= 2;
+const CAN_UPGRADE = f => !!f && UPGRADABLE(f.slot) && ((f.rar || 0) >= 2 || SPECIAL_UP.includes(f.id));
 const TIER_PERK = [
   'Bản gốc',
   'Viền bạc, lấp lánh nhẹ',
@@ -33,7 +33,7 @@ function tierBehind(slot, lv) {
 }
 function tierFront(slot, lv, tw) {
   const A = TIER_ANCHOR[slot]; if (!A || !lv) return '';
-  const col = tierSolid(lv), n = [0, 2, 4, 6, 8, 10, 12][lv], sz = Math.max(2.8, A.r * (0.07 + lv * 0.012)), off = (tw || 0) * 0.04;
+  const col = tierSolid(lv), n = [0, 2, 4, 6, 8, 10, 12][lv], sz = Math.max(2.8, A.r * (0.07 + lv * 0.012)), off = ANIM_PH * 0.5;
   let s = '';
   if (lv >= 3) s += `<ellipse cx="${A.x}" cy="${A.y}" rx="${A.r * 1.08}" ry="${A.r * .42}" fill="none" stroke="${col}" stroke-width="${Math.max(1, A.r * .03)}" stroke-dasharray="${A.r * .12} ${A.r * .08}" opacity=".8" transform="rotate(-14 ${A.x} ${A.y})"/>`;
   for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2 + off + lv; const rr = A.r * (i % 2 ? 0.95 : 1.12);
@@ -49,7 +49,7 @@ function tierWrap(slot, lv, svg, tw) { if (!svg || !lv) return svg; return tierB
 function hatAccent(lv) {
   if (!lv || lv < 5) return '';
   const wing = (x, d) => `<path d="M${x} 40Q${x + d * 26} 10 ${x + d * 34} 22Q${x + d * 22} 26 ${x + d * 28} 36Q${x + d * 16} 36 ${x + d * 20} 46Q${x + d * 8} 44 ${x} 46Z" fill="#FFFFFF" stroke="${tierSolid(lv)}" stroke-width="2"/>`;
-  let s = wing(26, -1) + wing(119, 1);
+  let s = `<g transform="rotate(${-APH([0, 6, 10, 6])} 26 42)">${wing(26, -1)}</g><g transform="rotate(${APH([0, 6, 10, 6])} 119 42)">${wing(119, 1)}</g>`;
   if (lv >= 6) s += `<ellipse cx="72.5" cy="-18" rx="30" ry="7" fill="none" stroke="url(#rb)" stroke-width="5"/><ellipse cx="72.5" cy="-18" rx="30" ry="7" fill="none" stroke="#FFFFFF" stroke-width="1.5" opacity=".8"/>`;
   return s;
 }

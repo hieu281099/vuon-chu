@@ -205,7 +205,7 @@ function chibiFrame(moving, phase, tnow, act, emote, id) {
   if (moving) return 'walk' + (Math.floor(phase / 2.4) % 4);
   const seed = id === 'me' ? 0 : id.length * 397;
   if ((tnow + seed) % 3600 < 140) return 'blink';
-  return (tnow + seed) % 1400 < 700 ? 'idle0' : 'idle1';
+  return 'idle' + (Math.floor((tnow + seed) / 280) % 4);
 }
 function drawPet(id, lv, x, y, tnow, moving) {
   const frame = moving ? Math.floor(tnow / 180) % 2 : Math.floor(tnow / 600) % 2;

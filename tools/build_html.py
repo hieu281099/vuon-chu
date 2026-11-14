@@ -12,7 +12,7 @@ def src(f):
     if f == "data.js":  # merge the expanded vocabulary before the word index is built
         t = t.replace("const WORDS = {};", (SRC / "vocab_extra.js").read_text(encoding="utf-8") + "\nconst WORDS = {};", 1)
     if f == "chibi.js":  # hot items, hairstyles and mythic gear, added before the FASH index is built
-        t = t.replace("const FASH = ", (SRC / "fashion_extra.js").read_text(encoding="utf-8") + "\n" + (SRC / "fashion_extra2.js").read_text(encoding="utf-8") + "\n" + (SRC / "fashion_extra3.js").read_text(encoding="utf-8") + "\n" + (SRC / "fashion_extra4.js").read_text(encoding="utf-8") + "\n" + (SRC / "spa_looks.js").read_text(encoding="utf-8") + "\n" + (SRC / "tiers.js").read_text(encoding="utf-8") + "\nconst FASH = ", 1)
+        t = t.replace("const FASH = ", (SRC / "fashion_extra.js").read_text(encoding="utf-8") + "\n" + (SRC / "fashion_extra2.js").read_text(encoding="utf-8") + "\n" + (SRC / "fashion_extra3.js").read_text(encoding="utf-8") + "\n" + (SRC / "fashion_extra4.js").read_text(encoding="utf-8") + "\n" + (SRC / "spa_looks.js").read_text(encoding="utf-8") + "\n" + (SRC / "tiers.js").read_text(encoding="utf-8") + "\n" + (SRC / "anim.js").read_text(encoding="utf-8") + "\nconst FASH = ", 1)
     return t
 js = "(() => {\n'use strict';\n" + "\n".join(src(f) for f in ORDER) + "\n})();"
 css = (SRC / "style.css").read_text(encoding="utf-8")

@@ -1551,7 +1551,7 @@ SKIN_TONES.push(SPA_SKINS.honey, SPA_SKINS.mermaid);
 
 /* ===================== UPGRADE TIERS: every level adds something you can see (merged into chibi.js) ===================== */
 // Only Epic (rar 2) and better items can be upgraded.
-const CAN_UPGRADE = f => !!f && UPGRADABLE(f.slot) && (f.rar || 0) >= 2;
+const CAN_UPGRADE = f => !!f && UPGRADABLE(f.slot) && ((f.rar || 0) >= 2 || SPECIAL_UP.includes(f.id));
 const TIER_PERK = [
   'Bản gốc',
   'Viền bạc, lấp lánh nhẹ',
@@ -1584,7 +1584,7 @@ function tierBehind(slot, lv) {
 }
 function tierFront(slot, lv, tw) {
   const A = TIER_ANCHOR[slot]; if (!A || !lv) return '';
-  const col = tierSolid(lv), n = [0, 2, 4, 6, 8, 10, 12][lv], sz = Math.max(2.8, A.r * (0.07 + lv * 0.012)), off = (tw || 0) * 0.04;
+  const col = tierSolid(lv), n = [0, 2, 4, 6, 8, 10, 12][lv], sz = Math.max(2.8, A.r * (0.07 + lv * 0.012)), off = ANIM_PH * 0.5;
   let s = '';
   if (lv >= 3) s += `<ellipse cx="${A.x}" cy="${A.y}" rx="${A.r * 1.08}" ry="${A.r * .42}" fill="none" stroke="${col}" stroke-width="${Math.max(1, A.r * .03)}" stroke-dasharray="${A.r * .12} ${A.r * .08}" opacity=".8" transform="rotate(-14 ${A.x} ${A.y})"/>`;
   for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2 + off + lv; const rr = A.r * (i % 2 ? 0.95 : 1.12);
@@ -1600,7 +1600,7 @@ function tierWrap(slot, lv, svg, tw) { if (!svg || !lv) return svg; return tierB
 function hatAccent(lv) {
   if (!lv || lv < 5) return '';
   const wing = (x, d) => `<path d="M${x} 40Q${x + d * 26} 10 ${x + d * 34} 22Q${x + d * 22} 26 ${x + d * 28} 36Q${x + d * 16} 36 ${x + d * 20} 46Q${x + d * 8} 44 ${x} 46Z" fill="#FFFFFF" stroke="${tierSolid(lv)}" stroke-width="2"/>`;
-  let s = wing(26, -1) + wing(119, 1);
+  let s = `<g transform="rotate(${-APH([0, 6, 10, 6])} 26 42)">${wing(26, -1)}</g><g transform="rotate(${APH([0, 6, 10, 6])} 119 42)">${wing(119, 1)}</g>`;
   if (lv >= 6) s += `<ellipse cx="72.5" cy="-18" rx="30" ry="7" fill="none" stroke="url(#rb)" stroke-width="5"/><ellipse cx="72.5" cy="-18" rx="30" ry="7" fill="none" stroke="#FFFFFF" stroke-width="1.5" opacity=".8"/>`;
   return s;
 }
@@ -1620,6 +1620,88 @@ function petTier(lv, hop) {
   if (lv >= 2) front += sparkle(6, 10 + hop, 3 + lv * 0.4, tierSolid(lv)) + sparkle(54, 18 + hop, 2.5 + lv * 0.4, tierSolid(lv));
   if (lv >= 5) front += `<ellipse cx="30" cy="${2 + hop}" rx="14" ry="3.5" fill="none" stroke="${lv >= 6 ? 'url(#rb)' : '#FFE48A'}" stroke-width="2.5"/>`;
   return {back, front};
+}
+
+/* ===================== ITEM ANIMATION (merged into chibi.js) ===================== */
+// The character is drawn in 4-phase loops (idle0..3, walk0..3). chibiInner sets ANIM_PH = 0..3 before drawing parts,
+// so any item can move a little from one phase to the next.
+let ANIM_PH = 0;
+const APH = arr => arr[ANIM_PH % arr.length];
+// glowing tips of magic sticks (in the held item's own coordinates)
+const ITEM_TIP = {hand_wand: [22, -26], hand_starstaff: [19, -50], hand_moonstaff: [28, -54], hand_scepter: [19, -48], hand_magicbook: [7, -6], hand_lantern: [10, -20], hand_saber: [5.5, -62], hand_trident: [20, -64], hand_sunflower: [15, -30]};
+function animItem(id, svg) {
+  if (!svg || !id) return svg;
+  const p = ANIM_PH;
+  switch (id) {
+    // breath puffs out and pulls back
+    case 'mouth_fire': case 'mouth_frost': { const k = APH([0.45, 0.75, 1, 0.8]); return `<g transform="translate(78 95) scale(${k} ${0.8 + k * 0.2}) translate(-78 -95)" opacity="${0.55 + k * 0.45}">${svg}</g>`; }
+    // bubble gum inflates and deflates
+    case 'mouth_gum': case 'mouth_rainbowgum': { const k = APH([0.7, 0.88, 1.06, 0.9]); return `<g transform="translate(72.5 100) scale(${k}) translate(-72.5 -100)">${svg}</g>`; }
+    case 'mouth_lollipop': case 'mouth_starpop': case 'mouth_pocky': case 'mouth_rose': return `<g transform="rotate(${APH([0, 3, 0, -3])} 76 94)">${svg}</g>`;
+    // earrings swing
+    case 'ear_hoop': case 'ear_pearl': case 'ear_cherry': case 'ear_star': case 'ear_feather': case 'ear_crystal': case 'ear_moon': case 'ear_dragon': case 'ear_butterfly': case 'ear_galaxy':
+      return `<g transform="translate(0 102) skewX(${APH([0, 7, 0, -7])}) translate(0 -102)">${svg}</g>`;
+    // floating things bob
+    case 'hand_balloon': return `<g transform="translate(${APH([0, 1, 0, -1])} ${APH([0, -3, -5, -2])})">${svg}</g>`;
+    case 'hat_halo': return `<g transform="translate(0 ${APH([0, -2, -4, -2])})">${svg}</g>`;
+    case 'shoes_cloud': return `<g transform="translate(0 ${APH([0, -1, -2, -1])})">${svg}</g>`;
+    case 'pet_phoenix': return svg;
+    // capes and tails sway
+    case 'back_cape': return `<g transform="translate(72.5 112) skewX(${APH([0, 4, 7, 4])}) translate(-72.5 -112)">${svg}</g>`;
+    case 'back_ninetails': return `<g transform="rotate(${APH([-5, 0, 5, 0])} 72.5 140)">${svg}</g>`;
+    case 'back_jetpack': return svg + `<path d="M45 150Q49 ${160 + APH([0, 6, 10, 4])} 53 150Z M92 150Q96 ${160 + APH([0, 6, 10, 4])} 100 150Z" fill="#FFE48A" opacity=".85"/>`;
+    // glowing face marks pulse
+    case 'deco_galaxy': case 'deco_rune': case 'deco_phoenix': case 'deco_heartglitter': return `<g opacity="${APH([0.7, 0.9, 1, 0.9])}">${svg}</g>`;
+  }
+  const tip = ITEM_TIP[id];
+  if (tip) { const r = APH([1.5, 3.5, 5.5, 3]); return svg + sparkle(tip[0] + 6, tip[1] - 4, r, '#FFFFFF') + sparkle(tip[0] - 5, tip[1] + 5, r * 0.6, '#FFE48A'); }
+  return svg;
+}
+
+/* ---------- specially upgradable Common / Rare items: each tier changes the item itself ---------- */
+const SPECIAL_UP = ['hat_cap', 'hat_cat', 'hat_bunny', 'hand_balloon', 'back_cape', 'mouth_gum', 'bag_heart', 'pet_chick'];
+function specialTier(id, lv) {
+  if (!lv) return '';
+  const T = tierSolid(lv);
+  switch (id) {
+    case 'hand_balloon': {   // more balloons, then a rainbow heart balloon
+      let s = '';
+      if (lv >= 2) s += `<path d="M6 26Q4 -20 4 -66" stroke="#8E8AA8" stroke-width="1.2" fill="none"/><ellipse cx="4" cy="-84" rx="14" ry="17" fill="#4D8BFF"/><ellipse cx="0" cy="-90" rx="3.5" ry="6" fill="#FFFFFF" opacity=".5"/>`;
+      if (lv >= 4) s += `<path d="M6 26Q24 -10 44 -60" stroke="#8E8AA8" stroke-width="1.2" fill="none"/><ellipse cx="46" cy="-76" rx="13" ry="16" fill="#FFC83D"/><ellipse cx="42" cy="-82" rx="3" ry="5" fill="#FFFFFF" opacity=".5"/>`;
+      if (lv >= 6) s += `<path d="M6 26Q22 -60 26 -112" stroke="#8E8AA8" stroke-width="1.2" fill="none"/><path transform="translate(10 -140)" d="M16 28C5 20 0 13 0 7C0 1 7 -2 16 6C25 -2 32 1 32 7C32 13 27 20 16 28Z" fill="url(#rb)"/>`;
+      return s;
+    }
+    case 'hat_cap': {        // star badge, gold brim, then a gem crest
+      let s = lv >= 2 ? starDots([[72.5, 38, 7]], T) : '';
+      if (lv >= 4) s += `<path d="M72 52 Q104 44 134 54 Q104 62 72 58Z" fill="url(#hg_gold)"/>`;
+      if (lv >= 6) s += `<path d="M72.5 2L80 14L72.5 26L65 14Z" fill="url(#rb)" stroke="#FFFFFF" stroke-width="1.5"/>`;
+      return s;
+    }
+    case 'hat_cat': case 'hat_bunny': {  // glowing tips, then tiny bells / ribbons
+      const tips = id === 'hat_cat' ? [[34, 8], [111, 8]] : [[47, -28], [98, -28]];
+      let s = tips.map(([x, y]) => `<circle cx="${x}" cy="${y}" r="${3 + lv}" fill="${T}" opacity=".55"/>`).join('');
+      if (lv >= 3) s += `<circle cx="50" cy="42" r="5" fill="#FFC83D" stroke="#C98A1A" stroke-width="1.2"/><circle cx="95" cy="42" r="5" fill="#FFC83D" stroke="#C98A1A" stroke-width="1.2"/>`;
+      if (lv >= 6) s += `<path d="M62 40L72.5 34L83 40L72.5 46Z" fill="url(#rb)"/>`;
+      return s;
+    }
+    case 'back_cape': {      // stars, gold hem, then a galaxy cape
+      let s = '';
+      if (lv >= 6) s += `<path d="M50 112L95 112L116 160Q72.5 168 29 160Z" fill="url(#hg_galaxy)" opacity=".85"/>`;
+      if (lv >= 2) s += starDots([[36, 150, 3], [108, 150, 3], [40, 134, 2.4], [105, 134, 2.4], [32, 158, 2]], lv >= 6 ? '#FFFFFF' : T);
+      if (lv >= 4) s += `<path d="M29 160Q72.5 168 116 160" stroke="#FFC83D" stroke-width="4" fill="none"/>`;
+      return s;
+    }
+    case 'mouth_gum': return lv >= 6 ? `<circle cx="72.5" cy="104" r="14" fill="url(#rb)" opacity=".6"/>` : '';
+    case 'bag_heart': return lv >= 5 ? `<path d="M80 128Q70 118 68 126Q72 128 70 134Z M100 128Q110 118 112 126Q108 128 110 134Z" fill="#FFFFFF" stroke="${T}" stroke-width="1.2"/>` : '';
+  }
+  return '';
+}
+// one call for any equipped item: its special tier art + its animation
+function itemFx(id, lv, svg) {
+  if (!svg) return svg;
+  let s = svg + specialTier(id, lv || 0);
+  if (id === 'mouth_gum' && lv) s = `<g transform="translate(72.5 104) scale(${1 + lv * 0.06}) translate(-72.5 -104)">${s}</g>`;
+  return animItem(id, s);
 }
 
 const FASH = Object.fromEntries(FASHION.map(f => [f.id, f]));
@@ -1739,10 +1821,11 @@ const HAND_FIT = {
 };
 // frame: {legs:[dl,dr], bob, arms:[rl,rr], face, tool, flap}
 function chibiInner(L, f, dir) {
+  ANIM_PH = f.ph || 0;
   const skin = SKIN_TONES[L.skin] || SKIN_TONES[0], lv = L.lv || {}, back = dir === 'u';
   const bob = f.bob || 0, face = f.face || L.face || 'smile';
-  const backItem = L.back ? tierWrap('back', lv[L.back] || 0, backSVG(L.back, FASH[L.back].col, lv[L.back] || 0, f.flap || 0, back), f.flap) : '';
-  const handItem = f.tool ? handSVG(f.tool, '#fff', 0) : (L.hand ? tierWrap('hand', lv[L.hand] || 0, handSVG(L.hand, FASH[L.hand].col, lv[L.hand] || 0), f.flap) : '');
+  const backItem = L.back ? tierWrap('back', lv[L.back] || 0, itemFx(L.back, lv[L.back] || 0, backSVG(L.back, FASH[L.back].col, lv[L.back] || 0, f.flap || 0, back)), f.flap) : '';
+  const handItem = f.tool ? handSVG(f.tool, '#fff', 0) : (L.hand ? tierWrap('hand', lv[L.hand] || 0, itemFx(L.hand, lv[L.hand] || 0, handSVG(L.hand, FASH[L.hand].col, lv[L.hand] || 0)), f.flap) : '');
   let s = '';
   if (!back) s += backItem;
   if (L.hairB && !back) s += `<g transform="translate(0 ${bob})">${tpl(NEMO.hairB[L.hairB], L.hairC)}</g>`;
@@ -1753,7 +1836,7 @@ function chibiInner(L, f, dir) {
   const tool = f.tool ? handItem : '';
   s += armSVG(L, 44, f.arms ? f.arms[0] : 0, skin, back ? tool : '');
   s += `<path d="M55 113H90V132C90 135.3 87.3 138 84 138H61C57.7 138 55 135.3 55 132V113Z" fill="${skin.b}"/>` + topSVG(L, f) + skirtSVG(L);
-  const acc = (k, fn) => L[k] && FASH[L[k]] ? tierWrap(k, lv[L[k]] || 0, fn(L[k], FASH[L[k]].col, lv[L[k]] || 0), f.flap) : '';
+  const acc = (k, fn) => L[k] && FASH[L[k]] ? tierWrap(k, lv[L[k]] || 0, itemFx(L[k], lv[L[k]] || 0, fn(L[k], FASH[L[k]].col, lv[L[k]] || 0)), f.flap) : '';
   if (!back) {
     if (L.bag && HANDBAGS.includes(L.bag)) s += `<g transform="rotate(${f.arms ? f.arms[0] : 0} 50 116)">${acc('bag', bagSVG)}</g>`;
   }
@@ -1767,13 +1850,13 @@ function chibiInner(L, f, dir) {
     s += featsSVG(L, skin, 'face');
     s += acc('deco', decoSVG);
     if (L.beard) s += tpl(NEMO.beards[L.beard], L.hairC);
-    if (L.face2) s += tierWrap('face', lv[L.face2] || 0, faceItemSVG(L.face2, FASH[L.face2].col, lv[L.face2] || 0), f.flap);
+    if (L.face2) s += tierWrap('face', lv[L.face2] || 0, itemFx(L.face2, lv[L.face2] || 0, faceItemSVG(L.face2, FASH[L.face2].col, lv[L.face2] || 0)), f.flap);
     s += acc('mouth', mouthSVG);
   }
   if (L.hairF && L.hairF !== 'none') s += tpl(NEMO.hairF[L.hairF], L.hairC);
   if (!back) s += acc('ear', earSVG) + featsSVG(L, skin, 'hair');
   if (L.hairB && back) s += tpl(NEMO.hairB[L.hairB], L.hairC);
-  if (L.hat) s += tierWrap('hat', lv[L.hat] || 0, hatSVG(L.hat, FASH[L.hat].col, lv[L.hat] || 0), f.flap) + hatAccent(lv[L.hat] || 0);
+  if (L.hat) s += tierWrap('hat', lv[L.hat] || 0, itemFx(L.hat, lv[L.hat] || 0, hatSVG(L.hat, FASH[L.hat].col, lv[L.hat] || 0)), f.flap) + hatAccent(lv[L.hat] || 0);
   // held item on top of everything, following the arm's swing and leaning away from the head
   if (handItem && !f.tool) {
     const fit = HAND_FIT[L.hand] || HAND_FIT._, ax = back ? 44 : 89, rot = f.arms ? f.arms[back ? 0 : 1] : 0, lean = (back ? -1 : 1) * fit[1];
@@ -1799,9 +1882,9 @@ function portraitSVG(L, opts = {}) {
 
 /* ---------- animation frames ---------- */
 const FRAMES = {
-  idle0: {}, idle1: {bob: 1, flap: 6}, blink: {face: 'sleepy'},
-  walk0: {legs: [-4, 0], bob: -2, arms: [14, -14], flap: 12}, walk1: {legs: [0, 0], bob: 0, arms: [0, 0], flap: 0},
-  walk2: {legs: [0, -4], bob: -2, arms: [-14, 14], flap: -10}, walk3: {legs: [0, 0], bob: 0, arms: [0, 0], flap: 4},
+  idle0: {flap: 0, ph: 0}, idle1: {bob: 1, flap: 10, ph: 1}, idle2: {bob: 1, flap: 18, ph: 2}, idle3: {flap: 10, ph: 3}, blink: {face: 'sleepy', flap: 8, ph: 1},
+  walk0: {legs: [-4, 0], bob: -2, arms: [14, -14], flap: 14, ph: 0}, walk1: {legs: [0, 0], bob: 0, arms: [0, 0], flap: 2, ph: 1},
+  walk2: {legs: [0, -4], bob: -2, arms: [-14, 14], flap: -10, ph: 2}, walk3: {legs: [0, 0], bob: 0, arms: [0, 0], flap: 4, ph: 3},
   water: {arms: [0, -55], tool: 'tool_can', bob: 0}, water2: {arms: [0, -75], tool: 'tool_can', bob: 1},
   hoe: {arms: [0, -120], tool: 'tool_hoe', bob: -1}, hoe2: {arms: [0, -30], tool: 'tool_hoe', bob: 2},
   fish: {arms: [0, -40], tool: 'tool_rod'},
@@ -1823,7 +1906,7 @@ function chibiImage(L, frame, dir, px) {
 const LAST_OK = new Map();
 function drawChibi(g, L, frame, dir, x, y, pxScale, id) {
   const w = VB.w * CHIBI_K, h = VB.h * CHIBI_K, px = Math.max(60, Math.round(w * pxScale));
-  let im = chibiImage(L, frame, dir === 'u' ? 'u' : dir === 'l' ? 'l' : 'd', px);
+  let im = chibiImage(L, frame, dir === 'l' ? 'l' : 'd', px);
   if (!im && id) im = LAST_OK.get(id); else if (im && id) LAST_OK.set(id, im);
   if (!im) return false;
   const smooth = g.imageSmoothingEnabled; g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
@@ -2819,7 +2902,7 @@ function itemCard(f, L, act, extra = '') {
   const own = S.owned.includes(f.id), lock = (f.lvl || 1) > S.lvl, lv = (S.look.lv || {})[f.id] || 0;
   const tryL = Object.assign({}, L, slotPatch(f)); if (FACE_SLOTS.includes(f.slot)) Object.assign(tryL, {back: null, hand: null}); if (lv) tryL.lv = Object.assign({}, L.lv, {[f.id]: lv});
   const img = f.slot === 'pet' ? `<img class="pv pet" src="${svgURL(petSVG(f.id, lv, 0))}" alt="">` : f.slot === 'aura' ? `<span class="pv aura" style="--c:${f.col}"></span>` : `<img class="pv" src="${portraitSVG(tryL, {full: ['back', 'hand', 'shoes', 'bag', 'neck'].includes(f.slot), hand: true})}" alt="">`;
-  return `<button class="card r${f.rar || 0}" data-act="${act}" data-id="${f.id}" ${extra}><span class="rar">${RARITY[f.rar || 0].vi}</span>${lv ? `<span class="plus t${lv}">+${lv}</span>` : CAN_UPGRADE(f) ? '<span class="upg">Nâng cấp +6</span>' : ''}${img}<b>${act === 'shop-pick' && !own ? '???' : esc(f.en)}</b><small>${esc(f.vi)}</small>${act === 'shop-pick' ? `<span class="price">${own ? 'Đã có' : lock ? needTag(f.lvl) : priceTag(f)}</span>` : ''}</button>`;
+  return `<button class="card r${f.rar || 0}" data-act="${act}" data-id="${f.id}" ${extra}><span class="rar">${RARITY[f.rar || 0].vi}</span>${lv ? `<span class="plus t${lv}">+${lv}</span>` : CAN_UPGRADE(f) ? `<span class="upg">${(f.rar || 0) < 2 ? 'Đặc cách +6' : 'Nâng cấp +6'}</span>` : ''}${img}<b>${act === 'shop-pick' && !own ? '???' : esc(f.en)}</b><small>${esc(f.vi)}</small>${act === 'shop-pick' ? `<span class="price">${own ? 'Đã có' : lock ? needTag(f.lvl) : priceTag(f)}</span>` : ''}</button>`;
 }
 function shopHTML() {
   const L = fullLook(S.look), list = FASHION.filter(f => f.slot === SHOPTAB && (f.price > 0 || f.chest)).sort((a, b) => (a.rar || 0) - (b.rar || 0) || (a.cur === 'gem') - (b.cur === 'gem') || a.price - b.price);
@@ -2865,7 +2948,7 @@ function forgeHTML() {
   const bonus = (FORGE.quiz === true ? 15 : 0) + (FORGE.shoe ? 10 : 0), chance = cost ? Math.min(100, cost.ch + bonus) : 0, enough = cost && S.em >= cost.em && S.di >= cost.di;
   const howGet = f.chest ? 'Món này chỉ rơi ra từ <b>Rương may mắn</b>.' : `Mua ở cửa hàng của <b>Cô Mai</b> trong Làng (${priceTag(f)}${(f.lvl || 1) > S.lvl ? ', ' + needTag(f.lvl) : ''}).`;
   return `<div class="forge">
-    <p class="note">Chỉ đồ <b>Sử thi trở lên</b> mới nâng cấp được, mỗi cấp thêm hiệu ứng mới. Bạn có <b>${mine.length}/${all.length}</b> món nâng cấp được. Món <b class="ownmark">viền xanh, ghi “Đã có”</b> là của bạn, món mờ là chưa có. Bấm vào bất kỳ món nào để xem các cấp +1 đến +6.</p>
+    <p class="note">Chỉ đồ <b>Sử thi trở lên</b> và vài món <b>đặc cách</b> mới nâng cấp được, mỗi cấp thêm hiệu ứng mới. Bạn có <b>${mine.length}/${all.length}</b> món nâng cấp được. Món <b class="ownmark">viền xanh, ghi “Đã có”</b> là của bạn, món mờ là chưa có. Bấm vào bất kỳ món nào để xem các cấp +1 đến +6.</p>
     <div class="seg">${slots.map(([k, l]) => { const n = all.filter(m => m.slot === k), o = n.filter(m => own(m.id)).length; return `<button class="segb" data-act="forge-tab" data-t="${k}" aria-pressed="${FORGE.tab === k}">${l} <small>${o}/${n.length}</small></button>`; }).join('')}</div>
     <div class="fgrid">${list.map(card).join('')}</div>
     <h3 class="ph3">${esc(f.vi)} <small>(${esc(f.en)}) · ${RARITY[f.rar || 0].vi}</small></h3>
@@ -4441,7 +4524,7 @@ function chibiFrame(moving, phase, tnow, act, emote, id) {
   if (moving) return 'walk' + (Math.floor(phase / 2.4) % 4);
   const seed = id === 'me' ? 0 : id.length * 397;
   if ((tnow + seed) % 3600 < 140) return 'blink';
-  return (tnow + seed) % 1400 < 700 ? 'idle0' : 'idle1';
+  return 'idle' + (Math.floor((tnow + seed) / 280) % 4);
 }
 function drawPet(id, lv, x, y, tnow, moving) {
   const frame = moving ? Math.floor(tnow / 180) % 2 : Math.floor(tnow / 600) % 2;
