@@ -181,6 +181,13 @@ function headSVG(L, skin, back) {
 }
 const RB_DEF = `<defs><linearGradient id="rb" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF3552"/><stop offset=".25" stop-color="#FFC83D"/><stop offset=".5" stop-color="#3DDC84"/><stop offset=".75" stop-color="#4D8BFF"/><stop offset="1" stop-color="#B05CFF"/></linearGradient><filter id="gl" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter><linearGradient id="hg_pink" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FF8FC7"/><stop offset="1" stop-color="#9B5CFF"/></linearGradient><linearGradient id="hg_ocean" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4D8BFF"/><stop offset="1" stop-color="#7EF0C4"/></linearGradient><linearGradient id="hg_fire" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#FF3552"/><stop offset=".55" stop-color="#FF8A3D"/><stop offset="1" stop-color="#FFE48A"/></linearGradient><linearGradient id="hg_silver" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".5" stop-color="#D9DDF0"/><stop offset="1" stop-color="#B8B4E0"/></linearGradient><linearGradient id="hg_gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFF3B0"/><stop offset=".45" stop-color="#FFC83D"/><stop offset="1" stop-color="#C98A1A"/></linearGradient><linearGradient id="hg_galaxy" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1E1B4B"/><stop offset=".5" stop-color="#6D3FD8"/><stop offset="1" stop-color="#FF6FB5"/></linearGradient><linearGradient id="hg_aurora" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3DDC84"/><stop offset=".5" stop-color="#2DD4BF"/><stop offset="1" stop-color="#9B5CFF"/></linearGradient></defs>`;
 const glowWrap = (lv, s) => s && lv >= 4 ? `<g filter="url(#gl)">${s}</g>` : s;
+// how each held item sits in the hand: [scale, lean in degrees away from the head]. Long items lean out so they clear the face.
+const HAND_FIT = {
+  _: [1.35, 28],
+  hand_balloon: [1.15, 22], hand_umbrella: [1.1, 26], hand_wand: [1.45, 34], hand_sunflower: [1.4, 32], hand_lollipop: [1.5, 30],
+  hand_saber: [1.15, 36], hand_scepter: [1.3, 32], hand_starstaff: [1.25, 32], hand_trident: [1.15, 34], hand_lantern: [1.35, 26], hand_cotton: [1.45, 28],
+  hand_boba: [1.7, 8], hand_icecream: [1.7, 14], hand_phone: [1.7, 6], hand_book: [1.6, 6], hand_bouquet: [1.6, 16], hand_teddy: [1.55, 10], hand_fan: [1.5, 18], hand_mic: [1.7, 16]
+};
 // frame: {legs:[dl,dr], bob, arms:[rl,rr], face, tool, flap}
 function chibiInner(L, f, dir) {
   const skin = SKIN_TONES[L.skin] || SKIN_TONES[0], lv = L.lv || {}, back = dir === 'u';
@@ -192,10 +199,12 @@ function chibiInner(L, f, dir) {
   if (L.hairB && !back) s += `<g transform="translate(0 ${bob})">${tpl(NEMO.hairB[L.hairB], L.hairC)}</g>`;
   s += legSVG(L, 59, f.legs ? f.legs[0] : 0, skin) + legSVG(L, 73, f.legs ? f.legs[1] : 0, skin);
   s += `<g transform="translate(0 ${bob})">`;
-  s += armSVG(L, 44, f.arms ? f.arms[0] : 0, skin, back ? handItem : '');
+  // farm tools stay in the arm layer; fashion items held in the hand are drawn last (see below) so the big head never hides them
+  const tool = f.tool ? handItem : '';
+  s += armSVG(L, 44, f.arms ? f.arms[0] : 0, skin, back ? tool : '');
   s += `<path d="M55 113H90V132C90 135.3 87.3 138 84 138H61C57.7 138 55 135.3 55 132V113Z" fill="${skin.b}"/>` + topSVG(L, f) + skirtSVG(L);
   if (L.back && !back) s += backStraps(L.back, FASH[L.back].col);
-  s += armSVG(L, 89, f.arms ? f.arms[1] : 0, skin, back ? '' : handItem);
+  s += armSVG(L, 89, f.arms ? f.arms[1] : 0, skin, back ? '' : tool);
   s += headSVG(L, skin, back);
   if (!back) {
     s += NEMO.faces[face] || NEMO.faces.smile;
@@ -205,6 +214,11 @@ function chibiInner(L, f, dir) {
   if (L.hairF && L.hairF !== 'none') s += tpl(NEMO.hairF[L.hairF], L.hairC);
   if (L.hairB && back) s += tpl(NEMO.hairB[L.hairB], L.hairC);
   if (L.hat) s += glowWrap(lv[L.hat], hatSVG(L.hat, FASH[L.hat].col, lv[L.hat] || 0));
+  // held item on top of everything, following the arm's swing and leaning away from the head
+  if (handItem && !f.tool) {
+    const fit = HAND_FIT[L.hand] || HAND_FIT._, ax = back ? 44 : 89, rot = f.arms ? f.arms[back ? 0 : 1] : 0, lean = (back ? -1 : 1) * fit[1];
+    s += `<g transform="rotate(${rot} ${ax + 6} 116)"><g transform="translate(${ax} 113)"><g transform="rotate(${lean} 6 26) translate(6 26) scale(${fit[0]}) translate(-6 -26)">${handItem}</g><rect x="0" y="20" width="12" height="9" rx="4.5" fill="${skin.b}"/></g></g>`;
+  }
   s += `</g>`;
   if (back) s += backItem;
   return s;
