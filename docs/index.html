@@ -534,6 +534,27 @@ textarea.field{resize:vertical;line-height:1.5}
 .card .hot{position:absolute;top:8px;right:8px;font-size:9.5px;font-weight:900;color:#fff;background:#ff3552;border-radius:99px;padding:1px 6px}
 @media (max-width:600px){.lvpath small{display:none}.lvbig{font-size:30px}}
 
+/* ---------- hints fade after 5 s ---------- */
+.hint{transition:opacity .5s,transform .5s}
+.hint.gone{opacity:0;pointer-events:none}
+/* ---------- forge catalogue ---------- */
+.fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;max-height:300px;overflow:auto;padding:2px}
+.fcard{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;border:2px solid transparent;background:var(--surface-2);border-radius:16px;padding:6px 4px;cursor:pointer;opacity:.5;filter:grayscale(.6)}
+.fcard.own{opacity:1;filter:none;border-color:var(--mint);background:#f0fdf8}
+.fcard.sel{border-color:var(--violet);box-shadow:0 0 0 3px rgba(124,92,255,.25);opacity:1}
+.fcard b{font-size:11.5px;line-height:1.2;text-align:center}
+.fcard .fstate{font-size:10.5px;font-weight:800;color:var(--muted)}.fcard.own .fstate{color:#047857}
+.fcard .tier{font-style:normal;font-size:10.5px;padding:0 6px}
+.pv.sm{width:64px;height:64px;border-radius:12px}
+.ownmark{color:#047857}
+.segb small{font-weight:700;opacity:.7;font-size:11px}
+.tierstrip{display:grid;grid-template-columns:repeat(7,minmax(70px,1fr));gap:6px;overflow-x:auto;padding:2px 0 6px}
+.tcell{display:flex;flex-direction:column;align-items:center;gap:3px;background:var(--surface-2);border-radius:14px;padding:6px 2px;border:2px solid transparent}
+.tcell small{font-size:10px;font-weight:800;color:var(--muted)}
+.tcell.cur{border-color:var(--violet);background:#f3efff}.tcell.done{background:#f0fdf8}
+.forge-info .warn{color:var(--bad);font-weight:800}
+@media (max-width:600px){.fgrid{grid-template-columns:repeat(auto-fill,minmax(76px,1fr));max-height:240px}.pv.sm{width:54px;height:54px}.tierstrip{grid-template-columns:repeat(7,64px)}}
+
 </style>
 
 <div id="loading" class="loading">
@@ -1333,13 +1354,67 @@ function bagSVG(id, c, lv) {
   return '';
 }
 
+/* ===================== SPA LOOKS: face shapes, eyes, facial features, special skins (merged into chibi.js) ===================== */
+// Head space: head x 25..120, y 34..117. Eyes centred at (58,82) and (87,82). Mouth around (72.5,93).
+const FACE_SHAPES = {
+  vline: f => `<path d="M25 64C25 46 40 34 58 34H87C105 34 120 46 120 64V82C120 96 100 112 72.5 125C45 112 25 96 25 82Z" fill="${f}"/>`,
+  oval: f => `<ellipse cx="72.5" cy="78" rx="47" ry="46" fill="${f}"/>`,
+  heart: f => `<path d="M25 62C25 44 40 34 58 34H87C105 34 120 44 120 62C124 74 122 92 110 104C100 113 86 119 72.5 123C59 119 45 113 35 104C23 92 21 74 25 62Z" fill="${f}"/>`,
+  mochi: f => `<rect x="18" y="36" width="109" height="83" rx="41" fill="${f}"/>`,
+  square: f => `<path d="M24 64C24 46 40 34 58 34H87C105 34 121 46 121 64V107C121 113 116 118 110 118H35C29 118 24 113 24 107Z" fill="${f}"/>`,
+  slim: f => `<rect x="30" y="30" width="85" height="93" rx="30" fill="${f}"/>`,
+  idol: f => `<path d="M28 62C28 45 41 34 58 34H87C104 34 117 45 117 62V80C117 95 97 113 72.5 127C48 113 28 95 28 80Z" fill="${f}"/>`
+};
+// a shaped face gets separate ears so the jawline stays visible
+const SHAPE_EARS = (s) => `<ellipse cx="22" cy="88" rx="10" ry="12" fill="${s.b}"/><ellipse cx="123" cy="88" rx="10" ry="12" fill="${s.b}"/><ellipse cx="23" cy="89" rx="5" ry="7" fill="${s.d}"/><ellipse cx="122" cy="89" rx="5" ry="7" fill="${s.d}"/>`;
+// custom eyes (the expression still chooses the mouth)
+const EYE_PAIR = f => f(58) + f(87);
+const SPA_EYES = {
+  sparkle: () => EYE_PAIR(x => `<ellipse cx="${x}" cy="82" rx="6.5" ry="8.5" fill="#1F1B24"/><ellipse cx="${x}" cy="85" rx="4.5" ry="4.5" fill="#6D3FD8"/><circle cx="${x - 2}" cy="78.5" r="2.8" fill="#FFFFFF"/><path d="M${x + 2.5} 85l.9 1.8 1.8.9-1.8.9-.9 1.8-.9-1.8-1.8-.9 1.8-.9z" fill="#FFFFFF"/>`),
+  cat: () => EYE_PAIR(x => `<path d="M${x - 7} 83Q${x} 74 ${x + 7} 81Q${x} 90 ${x - 7} 83Z" fill="#FFC83D" stroke="#1F1B24" stroke-width="2"/><ellipse cx="${x}" cy="82.5" rx="1.6" ry="4.5" fill="#1F1B24"/>`),
+  doe: () => EYE_PAIR(x => `<ellipse cx="${x}" cy="82" rx="6.5" ry="8" fill="#3B2418"/><circle cx="${x - 2}" cy="79" r="2.6" fill="#FFFFFF"/><circle cx="${x + 2.4}" cy="85" r="1.3" fill="#FFFFFF"/><path d="M${x + (x < 72 ? -6 : 6)} 77l${x < 72 ? -4 : 4} -3M${x + (x < 72 ? -6.5 : 6.5)} 80l${x < 72 ? -4.5 : 4.5} -1" stroke="#1F1B24" stroke-width="1.6" stroke-linecap="round"/>`),
+  odd: () => `<circle cx="58" cy="82" r="6.5" fill="#4D8BFF"/><circle cx="87" cy="82" r="6.5" fill="#FFB020"/>` + EYE_PAIR(x => `<circle cx="${x}" cy="82.5" r="3" fill="#1F1B24"/><circle cx="${x - 2}" cy="79.5" r="1.8" fill="#FFFFFF"/>`),
+  galaxy: () => EYE_PAIR(x => `<ellipse cx="${x}" cy="82" rx="6.5" ry="8.5" fill="url(#hg_galaxy)"/><circle cx="${x - 2}" cy="79" r="2.2" fill="#FFFFFF"/><circle cx="${x + 2}" cy="86" r="1" fill="#FFFFFF"/><circle cx="${x + 3}" cy="80" r=".8" fill="#FFE48A"/>`)
+};
+const FACE_MOUTH = {smile: 'smile', cute: 'smile', love: 'smile', gloating: 'smile', sleepy: 'smile', laughs: 'teeth_smile', willing: 'open_mouth', melancholic: 'sad'};
+function eyesSVG(L, face) {
+  const e = L.eyes; if (!e) return null;
+  const eyes = SPA_EYES[e] ? SPA_EYES[e]() : NEMO.eyes[e]; if (!eyes) return null;
+  return eyes + (NEMO.mouths[FACE_MOUTH[face] || 'smile'] || '');
+}
+// facial features that can be combined (L.feats)
+function featsSVG(L, skin, stage) {
+  const fs = L.feats || []; let s = '';
+  if (stage === 'face') {
+    if (fs.includes('glow')) s += `<ellipse cx="44" cy="92" rx="5" ry="2.6" fill="#FFFFFF" opacity=".55"/><ellipse cx="101" cy="92" rx="5" ry="2.6" fill="#FFFFFF" opacity=".55"/><ellipse cx="60" cy="62" rx="9" ry="3" fill="#FFFFFF" opacity=".35"/>`;
+    if (fs.includes('nose')) s += `<path d="M72.5 82V90Q72.5 92.5 75.5 92" stroke="${skin.d}" stroke-width="2" fill="none" stroke-linecap="round"/><ellipse cx="70.5" cy="86" rx="1.2" ry="3" fill="#FFFFFF" opacity=".5"/>`;
+    if (fs.includes('dimples')) s += `<path d="M62 97q-2 2 0 4M83 97q2 2 0 4" stroke="${skin.d}" stroke-width="1.8" fill="none" stroke-linecap="round"/>`;
+    if (fs.includes('mole')) s += `<circle cx="84" cy="99" r="1.4" fill="#3B2418"/>`;
+    if (fs.includes('lashes')) s += `<path d="M51 79l-4 -2M51 82l-4.5 0M94 79l4 -2M94 82l4.5 0" stroke="#1F1B24" stroke-width="1.8" stroke-linecap="round"/>`;
+  }
+  if (stage === 'hair' && fs.includes('brows')) s += `<path d="M51 71Q58 67 64 70M81 70Q87 67 94 71" stroke="#3B2418" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+  return s;
+}
+// special skins added after the six base tones (index 6+)
+const SPA_SKINS = {
+  porcelain: {id: 'porcelain', b: '#FFE6D8', d: '#F6CBB6', c: '#FFB6A6'},
+  bronze: {id: 'bronze', b: '#C98A5E', d: '#B07148', c: '#D9785F'},
+  peach: {id: 'peach', b: '#FFD0B8', d: '#F5AE90', c: '#FF9F8E'},
+  elf: {id: 'elf', b: '#C4F0DE', d: '#A2DDC8', c: '#FFB3D1'},
+  lilac: {id: 'lilac', b: '#E3D4FF', d: '#C9B4F5', c: '#FF9FD0'},
+  starlight: {id: 'starlight', b: '#E9EDFF', d: '#CBD3FA', c: '#B9A8FF'}
+};
+const BASE_SKINS = SKIN_TONES.length;
+for (const k of Object.keys(SPA_SKINS)) SKIN_TONES.push(SPA_SKINS[k]);
+const skinIndex = id => SKIN_TONES.findIndex(t => t.id === id);
+
 const FASH = Object.fromEntries(FASHION.map(f => [f.id, f]));
 const RARITY = [{vi:'Thường', c:'#8E8AA8'}, {vi:'Hiếm', c:'#4D8BFF'}, {vi:'Sử thi', c:'#B05CFF'}, {vi:'Huyền thoại', c:'#FFB020'}, {vi:'Thần thoại', c:'#FF3552'}];
 const SLOTS = [['top','Áo'], ['bottom','Quần váy'], ['shoes','Giày'], ['hat','Mũ'], ['face','Kính'], ['mouth','Miệng'], ['deco','Hình dán'], ['ear','Hoa tai'], ['neck','Vòng cổ'], ['back','Lưng'], ['bag','Túi'], ['hand','Cầm tay'], ['aura','Hào quang'], ['pet','Thú cưng']];
 const UPGRADABLE = s => ['hat','face','back','hand','aura','pet','mouth','deco','ear','neck','shoes','bag'].includes(s);
 const DEFAULT_LOOK = {skin:0, hairF:'regular', hairB:null, hairC:'#1F1B24', face:'smile', beard:null,
   top:'top_tee', topC:'#FF3552', bottom:'bot_pants', bottomC:'#545AF2', shoeC:'#1F1B24',
-  hat:null, face2:null, back:null, hand:null, aura:null, pet:null, mouth:null, deco:null, ear:null, neck:null, shoes:null, bag:null, lv:{}};
+  hat:null, face2:null, back:null, hand:null, aura:null, pet:null, mouth:null, deco:null, ear:null, neck:null, shoes:null, bag:null, shape:null, eyes:null, feats:[], lv:{}};
 
 /* ---------- SVG parts ---------- */
 const tpl = (s, c) => s.split('{C}').join(c);
@@ -1434,7 +1509,8 @@ function armSVG(L, x, rot, skin, hand) {
   return `<g transform="rotate(${rot} ${x + 6} 116)"><rect x="${x}" y="113" width="12" height="28" rx="6" fill="${skin.b}"/><path d="M${x} 119C${x} 115.7 ${x + 2.7} 113 ${x + 6} 113S${x + 12} 115.7 ${x + 12} 119V${113 + sl}H${x}Z" fill="${sc}"/>${hand ? `<g transform="translate(${x} 113)">${hand}</g>` : ''}</g>`;
 }
 function headSVG(L, skin, back) {
-  const head = `<rect x="11" y="76" width="123" height="29" rx="14.5" fill="${skin.b}"/><rect x="19" y="83" width="107" height="15" rx="7.5" fill="${skin.d}"/><rect x="25" y="34" width="95" height="83" rx="30" fill="${skin.b}"/>`;
+  const shaped = L.shape && FACE_SHAPES[L.shape];
+  const head = shaped ? SHAPE_EARS(skin) + FACE_SHAPES[L.shape](skin.b) : `<rect x="11" y="76" width="123" height="29" rx="14.5" fill="${skin.b}"/><rect x="19" y="83" width="107" height="15" rx="7.5" fill="${skin.d}"/><rect x="25" y="34" width="95" height="83" rx="30" fill="${skin.b}"/>`;
   if (back) return head + (L.hairF !== 'none' ? `<rect x="23" y="32" width="99" height="87" rx="31" fill="${L.hairC}"/>` : '');
   return head + `<circle cx="45" cy="99" r="10" fill="${skin.c}"/><circle cx="100" cy="99" r="10" fill="${skin.c}"/>`;
 }
@@ -1472,14 +1548,15 @@ function chibiInner(L, f, dir) {
   s += headSVG(L, skin, back);
   if (!back) {
     s += `<g transform="translate(72.5 118) scale(1.25) translate(-72.5 -118)">${acc('neck', neckSVG)}</g>`;
-    s += NEMO.faces[face] || NEMO.faces.smile;
+    s += (!f.face && eyesSVG(L, face)) || NEMO.faces[face] || NEMO.faces.smile;
+    s += featsSVG(L, skin, 'face');
     s += acc('deco', decoSVG);
     if (L.beard) s += tpl(NEMO.beards[L.beard], L.hairC);
     if (L.face2) s += glowWrap(lv[L.face2], faceItemSVG(L.face2, FASH[L.face2].col, lv[L.face2] || 0));
     s += acc('mouth', mouthSVG);
   }
   if (L.hairF && L.hairF !== 'none') s += tpl(NEMO.hairF[L.hairF], L.hairC);
-  if (!back) s += acc('ear', earSVG);
+  if (!back) s += acc('ear', earSVG) + featsSVG(L, skin, 'hair');
   if (L.hairB && back) s += tpl(NEMO.hairB[L.hairB], L.hairC);
   if (L.hat) s += glowWrap(lv[L.hat], hatSVG(L.hat, FASH[L.hat].col, lv[L.hat] || 0));
   // held item on top of everything, following the arm's swing and leaning away from the head
@@ -1642,6 +1719,7 @@ const BSTYLE = {
   post:   {wall:'#FFF8E6', roof:'#FFB547', roof2:'#F29A1F', trim:'#EEDDB6', door:'#C4703A'},
   house2: {wall:'#E8F7FF', roof:'#4FC3C9', roof2:'#36A8AE', trim:'#CBE7EE', door:'#2F8A8F'},
   barn:   {wall:'#E8584B', roof:'#B9483D', roof2:'#9E3B32', trim:'#FFFFFF', door:'#FFFFFF'},
+  spa:    {wall:'#F0FFF8', roof:'#2DD4BF', roof2:'#1FB5A3', trim:'#C9F2E8', door:'#FF8FC7', awning:['#7EF0C4','#FFFFFF']},
   salon:  {wall:'#FFF0FB', roof:'#C77DFF', roof2:'#A75BE8', trim:'#F2D4FF', door:'#FF6FB5', awning:['#FF8FC7','#FFFFFF']},
   coop:   {wall:'#FFD36B', roof:'#E8584B', roof2:'#C9473C', trim:'#FFF3D0', door:'#8B5A3C'}
 };
@@ -1976,11 +2054,14 @@ function buildMaps() {
   prop(v, 'board', 12, 11); prop(v, 'well', 23, 14);
   for (const [x, y] of [[10, 9], [25, 9], [10, 17], [25, 17]]) prop(v, 'lamp', x, y);
   prop(v, 'bench', 14, 16); prop(v, 'bench', 21, 16); prop(v, 'crate', 15, 7); prop(v, 'sacks', 20, 7);
-  for (const [x, y, k] of [[8, 16, 'round'], [9, 25, 'fruit'], [30, 24, 'pine'], [33, 9, 'round'], [3, 15, 'blossom']]) tree(v, x, y, k);
+  for (const [x, y, k] of [[8, 16, 'round'], [5, 24, 'fruit'], [30, 24, 'pine'], [33, 9, 'round'], [3, 15, 'blossom']]) tree(v, x, y, k);
   prop(v, 'flowers', 9, 11, false); prop(v, 'flowers', 26, 11, false);
   v.exits.push({x: 0, y: 12, w: 1, h: 2, to: 'farm', tx: 34, ty: 12});
   v.exits.push({x: 35, y: 12, w: 1, h: 2, to: 'river', tx: 1, ty: 9});
   v.exits.push({x: 17, y: 0, w: 2, h: 1, to: 'park', tx: 15, ty: 21});
+  // keep the strip in front of the school open: low flower beds instead of tall border trees (the edge row stays blocked)
+  v.objs = v.objs.filter(o => !(o.t === 'tree' && o.y >= v.h - 2 && o.x >= 8 && o.x <= 24));
+  for (let x = 9; x <= 23; x += 3) prop(v, 'flowers', x, v.h - 1, false);
   v.spawn = [3, 12];
   M.village = v;
 
@@ -1991,8 +2072,9 @@ function buildMaps() {
   prop(p, 'fountain', 16, 10); blockRect(p, 14, 8, 4, 3);
   for (const [x, y] of [[11, 6], [20, 6], [11, 13], [20, 13]]) prop(p, 'lamp', x, y);
   for (const [x, y] of [[8, 9], [23, 9], [8, 12], [23, 12]]) prop(p, 'bench', x, y);
-  for (const [x, y] of [[4, 4], [27, 4], [5, 17], [26, 18], [9, 20], [22, 20], [13, 3], [19, 3]]) tree(p, x, y, (x + y) % 3 ? 'blossom' : 'round');
-  for (const [x, y] of [[6, 7], [25, 7], [7, 15], [24, 15], [3, 12], [28, 12]]) prop(p, 'flowers', x, y, false);
+  for (const [x, y] of [[4, 4], [27, 4], [3, 20], [26, 18], [11, 21], [22, 20], [13, 3], [19, 3]]) tree(p, x, y, (x + y) % 3 ? 'blossom' : 'round');
+  for (const [x, y] of [[6, 7], [25, 7], [11, 17], [24, 15], [3, 12], [28, 12]]) prop(p, 'flowers', x, y, false);
+  house(p, 'spa', 3, 14, 6, 4, {sign: 'BEAUTY SPA', role: 'spa'});
   prop(p, 'board', 18, 15);
   p.exits.push({x: 15, y: 23, w: 2, h: 1, to: 'village', tx: 17, ty: 2});
   p.spawn = [15, 21];
@@ -2036,7 +2118,7 @@ const NPC_DEFS = [
     greet:['Seeds for sale!','Plant and grow!'], line:() => ({en:`Good day, ${S.name}. Which seeds do you need?`, vi:`Chào cháu ${S.name}. Cháu cần hạt giống gì?`})},
   {id:'nam', name:'Cô Năm', map:'village', home:[33, 21], role:'forge', look:L_({skin:1, hairF:'chupchik', hairB:'short', hairC:'#9B5CFF', top:'top_sailor', topC:'#9B5CFF', bottom:'bot_skirt', bottomC:'#1F1B24', hat:'hat_witch', hand:'hand_wand', lv:{hand_wand:5, hat_witch:4}}),
     greet:['Upgrade your items!','Shiny gems!'], line:() => ({en:`Hi, ${S.name}! Want to make your items shine?`, vi:`Chào ${S.name}! Muốn nâng cấp đồ cho lấp lánh không?`})},
-  {id:'lan', name:'Cô Lan', map:'village', home:[16, 25], role:'teacher', look:L_({skin:0, hairF:'straight', hairB:'long', hairC:'#5B3423', top:'top_aodai', topC:'#FFFFFF', face2:'face_square'}),
+  {id:'lan', name:'Cô Lan', map:'village', home:[18, 24], role:'teacher', look:L_({skin:0, hairF:'straight', hairB:'long', hairC:'#5B3423', top:'top_aodai', topC:'#FFFFFF', face2:'face_square'}),
     greet:['Good morning!','Practice makes perfect.'], line:() => ({en:`Good morning, ${S.name}! Are you ready for a lesson?`, vi:`Chào buổi sáng ${S.name}! Em sẵn sàng học chưa?`})},
   {id:'na', name:'Bé Na', map:'village', home:[19, 14], role:'chat', wander:true, look:L_({skin:1, hairF:'chupchik', hairB:'curly', hairC:'#FF6B35', top:'top_dress', topC:'#FFC83D', hat:'hat_bunny', pet:'pet_chick', hand:'hand_balloon'}),
     greet:['Hi!',"Let's play!",'I like rabbits!'], line:() => ({en:`Hi, ${S.name}! Can we talk in English?`, vi:`Chào ${S.name}! Mình nói chuyện bằng tiếng Anh nhé?`})},
@@ -2051,7 +2133,9 @@ NPC_DEFS.push(
   {id:'bao', name:'Anh Bảo', map:'park', home:[10, 11], role:'chat', wander:true, look:L_({skin:3, hairF:'straight', hairC:'#1F1B24', top:'top_hoodie', topC:'#FF6B35', bottom:'bot_shorts', bottomC:'#1F1B24', hat:'hat_cap', pet:'pet_puppy'}),
     greet:['Morning run!','Nice weather today.'], line:() => ({en:`Hey ${S.name}! Do you jog in the park too?`, vi:`Chào ${S.name}! Bạn cũng chạy bộ trong công viên à?`})},
   {id:'ngan', name:'Chị Ngân', map:'village', home:[8, 23], role:'salon', look:L_({skin:1, hairF:'elegant', hairB:'long', hairC:'#FF8FC7', top:'top_cardigan', topC:'#B05CFF', bottom:'bot_pleated', bottomC:'#1F1B24', face2:'face_star', hand:'hand_fan'}),
-    greet:['New hairstyles!','Try a new look!'], line:() => ({en:`Hi ${S.name}! Which hairstyle would you like today?`, vi:`Chào ${S.name}! Hôm nay em muốn làm kiểu tóc nào?`})}
+    greet:['New hairstyles!','Try a new look!'], line:() => ({en:`Hi ${S.name}! Which hairstyle would you like today?`, vi:`Chào ${S.name}! Hôm nay em muốn làm kiểu tóc nào?`})},
+  {id:'thu', name:'Chị Thu', map:'park', home:[9, 19], role:'spa', look:L_({skin:6, hairF:'elegant', hairB:'long', hairC:'#5B3423', top:'top_dress', topC:'#FFFFFF', bottomC:'#FF8FC7', face2:null, hat:'hat_flower'}),
+    greet:['Relax and glow!','Spa time!'], line:() => ({en:`Welcome to the spa, ${S.name}! What would you like today?`, vi:`Chào mừng ${S.name} đến spa! Hôm nay em muốn làm gì nào?`})}
 );
 const fullLook = L => Object.assign({}, DEFAULT_LOOK, L || {}, {lv: Object.assign({}, (L && L.lv) || {})});
 
@@ -2065,7 +2149,7 @@ function newGame() {
   Object.assign(plots[0], {c: 'carrot', p: 1}); Object.assign(plots[1], {c: 'radish', p: 0.4, w: now + 20000}); Object.assign(plots[2], {c: 'carrot', p: 0.25});
   return {v: 4, created: false, name: '', look: fullLook(DEFAULT_LOOK), owned: [...FREE_ITEMS], map: 'farm', px: 0, py: 0,
     coins: 80, em: 4, di: 1, daily: '', xp: 0, lvl: 3, plots, animals: [{t: 'chicken', st: 'hungry', r: 0}, ...Array(17).fill(null)], barnLv: 0, keys: 1, pity: 0,
-    cefr: 'A1', hair: [], lvAns: 0, seeds: {carrot: 6, radish: 4}, inv: {}, m: {}, orders: [], streak: 0, best: 0, stats: {ok: 0, all: 0, talks: 0, fish: 0},
+    cefr: 'A1', hair: [], spa: [], lvAns: 0, seeds: {carrot: 6, radish: 4}, inv: {}, m: {}, orders: [], streak: 0, best: 0, stats: {ok: 0, all: 0, talks: 0, fish: 0},
     study: {track: 'general', level: 'A1', unlocked: ['A1']}, sound: true, last: now, caught: false};
 }
 async function initStore() {
@@ -2483,6 +2567,7 @@ function npcBody(n) {
   if (role === 'teacher') return teacherHTML();
   if (role === 'ielts') return ieltsHTML();
   if (role === 'salon') return salonHTML();
+  if (role === 'spa') return spaHTML();
   return `<div class="row-btns"><button class="btn" data-act="chat">Nói chuyện</button><button class="btn ghost" data-act="close">Tạm biệt</button></div>`;
 }
 function orderHTML(o, k, canGive) {
@@ -2547,25 +2632,36 @@ const UP_COST = [null, {em: 2, di: 0, ch: 100}, {em: 4, di: 0, ch: 90}, {em: 6, 
 let FORGE = null;
 function forgeHTML() {
   if (FORGE && FORGE.ex) return exchangeHTML();
-  const L = fullLook(S.look), mine = FASHION.filter(f => UPGRADABLE(f.slot) && S.owned.includes(f.id));
-  if (!mine.length) return `<p class="empty">Bạn chưa có món đồ nào nâng cấp được. Mua mũ, kính, cánh, đồ cầm tay, hào quang hoặc thú cưng ở cửa hàng của Cô Mai trước nhé.</p><div class="row-btns"><button class="btn ghost sm" data-act="exchange">Đổi xu lấy ngọc</button></div>`;
-  if (!FORGE || !S.owned.includes(FORGE.id)) FORGE = {id: mine[0].id, quiz: null, res: null};
-  const f = FASH[FORGE.id], lv = (S.look.lv || {})[f.id] || 0, nx = lv + 1, cost = UP_COST[nx];
-  const withLv = l => Object.assign({}, L, slotPatch(f), {lv: Object.assign({}, L.lv, {[f.id]: l})});
-  const pic = l => f.slot === 'pet' ? `<img class="pv big" src="${svgURL(petSVG(f.id, l, 0))}" alt="">` : f.slot === 'aura' ? `<span class="pv aura big" style="--c:${l ? (TIER[l] === 'rainbow' ? '#FFB020' : TIER[l]) : f.col}"></span>` : `<img class="pv big" src="${portraitSVG(withLv(l), {full: true, hand: true})}" alt="">`;
+  const L = fullLook(S.look), own = id => S.owned.includes(id);
+  const all = FASHION.filter(f => UPGRADABLE(f.slot) && (f.price > 0 || f.chest || own(f.id)));
+  const slots = SLOTS.filter(([k]) => UPGRADABLE(k));
+  if (!FORGE || !FASH[FORGE.id]) { const first = all.find(f => own(f.id)) || all[0]; FORGE = {id: first.id, tab: first.slot, quiz: null, res: null}; }
+  if (!FORGE.tab) FORGE.tab = FASH[FORGE.id].slot;
+  const list = all.filter(f => f.slot === FORGE.tab), mine = all.filter(f => own(f.id));
+  const f = FASH[FORGE.id], have = own(f.id), lv = have ? ((S.look.lv || {})[f.id] || 0) : 0, nx = lv + 1, cost = UP_COST[nx];
+  const look = (m, l) => { const x = Object.assign({}, L, slotPatch(m), {lv: Object.assign({}, L.lv, {[m.id]: l})}); if (FACE_SLOTS.includes(m.slot)) Object.assign(x, {back: null, hand: null}); return x; };
+  const img = (m, l, cls) => m.slot === 'pet' ? `<img class="pv ${cls} pet" src="${svgURL(petSVG(m.id, l, 0))}" alt="">` : m.slot === 'aura' ? `<span class="pv ${cls} aura" style="--c:${l ? (TIER[l] === 'rainbow' ? '#FFB020' : TIER[l]) : m.col}"></span>` : `<img class="pv ${cls}" src="${portraitSVG(look(m, l), {full: ['back', 'hand', 'shoes', 'bag', 'neck'].includes(m.slot), hand: true})}" alt="">`;
+  const card = m => { const o = own(m.id), l = (S.look.lv || {})[m.id] || 0;
+    return `<button class="fcard r${m.rar || 0} ${o ? 'own' : ''} ${m.id === f.id ? 'sel' : ''}" data-act="forge-pick" data-id="${m.id}" aria-pressed="${m.id === f.id}">${img(m, o ? l : 0, 'sm')}<b>${esc(m.vi)}</b><span class="fstate">${o ? (l ? `<i class="tier t${l}">+${l}</i>` : 'Đã có') : 'Chưa có'}</span></button>`; };
   const bonus = (FORGE.quiz === true ? 15 : 0) + (FORGE.shoe ? 10 : 0), chance = cost ? Math.min(100, cost.ch + bonus) : 0, enough = cost && S.em >= cost.em && S.di >= cost.di;
+  const howGet = f.chest ? 'Món này chỉ rơi ra từ <b>Rương may mắn</b>.' : `Mua ở cửa hàng của <b>Cô Mai</b> trong Làng (${priceTag(f)}${(f.lvl || 1) > S.lvl ? ', ' + needTag(f.lvl) : ''}).`;
   return `<div class="forge">
-    <div class="chips">${mine.map(m => { const l = (S.look.lv || {})[m.id] || 0; return `<button class="chip" data-act="forge-pick" data-id="${m.id}" aria-pressed="${m.id === f.id}">${esc(m.vi)}${l ? ` <b>+${l}</b>` : ''}</button>`; }).join('')}</div>
-    <div class="forge-stage"><div class="fs-item"><span class="tier t${lv}">${lv ? '+' + lv + ' ' + TIER_VI[lv] : 'Chưa nâng'}</span>${pic(lv)}</div>
-      ${nx <= 6 ? `<div class="fs-arrow" aria-hidden="true">→</div><div class="fs-item next"><span class="tier t${nx}">+${nx} ${TIER_VI[nx]}</span>${pic(nx)}</div>` : ''}</div>
-    ${nx <= 6 ? `<div class="forge-info"><span>Cần ${gemIcon('em')}<b>${cost.em}</b>${cost.di ? ` ${gemIcon('di')}<b>${cost.di}</b>` : ''}</span><span>Tỉ lệ thành công <b class="${chance >= 70 ? 'ok' : chance >= 45 ? 'mid' : 'low'}">${chance}%</b>${bonus ? ' (đã cộng 15%)' : ''}</span><span class="${nx >= 4 ? 'warn' : ''}">${nx >= 4 ? 'Thất bại từ +4 trở lên sẽ tụt 1 cấp.' : 'Thất bại chỉ mất ngọc, đồ giữ nguyên.'}</span></div>
-      <div class="row-btns">${FORGE.quiz === null ? `<button class="btn ghost" data-act="forge-quiz">Trả lời 1 câu khó để +15%</button>` : ''}${S.inv.horseshoe > 0 ? `<button class="btn ghost" data-act="forge-shoe" aria-pressed="${!!FORGE.shoe}">${FORGE.shoe ? 'Đã dùng' : 'Dùng'} móng ngựa may mắn (+10%) · có ${S.inv.horseshoe}</button>` : ''}<button class="btn gold" data-act="forge-go" ${enough ? '' : 'disabled'}>Nâng lên +${nx}</button><button class="btn ghost sm" data-act="exchange">Đổi xu lấy ngọc</button></div>
-      ${enough ? '' : `<p class="note">Chưa đủ ngọc. Ngọc lục bảo có được khi trả lời đúng 5 câu liên tiếp, lên cấp, giao đơn, học bài. Kim cương có được khi thi đậu, mỗi 5 cấp và khi câu được cá ngừ.</p>`}` : `<div class="fb good"><strong>Tối đa!</strong> Món này đã đạt +6 Cầu vồng.</div>`}
+    <p class="note">Bạn có <b>${mine.length}/${all.length}</b> món nâng cấp được. Món <b class="ownmark">viền xanh, ghi “Đã có”</b> là của bạn, món mờ là chưa có. Bấm vào bất kỳ món nào để xem các cấp +1 đến +6.</p>
+    <div class="seg">${slots.map(([k, l]) => { const n = all.filter(m => m.slot === k), o = n.filter(m => own(m.id)).length; return `<button class="segb" data-act="forge-tab" data-t="${k}" aria-pressed="${FORGE.tab === k}">${l} <small>${o}/${n.length}</small></button>`; }).join('')}</div>
+    <div class="fgrid">${list.map(card).join('')}</div>
+    <h3 class="ph3">${esc(f.vi)} <small>(${esc(f.en)}) · ${RARITY[f.rar || 0].vi}</small></h3>
+    <div class="tierstrip">${[0, 1, 2, 3, 4, 5, 6].map(l => `<div class="tcell ${have && l === lv ? 'cur' : ''} ${have && l < lv ? 'done' : ''}"><span class="tier t${l}">${l ? '+' + l : 'Gốc'}</span>${img(f, l, 'sm')}<small>${l ? TIER_VI[l] : 'Thường'}</small></div>`).join('')}</div>
+    ${!have ? `<div class="fb miss"><strong>Bạn chưa có món này.</strong> ${howGet}</div>` : `
+    <div class="forge-stage"><div class="fs-item"><span class="tier t${lv}">${lv ? '+' + lv + ' ' + TIER_VI[lv] : 'Chưa nâng'}</span>${img(f, lv, 'big')}</div>
+      ${nx <= 6 ? `<div class="fs-arrow" aria-hidden="true">→</div><div class="fs-item next"><span class="tier t${nx}">+${nx} ${TIER_VI[nx]}</span>${img(f, nx, 'big')}</div>` : ''}</div>
+    ${nx <= 6 ? `<div class="forge-info"><span>Cần ${gemIcon('em')}<b>${cost.em}</b>${cost.di ? ` ${gemIcon('di')}<b>${cost.di}</b>` : ''}</span><span>Tỉ lệ thành công <b class="${chance >= 70 ? 'ok' : chance >= 45 ? 'mid' : 'low'}">${chance}%</b>${bonus ? ` (đã cộng ${bonus}%)` : ''}</span>${nx >= 4 ? '<span class="warn">Thất bại có thể tụt 1 cấp</span>' : ''}</div>
+      <div class="row-btns">${FORGE.quiz === null ? `<button class="btn ghost" data-act="forge-quiz">Trả lời 1 câu khó để +15%</button>` : ''}${S.inv.horseshoe > 0 ? `<button class="btn ghost" data-act="forge-shoe" aria-pressed="${!!FORGE.shoe}">${FORGE.shoe ? 'Đã dùng' : 'Dùng'} móng ngựa may mắn (+10%) · còn ${S.inv.horseshoe}</button>` : ''}<button class="btn gold" data-act="forge-go" ${enough ? '' : 'disabled'}>Nâng lên +${nx}</button><button class="btn ghost sm" data-act="exchange">Đổi xu lấy ngọc</button></div>
+      ${enough ? '' : `<p class="note">Chưa đủ ngọc. Ngọc lục bảo có được khi trả lời đúng 5 câu liên tiếp, lên trình độ, giao đơn, học bài. Kim cương có được khi thi đậu và khi câu được cá ngừ.</p>`}` : `<div class="fb good"><strong>Tối đa!</strong> Món này đã đạt +6 Cầu vồng.</div>`}`}
     ${FORGE.res ? `<div class="fb ${FORGE.res.ok ? 'good' : 'miss'}"><strong>${FORGE.res.ok ? 'Thành công!' : 'Thất bại'}</strong> ${FORGE.res.msg}</div>` : ''}
   </div>`;
 }
 function forgeGo() {
-  const f = FASH[FORGE.id]; if (!f) return; S.look.lv = S.look.lv || {};
+  const f = FASH[FORGE.id]; if (!f || !S.owned.includes(f.id)) return; S.look.lv = S.look.lv || {};
   const lv = S.look.lv[f.id] || 0, nx = lv + 1, cost = UP_COST[nx]; if (!cost || S.em < cost.em || S.di < cost.di) return;
   S.em -= cost.em; S.di -= cost.di;
   const shoe = FORGE.shoe && S.inv.horseshoe > 0; if (shoe) S.inv.horseshoe--; const chance = Math.min(100, cost.ch + (FORGE.quiz === true ? 15 : 0) + (shoe ? 10 : 0)), ok = Math.random() * 100 < chance;
@@ -2686,7 +2782,7 @@ function openWardrobe() {
   const items = FASHION.filter(f => f.slot === WARD && S.owned.includes(f.id));
   const colorKey = {top: 'topC', bottom: 'bottomC'}[WARD];
   const optional = !['top', 'bottom'].includes(WARD), cur = WARD === 'face' ? L.face2 : L[WARD];
-  openModal(`<h2 class="ptitle">Tủ đồ</h2><div class="ward"><div class="ward-prev"><div class="stagebox"><img class="pv hero" src="${portraitSVG(L, {full: true, hand: true})}" alt="Nhân vật của bạn">${L.pet ? `<img class="petmini" src="${svgURL(petSVG(L.pet, (L.lv || {})[L.pet] || 0, 0))}" alt="">` : ''}</div><button class="btn ghost sm" data-act="creator">Sửa ngoại hình</button><button class="btn sm" data-act="salon">Tiệm tóc</button></div><div class="ward-main">
+  openModal(`<h2 class="ptitle">Tủ đồ</h2><div class="ward"><div class="ward-prev"><div class="stagebox"><img class="pv hero" src="${portraitSVG(L, {full: true, hand: true})}" alt="Nhân vật của bạn">${L.pet ? `<img class="petmini" src="${svgURL(petSVG(L.pet, (L.lv || {})[L.pet] || 0, 0))}" alt="">` : ''}</div><button class="btn ghost sm" data-act="creator">Sửa ngoại hình</button><button class="btn sm" data-act="salon">Tiệm tóc</button><button class="btn sm" data-act="spa">Spa</button></div><div class="ward-main">
     <div class="seg">${SLOTS.map(([k, l]) => `<button class="segb" data-act="ward-slot" data-t="${k}" aria-pressed="${WARD === k}">${l}</button>`).join('')}</div>
     <div class="cards">${optional ? `<button class="card ${!cur ? 'on' : ''}" data-act="wear" data-id=""><span class="pv none">Trống</span><b>Bỏ ra</b><small>không dùng</small></button>` : ''}${items.map(f => itemCard(f, L, 'wear', cur === f.id ? 'aria-pressed="true"' : '')).join('') || '<p class="empty">Chưa có món nào. Mua ở CLOTHES SHOP trong Làng.</p>'}</div>
     ${colorKey ? `<h3 class="ph3">Đổi màu</h3><div class="swatches">${CLOTH_COLS.map(c => `<button class="sw" style="background:${c}" data-act="dye" data-c="${c}" aria-pressed="${L[colorKey] === c}" aria-label="${c}"></button>`).join('')}</div>` : ''}
@@ -2755,7 +2851,7 @@ function renderCreator() {
   const sw = (k, list) => `<div class="swatches">${list.map(c => `<button class="sw" style="background:${c}" data-act="cc" data-k="${k}" data-v="${c}" aria-pressed="${L[k] === c}" aria-label="${c}"></button>`).join('')}</div>`;
   const chips = (k, list, vi) => `<div class="chips">${list.map(v => `<button class="chip" data-act="cc" data-k="${k}" data-v="${v}" aria-pressed="${String(L[k]) === String(v)}">${esc(vi(v))}</button>`).join('')}</div>`;
   let body = '';
-  if (CC.tab === 'body') body = `<span class="lbl">Màu da</span><div class="swatches">${SKIN_TONES.map((t, i) => `<button class="sw" style="background:${t.b}" data-act="cc" data-k="skin" data-v="${i}" aria-pressed="${L.skin === i}" aria-label="Màu da ${i + 1}"></button>`).join('')}</div>
+  if (CC.tab === 'body') body = `<span class="lbl">Màu da</span><div class="swatches">${SKIN_TONES.map((t, i) => (i < BASE_SKINS || spaOwned('sk_' + t.id)) ? `<button class="sw" style="background:${t.b}" data-act="cc" data-k="skin" data-v="${i}" aria-pressed="${L.skin === i}" aria-label="Màu da ${i + 1}"></button>` : '').join('')}</div>
     <span class="lbl">Kiểu áo</span>${chips('top', ['top_tee', 'top_dress'], v => FASH[v].vi)}<span class="lbl">Màu áo</span>${sw('topC', CLOTH_COLS)}<span class="lbl">Màu quần</span>${sw('bottomC', CLOTH_COLS)}`;
   if (CC.tab === 'hair') body = `<span class="lbl">Tóc phía trước</span>${chips('hairF', Object.keys(NEMO.hairF).filter(v => v !== 'none').concat('none').filter(ownsHairF), v => HAIR_F_VI[v] || (HAIR_ITEMS.find(h => h.f === v) || {}).vi || v)}<span class="lbl">Tóc phía sau</span>${chips('hairB', [null, ...Object.keys(NEMO.hairB)].filter(ownsHairB), v => HAIR_B_VI[v] || (HAIR_ITEMS.find(h => h.b === v) || {}).vi || v)}<span class="lbl">Màu tóc</span>${sw('hairC', [...HAIR_COLS, ...ownedDyes()])}<p class="note">Kiểu tóc và màu nhuộm đẹp, hiếm có ở <b>Tiệm tóc</b> trong Làng. <button class="linkbtn" data-act="salon">Đến tiệm tóc</button></p>`;
   if (CC.tab === 'face') body = `<span class="lbl">Biểu cảm</span>${chips('face', FACES, v => FACE_VI[v])}<span class="lbl">Râu</span>${chips('beard', [null, 'short', 'middle', 'long'], v => ({null: 'Không', short: 'Ria mép', middle: 'Râu quai nón', long: 'Râu dài'})[v])}`;
@@ -2826,16 +2922,16 @@ function farmBuyAnimal(id) { const i = freeSlot(); if (i < 0) return; buyAnimal(
 /* ---------- lucky chest: keys come from weekly tests, roadmap stages, rare fish and every 5 levels ---------- */
 const CHEST_PRICE = 5, PITY = 40; let LASTCHEST = 'key';
 function chestHTML() {
-  const myth = FASHION.filter(f => f.chest), have = myth.filter(f => S.owned.includes(f.id)).length + HAIR_ITEMS.filter(h => h.chest && (S.hair || []).includes(h.id)).length, total = myth.length + HAIR_ITEMS.filter(h => h.chest).length;
+  const myth = FASHION.filter(f => f.chest), have = myth.filter(f => S.owned.includes(f.id)).length + HAIR_ITEMS.filter(h => h.chest && (S.hair || []).includes(h.id)).length + SPA_ITEMS.filter(x => x.chest && spaOwned(x.id)).length, total = myth.length + HAIR_ITEMS.filter(h => h.chest).length + SPA_ITEMS.filter(x => x.chest).length;
   return `<div class="chest"><div class="chestbox" aria-hidden="true"><i></i></div><div><p>Mở rương có thể nhận: xu, ngọc lục bảo, kim cương, <b>hạt nhân sâm</b> (bán 1200 xu), đồ Sử thi, Huyền thoại và cực hiếm là <b class="myth">đồ Thần thoại</b> chỉ có trong rương (tỉ lệ 1,5%).</p>
-    <p class="note">Bảo hiểm: mở đủ ${PITY} lần chưa ra đồ Thần thoại thì lần tiếp theo chắc chắn ra. Đã mở ${S.pity || 0}/${PITY}. Bộ sưu tập Thần thoại: ${have}/${total} (gồm cả kiểu tóc).</p>
+    <p class="note">Bảo hiểm: mở đủ ${PITY} lần chưa ra đồ Thần thoại thì lần tiếp theo chắc chắn ra. Đã mở ${S.pity || 0}/${PITY}. Bộ sưu tập Thần thoại: ${have}/${total} (gồm cả kiểu tóc và spa).</p>
     <div class="row-btns"><button class="btn gold" data-act="chest-open" data-k="key" ${(S.keys || 0) < 1 ? 'disabled' : ''}>Dùng 1 chìa khoá (có ${S.keys || 0})</button><button class="btn" data-act="chest-open" data-k="di" ${S.di < CHEST_PRICE ? 'disabled' : ''}>Mở bằng ${gemIcon('di')}${CHEST_PRICE}</button></div>
     <p class="note">Kiếm chìa khoá: bài kiểm tra tuần chính thức, hoàn thành chặng lộ trình IELTS, câu được cá ngừ quý, mỗi 5 cấp.</p></div></div>
     <div class="mythrow">${myth.map(f => `<span class="${S.owned.includes(f.id) ? 'got' : ''}" title="${esc(f.vi)}">${f.slot === 'pet' ? `<img src="${svgURL(petSVG(f.id, 0, 0))}" alt="">` : `<img src="${portraitSVG(Object.assign({}, fullLook(S.look), slotPatch(f)), {full: ['back', 'hand', 'shoes', 'bag', 'neck'].includes(f.slot), hand: true})}" alt="">`}<small>${esc(f.vi)}</small></span>`).join('')}</div>`;
 }
 function rollChest() {
   const notOwned = l => l.filter(f => !S.owned.includes(f.id));
-  const myth = [...notOwned(FASHION.filter(f => f.chest)).map(item => ({item})), ...HAIR_ITEMS.filter(h => h.chest && !(S.hair || []).includes(h.id)).map(hairItem => ({hairItem}))];
+  const myth = [...notOwned(FASHION.filter(f => f.chest)).map(item => ({item})), ...HAIR_ITEMS.filter(h => h.chest && !(S.hair || []).includes(h.id)).map(hairItem => ({hairItem})), ...SPA_ITEMS.filter(x => x.chest && !spaOwned(x.id)).map(spaItem => ({spaItem}))];
   const rare = [...notOwned(FASHION.filter(f => f.rar >= 2 && f.rar <= 3 && f.price > 0)).map(item => ({item})), ...HAIR_ITEMS.filter(h => h.rar >= 2 && h.rar <= 3 && !(S.hair || []).includes(h.id)).map(hairItem => ({hairItem}))];
   S.pity = (S.pity || 0) + 1;
   const r = Math.random();
@@ -2849,15 +2945,16 @@ function rollChest() {
 function openChest(kind) {
   if (kind === 'key') { if ((S.keys || 0) < 1) return; S.keys--; } else { if (S.di < CHEST_PRICE) return; S.di -= CHEST_PRICE; }
   const g = rollChest(); let title, img = '', cls = 'r0';
-  if (g.hairItem) { const h = g.hairItem; S.hair = S.hair || []; S.hair.push(h.id); cls = 'r' + h.rar; title = `<b>${esc(h.vi)}</b> (${esc(h.en)}) · ${RARITY[h.rar].vi} · tóc`; img = hairPreview(h); if (h.rar >= 4) sfx('level'); }
+  if (g.spaItem) { const x = g.spaItem; S.spa = S.spa || []; S.spa.push(x.id); cls = 'r' + x.rar; title = `<b>${esc(x.vi)}</b> (${esc(x.en)}) · ${RARITY[x.rar].vi} · spa`; img = spaPreview(x); if (x.rar >= 4) sfx('level'); }
+  else if (g.hairItem) { const h = g.hairItem; S.hair = S.hair || []; S.hair.push(h.id); cls = 'r' + h.rar; title = `<b>${esc(h.vi)}</b> (${esc(h.en)}) · ${RARITY[h.rar].vi} · tóc`; img = hairPreview(h); if (h.rar >= 4) sfx('level'); }
   else if (g.item) { const f = g.item; S.owned.push(f.id); cls = 'r' + f.rar; title = `<b>${esc(f.vi)}</b> (${esc(f.en)}) · ${RARITY[f.rar].vi}`; img = f.slot === 'pet' ? svgURL(petSVG(f.id, 0, 0)) : portraitSVG(Object.assign({}, fullLook(S.look), slotPatch(f)), {full: true, hand: true}); if (f.rar >= 4) sfx('level'); }
   else if (g.seed) { S.seeds.ginseng = (S.seeds.ginseng || 0) + 1; cls = 'r3'; title = '<b>1 hạt nhân sâm</b> (ginseng) · chín sau 48 giờ, bán 1200 xu'; img = produceSVG('ginseng'); }
   else if (g.di) { S.di += g.di; cls = 'r2'; title = `<b>${g.di} kim cương</b>`; }
   else if (g.em) { S.em += g.em; cls = 'r1'; title = `<b>${g.em} ngọc lục bảo</b>`; }
   else { S.coins += g.coins; title = `<b>${g.coins} xu</b>`; }
   sfx('coin'); renderHUD(); markDirty(); saveNow(true);
-  openModal(`<div class="loot ${cls}"><h2 class="ptitle">${(g.item || g.hairItem) && (g.item || g.hairItem).rar >= 4 ? 'THẦN THOẠI!' : 'Mở rương!'}</h2>${img ? `<img class="pv big" src="${img}" alt="">` : `<div class="lootico">${g.di ? gemIcon('di') : g.em ? gemIcon('em') : coinIcon}</div>`}<p>Bạn nhận được ${title}</p>
-    ${g.item ? '<p class="note">Đồ đã vào Tủ đồ. Có thể nâng cấp ở lò rèn.</p>' : g.hairItem ? '<p class="note">Kiểu tóc đã vào bộ sưu tập, đổi ở Tủ đồ → Sửa ngoại hình hoặc Tiệm tóc.</p>' : ''}<div class="row-btns"><button class="btn gold" data-act="chest-again">Mở tiếp</button>${g.item ? `<button class="btn" data-act="wear-now" data-id="${g.item.id}">Mặc luôn</button>` : ''}${g.hairItem ? `<button class="btn" data-act="hair-now" data-id="${g.hairItem.id}">Dùng luôn</button>` : ''}<button class="btn ghost" data-act="close">Đóng</button></div></div>`, {label: 'Mở rương'});
+  openModal(`<div class="loot ${cls}"><h2 class="ptitle">${(g.item || g.hairItem || g.spaItem) && (g.item || g.hairItem || g.spaItem).rar >= 4 ? 'THẦN THOẠI!' : 'Mở rương!'}</h2>${img ? `<img class="pv big" src="${img}" alt="">` : `<div class="lootico">${g.di ? gemIcon('di') : g.em ? gemIcon('em') : coinIcon}</div>`}<p>Bạn nhận được ${title}</p>
+    ${g.item ? '<p class="note">Đồ đã vào Tủ đồ. Có thể nâng cấp ở lò rèn.</p>' : g.hairItem ? '<p class="note">Kiểu tóc đã vào bộ sưu tập, đổi ở Tủ đồ → Sửa ngoại hình hoặc Tiệm tóc.</p>' : ''}<div class="row-btns"><button class="btn gold" data-act="chest-again">Mở tiếp</button>${g.item ? `<button class="btn" data-act="wear-now" data-id="${g.item.id}">Mặc luôn</button>` : ''}${g.hairItem ? `<button class="btn" data-act="hair-now" data-id="${g.hairItem.id}">Dùng luôn</button>` : ''}${g.spaItem ? `<button class="btn" data-act="spa-now" data-id="${g.spaItem.id}">Dùng luôn</button>` : ''}<button class="btn ghost" data-act="close">Đóng</button></div></div>`, {label: 'Mở rương'});
 }
 function giveKey(n, why) { S.keys = (S.keys || 0) + n; setTimeout(() => toast(`<b>+${n} chìa khoá rương</b>${why ? ' · ' + why : ''}`), 600); markDirty(); }
 
@@ -3069,6 +3166,101 @@ function hairAnswer(i) {
   salonRefresh(); renderHUD(); markDirty();
 }
 function hairWear(id) { const h = HAIR[id]; if (!h || !(S.hair || []).includes(id)) return; Object.assign(S.look, hairPatch(h)); markDirty(); renderHUD(); salonRefresh(); toast(`Đã đổi sang <b>${esc(h.vi)}</b>.`); }
+
+/* ===================== BEAUTY SPA: face shapes, eyes, facial features and special skins ===================== */
+// k: which part it changes. shape -> L.shape, eyes -> L.eyes, feat -> toggles one entry of L.feats, skin -> L.skin (index of SPA_SKINS)
+const SPA_ITEMS = [
+  // face shapes
+  {id:'sp_square', k:'shape', v:'square', en:'strong jaw', vi:'Hàm vuông nam tính', price:100, rar:0},
+  {id:'sp_oval', k:'shape', v:'oval', en:'oval face', vi:'Mặt trái xoan', price:120, rar:0},
+  {id:'sp_mochi', k:'shape', v:'mochi', en:'chubby cheeks', vi:'Má bánh bao', price:140, rar:1, lvl:2, hot:1},
+  {id:'sp_vline', k:'shape', v:'vline', en:'V-line jaw', vi:'Cằm V-line', price:180, rar:1, lvl:3, hot:1},
+  {id:'sp_heart', k:'shape', v:'heart', en:'heart-shaped face', vi:'Mặt trái tim', price:200, rar:1, lvl:4},
+  {id:'sp_slim', k:'shape', v:'slim', en:'slim face', vi:'Mặt thon dài', price:10, cur:'gem', rar:2, lvl:5},
+  {id:'sp_idol', k:'shape', v:'idol', en:'idol face', vi:'Mặt idol cằm nhọn', price:30, cur:'gem', rar:3, lvl:10, hot:1},
+  // eyes
+  {id:'se_ordinary', k:'eyes', v:'ordinary', en:'calm eyes', vi:'Mắt hiền', price:60, rar:0},
+  {id:'se_cute', k:'eyes', v:'cute', en:'big round eyes', vi:'Mắt to tròn long lanh', price:100, rar:0, hot:1},
+  {id:'se_sparkle', k:'eyes', v:'sparkle', en:'sparkling eyes', vi:'Mắt lấp lánh anime', price:160, rar:1, lvl:3, hot:1},
+  {id:'se_cat', k:'eyes', v:'cat', en:'cat eyes', vi:'Mắt mèo sắc sảo', price:150, rar:1, lvl:3},
+  {id:'se_love', k:'eyes', v:'love', en:'heart eyes', vi:'Mắt trái tim', price:12, cur:'gem', rar:2, lvl:5},
+  {id:'se_doe', k:'eyes', v:'doe', en:'doe eyes', vi:'Mắt nai mi cong', price:14, cur:'gem', rar:2, lvl:6, hot:1},
+  {id:'se_odd', k:'eyes', v:'odd', en:'two-coloured eyes', vi:'Mắt hai màu', price:35, cur:'gem', rar:3, lvl:12},
+  {id:'se_galaxy', k:'eyes', v:'galaxy', en:'galaxy eyes', vi:'Mắt ngân hà', price:0, rar:4, chest:1},
+  // facial features (several can be on at once)
+  {id:'sf_mole', k:'feat', v:'mole', en:'beauty mark', vi:'Nốt ruồi duyên', price:50, rar:0},
+  {id:'sf_brows', k:'feat', v:'brows', en:'bold eyebrows', vi:'Lông mày đậm', price:80, rar:0},
+  {id:'sf_dimples', k:'feat', v:'dimples', en:'dimples', vi:'Lúm đồng tiền', price:90, rar:1, lvl:2, hot:1},
+  {id:'sf_lashes', k:'feat', v:'lashes', en:'long eyelashes', vi:'Mi dài cong vút', price:110, rar:1, lvl:3},
+  {id:'sf_nose', k:'feat', v:'nose', en:'high nose bridge', vi:'Sống mũi cao', price:12, cur:'gem', rar:2, lvl:6},
+  {id:'sf_glow', k:'feat', v:'glow', en:'glass skin', vi:'Da căng bóng', price:20, cur:'gem', rar:2, lvl:7, hot:1},
+  // special skins
+  {id:'sk_porcelain', k:'skin', v:'porcelain', en:'porcelain skin', vi:'Da trắng sứ', price:120, rar:1, lvl:2},
+  {id:'sk_peach', k:'skin', v:'peach', en:'peachy skin', vi:'Da hồng đào', price:120, rar:1, lvl:2},
+  {id:'sk_bronze', k:'skin', v:'bronze', en:'bronze tan', vi:'Da nâu bánh mật', price:120, rar:1, lvl:2},
+  {id:'sk_elf', k:'skin', v:'elf', en:'elf skin', vi:'Da tiên tộc bạc hà', price:30, cur:'gem', rar:3, lvl:10},
+  {id:'sk_lilac', k:'skin', v:'lilac', en:'fairy skin', vi:'Da tiên tím oải hương', price:35, cur:'gem', rar:3, lvl:12},
+  {id:'sk_starlight', k:'skin', v:'starlight', en:'starlight skin', vi:'Da ánh sao', price:0, rar:4, chest:1}
+];
+const SPA = Object.fromEntries(SPA_ITEMS.map(x => [x.id, x]));
+const SPA_TABS = [['shape', 'Dáng mặt'], ['eyes', 'Đôi mắt'], ['feat', 'Nét duyên'], ['skin', 'Màu da']];
+const spaOwned = id => (S.spa || []).includes(id);
+function spaPatch(x, L) {
+  if (x.k === 'shape') return {shape: x.v};
+  if (x.k === 'eyes') return {eyes: x.v};
+  if (x.k === 'skin') return {skin: skinIndex(x.v)};
+  const fs = (L.feats || []).filter(v => v !== x.v); return {feats: [...fs, x.v]};
+}
+const spaActive = (x, L) => x.k === 'shape' ? L.shape === x.v : x.k === 'eyes' ? L.eyes === x.v : x.k === 'skin' ? L.skin === skinIndex(x.v) : (L.feats || []).includes(x.v);
+// face-shape previews use short hair so the jawline shows
+function spaPreview(x) { const L = fullLook(S.look); return portraitSVG(Object.assign({}, L, spaPatch(x, L), {hat: null, back: null, hand: null, face2: null, mouth: null, ear: null, neck: null}, x.k === 'shape' ? {hairB: null, hairF: 'regular'} : {})); }
+
+let SPAS = {tab: 'shape', buy: null};
+function spaHTML() {
+  if (SPAS.buy) return spaBuyHTML();
+  const L = fullLook(S.look), list = SPA_ITEMS.filter(x => x.k === SPAS.tab);
+  const card = x => { const has = spaOwned(x.id), lock = (x.lvl || 1) > S.lvl, on = spaActive(x, L);
+    return `<button class="card r${x.rar}" data-act="${has ? 'spa-use' : 'spa-pick'}" data-id="${x.id}" ${!has && (lock || !salAfford(x)) ? 'disabled' : ''}><span class="rar">${RARITY[x.rar].vi}</span>${x.hot ? '<span class="hot">HOT</span>' : ''}<img class="pv" src="${spaPreview(x)}" alt=""><b>${has ? esc(x.en) : '???'}</b><small>${esc(x.vi)}</small><span class="price">${has ? (on ? (x.k === 'feat' ? 'Đang dùng · bấm để bỏ' : 'Đang dùng') : 'Đã có · bấm để dùng') : lock ? needTag(x.lvl) : salPrice(x)}</span></button>`; };
+  const reset = SPAS.tab === 'feat' ? '' : `<button class="card" data-act="spa-reset" data-k="${SPAS.tab}"><span class="pv none">Gốc</span><b>Trở lại mặc định</b><small>miễn phí</small></button>`;
+  return `<p class="note">Spa làm đẹp: đổi dáng mặt, đôi mắt, thêm nét duyên và màu da đặc biệt. Chị Thu hỏi tên dịch vụ bằng tiếng Anh, trả lời đúng mới làm được. Nét duyên có thể bật nhiều cái cùng lúc.</p>
+    <div class="seg">${SPA_TABS.map(([k, l]) => `<button class="segb" data-act="spa-tab" data-t="${k}" aria-pressed="${SPAS.tab === k}">${l}</button>`).join('')}</div>
+    <div class="cards">${reset}${list.map(card).join('')}</div>`;
+}
+function spaBuyHTML() {
+  const x = SPA[SPAS.buy.id], B = SPAS.buy;
+  return `<div class="buyq"><img class="pv big" src="${spaPreview(x)}" alt=""><div><p class="q-ask">Chị Thu hỏi: “What is this called in English?” ${sayBtn('What is this called in English?')}</p><div class="q-word vi">${esc(x.vi)}</div><span class="price">${salPrice(x)}</span></div></div>
+    <div class="opts">${B.opts.map((o, i) => `<button class="opt ${B.done ? (o === x.en ? 'right' : i === B.pick ? 'wrong' : '') : ''}" data-act="spa-ans" data-i="${i}" ${B.done ? 'disabled' : ''}><kbd>${i + 1}</kbd><span>${esc(o)}</span></button>`).join('')}</div>
+    ${B.done ? `<div class="fb ${B.ok ? 'good' : 'miss'}"><strong>${B.ok ? 'Đúng rồi!' : 'Chưa đúng'}</strong> ${B.ok ? `Đã làm xong: <b>${esc(x.en)}</b>.` : `Đây là “${esc(x.en)}”. Thử lại sau nhé.`}</div><div class="row-btns"><button class="btn ghost sm" data-act="spa-back">Xem dịch vụ khác</button>${sayBtn(x.en)}</div>` : ''}`;
+}
+function spaRefresh() { if (CURNPC && CURNPC.def.role === 'spa' && $('#npc-body')) refreshNpc(); else openSpa(); }
+function openSpa() {
+  const n = NPCS.find(q => q.def.role === 'spa');
+  if (n && S.map === 'park') return talk(n);
+  openModal(`<h2 class="ptitle">Spa Thu</h2><div id="npc-body">${spaHTML()}</div>`, {label: 'Spa', wide: true});
+}
+function spaPick(id) {
+  const x = SPA[id]; if (!x || spaOwned(id) || (x.lvl || 1) > S.lvl || !salAfford(x)) return;
+  const same = SPA_ITEMS.filter(y => y.id !== id && y.en !== x.en && (y.k === x.k || Math.random() < 0.3));
+  SPAS.buy = {id, opts: shuffle([x.en, ...shuffle(same).slice(0, 3).map(y => y.en)]), done: false}; spaRefresh(); speak('What is this called in English?', true);
+}
+function spaAnswer(i) {
+  const B = SPAS.buy; if (!B || B.done) return; const x = SPA[B.id];
+  B.done = true; B.pick = i; B.ok = B.opts[i] === x.en; S.stats.all++; lvNoteAnswer();
+  if (B.ok) { S.stats.ok++; if (x.cur === 'gem') S.di -= x.price; else S.coins -= x.price; S.spa = S.spa || []; S.spa.push(x.id); Object.assign(S.look, spaPatch(x, S.look)); sfx('coin'); speak(x.en, true); queueFx({kind: 'spark', who: 'player'}); }
+  else sfx('bad');
+  spaRefresh(); renderHUD(); markDirty();
+}
+function spaUse(id) {
+  const x = SPA[id]; if (!x || !spaOwned(id)) return;
+  if (x.k === 'feat' && spaActive(x, S.look)) S.look.feats = (S.look.feats || []).filter(v => v !== x.v);
+  else Object.assign(S.look, spaPatch(x, S.look));
+  markDirty(); renderHUD(); spaRefresh();
+}
+function spaReset(k) {
+  if (k === 'shape') S.look.shape = null; if (k === 'eyes') S.look.eyes = null;
+  if (k === 'skin' && S.look.skin >= BASE_SKINS) S.look.skin = 0;
+  markDirty(); renderHUD(); spaRefresh();
+}
 
 /* ===================== VƯỜN CHỮ ACCOUNTS (Supabase): sign up, log in, cloud save shared by web and app ===================== */
 // The publishable key is meant to ship inside the app; row-level security on the server keeps each save private.
@@ -4043,6 +4235,7 @@ function renderHUD() {
   renderHint();
 }
 let hintKey = '';
+let hintTimer = 0;
 function renderHint() {
   const now = Date.now(); let h;
   if (S.map === 'farm') {
@@ -4055,9 +4248,9 @@ function renderHint() {
     else if (sts.includes('E')) h = Object.values(S.seeds).some(n => n > 0) ? 'Còn ô đất trống. Chạm vào để gieo hạt.' : 'Hết hạt giống. Sang <b>Làng</b> mua ở cửa hàng SEEDS.';
     else h = 'Cây đang lớn, vài giờ nữa mới chín. Chạm vào ô ruộng để bón phân, hoặc mở <b>Bản đồ</b> đi dạo.';
   } else if (S.map === 'village') h = 'Chú Ba (MARKET) nhận đơn hàng, Cô Mai (CLOTHES SHOP) bán quần áo, Ông Tư (SEEDS) bán hạt, Cô Lan (SCHOOL) dạy học, Chị Ngân (HAIR SALON) làm tóc. Bảng tin ở quảng trường.';
-  else if (S.map === 'park') h = 'Gặp Chị Hà ở bảng IELTS CHALLENGE để làm thử thách IELTS hằng ngày, nhận kim cương.';
+  else if (S.map === 'park') h = 'Gặp Chị Hà ở bảng IELTS CHALLENGE để làm thử thách IELTS hằng ngày. Chị Thu ở BEAUTY SPA đổi dáng mặt, đôi mắt, nét duyên.';
   else h = 'Chạm vào mặt nước để thả câu. Ông Sáu ở cầu tàu cũng thích nói chuyện.';
-  if (h !== hintKey) { hintKey = h; $('#hint').innerHTML = h; }
+  if (h !== hintKey) { hintKey = h; const el = $('#hint'); el.innerHTML = h; el.classList.remove('gone'); clearTimeout(hintTimer); hintTimer = setTimeout(() => el.classList.add('gone'), 5000); }
 }
 function showBanner(en, vi) { const b = $('#banner'); b.innerHTML = `<b>${esc(en)}</b><span>${esc(vi)}</span>`; b.classList.remove('show'); void b.offsetWidth; b.classList.add('show'); }
 
@@ -4154,7 +4347,8 @@ document.addEventListener('click', e => {
     case 'wear': { const key = WARD === 'face' ? 'face2' : WARD; S.look[key] = d.id || (['top', 'bottom'].includes(WARD) ? S.look[key] : null); markDirty(); renderHUD(); return openWardrobe(); }
     case 'dye-shoe': S.look.shoeC = d.c; markDirty(); renderHUD(); return openWardrobe();
     case 'shop-tab': SHOPTAB = d.t; BUY = null; return refreshNpc();
-    case 'forge-pick': FORGE = {id: d.id, quiz: null, res: null}; return refreshNpc();
+    case 'forge-pick': FORGE = {id: d.id, tab: FASH[d.id].slot, quiz: null, res: null}; refreshNpc(); { const s = document.querySelector('#modal .tierstrip'); if (s) s.scrollIntoView({block: 'nearest', behavior: 'smooth'}); } return;
+    case 'forge-tab': { const list = FASHION.filter(f => f.slot === d.t && UPGRADABLE(f.slot) && (f.price > 0 || f.chest || S.owned.includes(f.id))); const pick = list.find(f => S.owned.includes(f.id)) || list[0]; FORGE = {id: pick.id, tab: d.t, quiz: null, res: null}; return refreshNpc(); }
     case 'forge-quiz': return forgeQuiz();
     case 'forge-go': return forgeGo();
     case 'exchange': FORGE = Object.assign(FORGE || {}, {ex: true}); return refreshNpc();
@@ -4172,6 +4366,14 @@ document.addEventListener('click', e => {
     case 'lvinfo': return openLevel();
     case 'lv-test': return startLevelUp();
     case 'salon': return openSalon();
+    case 'spa': return openSpa();
+    case 'spa-tab': SPAS.tab = d.t; SPAS.buy = null; return spaRefresh();
+    case 'spa-back': SPAS.buy = null; return spaRefresh();
+    case 'spa-pick': return spaPick(d.id);
+    case 'spa-use': return spaUse(d.id);
+    case 'spa-ans': return spaAnswer(+d.i);
+    case 'spa-reset': return spaReset(d.k);
+    case 'spa-now': { const x = SPA[d.id]; if (x && spaOwned(x.id)) { Object.assign(S.look, spaPatch(x, S.look)); markDirty(); renderHUD(); } return closeModal(); }
     case 'sal-tab': SAL.tab = d.t; SAL.buy = null; return salonRefresh();
     case 'sal-back': SAL.buy = null; return salonRefresh();
     case 'hair-pick': return hairPick(d.id);
@@ -4249,7 +4451,7 @@ function normalize(d) {
   if (typeof s.last !== 'number') s.last = Date.now();
   // English level replaces the XP level; hairstyles become salon items (keep whatever the player already wears)
   if (!s.cefr) { const t = s.created ? tierOf(s.lvl || 1) : 0, st = Math.max(0, LEVELS.indexOf(s.study.level)); s.cefr = LEVELS[Math.min(t, st)]; }
-  s.hair = Array.isArray(s.hair) ? s.hair : [];
+  s.hair = Array.isArray(s.hair) ? s.hair : []; s.spa = Array.isArray(s.spa) ? s.spa : [];
   for (const h of HAIR_ITEMS) if (((h.f && s.look.hairF === h.f) || (h.b && s.look.hairB === h.b) || (h.c && s.look.hairC === h.c)) && !s.hair.includes(h.id)) s.hair.push(h.id);
   s.lvl = TIER_MAX[Math.max(0, LEVELS.indexOf(s.cefr))];
   s.tests = Array.isArray(s.tests) ? s.tests : []; s.bestBand = s.bestBand || {}; s.road = s.road || {claimed: []}; s.ieltsCount = s.ieltsCount || 0;
@@ -4289,7 +4491,7 @@ async function boot(hotData) {
     console.error(e); $('#loadmsg').textContent = 'Không tải được game: ' + (e.message || e);
   }
 }
-if (location.hostname === '127.0.0.1') window.__vc = () => ({S, P, ANIMS, NPCS, MAPS, view, approach, changeMap, talk, spawnAnimals, onPlot, ex: () => EX, autoSimulate, TW: TRACK_WORDS, readiness, renderHUD, FASHION, HAIR_ITEMS, chibiSVG, petSVG, hairPreview, fullLook, step: (sec) => { let t = performance.now(); for (let i = 0; i < sec * 20; i++) { t += 50; update(0.05, t); } draw(t); }});
+if (location.hostname === '127.0.0.1') window.__vc = () => ({S, P, ANIMS, NPCS, MAPS, view, approach, changeMap, talk, spawnAnimals, onPlot, ex: () => EX, autoSimulate, TW: TRACK_WORDS, readiness, renderHUD, FASHION, HAIR_ITEMS, SPA_ITEMS, spaPreview, chibiSVG, petSVG, hairPreview, fullLook, step: (sec) => { let t = performance.now(); for (let i = 0; i < sec * 20; i++) { t += 50; update(0.05, t); } draw(t); }});
 try { window.claude && window.claude.hot && window.claude.hot.snapshot && window.claude.hot.snapshot(() => { if (P && S) { S.px = P.x; S.py = P.y; } return {S}; }); } catch (e) {}
 const HOT = window.claude && window.claude.hot;
 if (HOT && HOT.ready) HOT.ready(boot); else boot((HOT && HOT.data) || {});

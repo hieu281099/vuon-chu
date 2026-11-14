@@ -68,11 +68,14 @@ function buildMaps() {
   prop(v, 'board', 12, 11); prop(v, 'well', 23, 14);
   for (const [x, y] of [[10, 9], [25, 9], [10, 17], [25, 17]]) prop(v, 'lamp', x, y);
   prop(v, 'bench', 14, 16); prop(v, 'bench', 21, 16); prop(v, 'crate', 15, 7); prop(v, 'sacks', 20, 7);
-  for (const [x, y, k] of [[8, 16, 'round'], [9, 25, 'fruit'], [30, 24, 'pine'], [33, 9, 'round'], [3, 15, 'blossom']]) tree(v, x, y, k);
+  for (const [x, y, k] of [[8, 16, 'round'], [5, 24, 'fruit'], [30, 24, 'pine'], [33, 9, 'round'], [3, 15, 'blossom']]) tree(v, x, y, k);
   prop(v, 'flowers', 9, 11, false); prop(v, 'flowers', 26, 11, false);
   v.exits.push({x: 0, y: 12, w: 1, h: 2, to: 'farm', tx: 34, ty: 12});
   v.exits.push({x: 35, y: 12, w: 1, h: 2, to: 'river', tx: 1, ty: 9});
   v.exits.push({x: 17, y: 0, w: 2, h: 1, to: 'park', tx: 15, ty: 21});
+  // keep the strip in front of the school open: low flower beds instead of tall border trees (the edge row stays blocked)
+  v.objs = v.objs.filter(o => !(o.t === 'tree' && o.y >= v.h - 2 && o.x >= 8 && o.x <= 24));
+  for (let x = 9; x <= 23; x += 3) prop(v, 'flowers', x, v.h - 1, false);
   v.spawn = [3, 12];
   M.village = v;
 
@@ -83,8 +86,9 @@ function buildMaps() {
   prop(p, 'fountain', 16, 10); blockRect(p, 14, 8, 4, 3);
   for (const [x, y] of [[11, 6], [20, 6], [11, 13], [20, 13]]) prop(p, 'lamp', x, y);
   for (const [x, y] of [[8, 9], [23, 9], [8, 12], [23, 12]]) prop(p, 'bench', x, y);
-  for (const [x, y] of [[4, 4], [27, 4], [5, 17], [26, 18], [9, 20], [22, 20], [13, 3], [19, 3]]) tree(p, x, y, (x + y) % 3 ? 'blossom' : 'round');
-  for (const [x, y] of [[6, 7], [25, 7], [7, 15], [24, 15], [3, 12], [28, 12]]) prop(p, 'flowers', x, y, false);
+  for (const [x, y] of [[4, 4], [27, 4], [3, 20], [26, 18], [11, 21], [22, 20], [13, 3], [19, 3]]) tree(p, x, y, (x + y) % 3 ? 'blossom' : 'round');
+  for (const [x, y] of [[6, 7], [25, 7], [11, 17], [24, 15], [3, 12], [28, 12]]) prop(p, 'flowers', x, y, false);
+  house(p, 'spa', 3, 14, 6, 4, {sign: 'BEAUTY SPA', role: 'spa'});
   prop(p, 'board', 18, 15);
   p.exits.push({x: 15, y: 23, w: 2, h: 1, to: 'village', tx: 17, ty: 2});
   p.spawn = [15, 21];

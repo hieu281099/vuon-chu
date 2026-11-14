@@ -81,7 +81,7 @@ const SLOTS = [['top','Áo'], ['bottom','Quần váy'], ['shoes','Giày'], ['hat
 const UPGRADABLE = s => ['hat','face','back','hand','aura','pet','mouth','deco','ear','neck','shoes','bag'].includes(s);
 const DEFAULT_LOOK = {skin:0, hairF:'regular', hairB:null, hairC:'#1F1B24', face:'smile', beard:null,
   top:'top_tee', topC:'#FF3552', bottom:'bot_pants', bottomC:'#545AF2', shoeC:'#1F1B24',
-  hat:null, face2:null, back:null, hand:null, aura:null, pet:null, mouth:null, deco:null, ear:null, neck:null, shoes:null, bag:null, lv:{}};
+  hat:null, face2:null, back:null, hand:null, aura:null, pet:null, mouth:null, deco:null, ear:null, neck:null, shoes:null, bag:null, shape:null, eyes:null, feats:[], lv:{}};
 
 /* ---------- SVG parts ---------- */
 const tpl = (s, c) => s.split('{C}').join(c);
@@ -176,7 +176,8 @@ function armSVG(L, x, rot, skin, hand) {
   return `<g transform="rotate(${rot} ${x + 6} 116)"><rect x="${x}" y="113" width="12" height="28" rx="6" fill="${skin.b}"/><path d="M${x} 119C${x} 115.7 ${x + 2.7} 113 ${x + 6} 113S${x + 12} 115.7 ${x + 12} 119V${113 + sl}H${x}Z" fill="${sc}"/>${hand ? `<g transform="translate(${x} 113)">${hand}</g>` : ''}</g>`;
 }
 function headSVG(L, skin, back) {
-  const head = `<rect x="11" y="76" width="123" height="29" rx="14.5" fill="${skin.b}"/><rect x="19" y="83" width="107" height="15" rx="7.5" fill="${skin.d}"/><rect x="25" y="34" width="95" height="83" rx="30" fill="${skin.b}"/>`;
+  const shaped = L.shape && FACE_SHAPES[L.shape];
+  const head = shaped ? SHAPE_EARS(skin) + FACE_SHAPES[L.shape](skin.b) : `<rect x="11" y="76" width="123" height="29" rx="14.5" fill="${skin.b}"/><rect x="19" y="83" width="107" height="15" rx="7.5" fill="${skin.d}"/><rect x="25" y="34" width="95" height="83" rx="30" fill="${skin.b}"/>`;
   if (back) return head + (L.hairF !== 'none' ? `<rect x="23" y="32" width="99" height="87" rx="31" fill="${L.hairC}"/>` : '');
   return head + `<circle cx="45" cy="99" r="10" fill="${skin.c}"/><circle cx="100" cy="99" r="10" fill="${skin.c}"/>`;
 }
@@ -214,14 +215,15 @@ function chibiInner(L, f, dir) {
   s += headSVG(L, skin, back);
   if (!back) {
     s += `<g transform="translate(72.5 118) scale(1.25) translate(-72.5 -118)">${acc('neck', neckSVG)}</g>`;
-    s += NEMO.faces[face] || NEMO.faces.smile;
+    s += (!f.face && eyesSVG(L, face)) || NEMO.faces[face] || NEMO.faces.smile;
+    s += featsSVG(L, skin, 'face');
     s += acc('deco', decoSVG);
     if (L.beard) s += tpl(NEMO.beards[L.beard], L.hairC);
     if (L.face2) s += glowWrap(lv[L.face2], faceItemSVG(L.face2, FASH[L.face2].col, lv[L.face2] || 0));
     s += acc('mouth', mouthSVG);
   }
   if (L.hairF && L.hairF !== 'none') s += tpl(NEMO.hairF[L.hairF], L.hairC);
-  if (!back) s += acc('ear', earSVG);
+  if (!back) s += acc('ear', earSVG) + featsSVG(L, skin, 'hair');
   if (L.hairB && back) s += tpl(NEMO.hairB[L.hairB], L.hairC);
   if (L.hat) s += glowWrap(lv[L.hat], hatSVG(L.hat, FASH[L.hat].col, lv[L.hat] || 0));
   // held item on top of everything, following the arm's swing and leaning away from the head

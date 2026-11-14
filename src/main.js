@@ -16,6 +16,7 @@ function renderHUD() {
   renderHint();
 }
 let hintKey = '';
+let hintTimer = 0;
 function renderHint() {
   const now = Date.now(); let h;
   if (S.map === 'farm') {
@@ -28,9 +29,9 @@ function renderHint() {
     else if (sts.includes('E')) h = Object.values(S.seeds).some(n => n > 0) ? 'Còn ô đất trống. Chạm vào để gieo hạt.' : 'Hết hạt giống. Sang <b>Làng</b> mua ở cửa hàng SEEDS.';
     else h = 'Cây đang lớn, vài giờ nữa mới chín. Chạm vào ô ruộng để bón phân, hoặc mở <b>Bản đồ</b> đi dạo.';
   } else if (S.map === 'village') h = 'Chú Ba (MARKET) nhận đơn hàng, Cô Mai (CLOTHES SHOP) bán quần áo, Ông Tư (SEEDS) bán hạt, Cô Lan (SCHOOL) dạy học, Chị Ngân (HAIR SALON) làm tóc. Bảng tin ở quảng trường.';
-  else if (S.map === 'park') h = 'Gặp Chị Hà ở bảng IELTS CHALLENGE để làm thử thách IELTS hằng ngày, nhận kim cương.';
+  else if (S.map === 'park') h = 'Gặp Chị Hà ở bảng IELTS CHALLENGE để làm thử thách IELTS hằng ngày. Chị Thu ở BEAUTY SPA đổi dáng mặt, đôi mắt, nét duyên.';
   else h = 'Chạm vào mặt nước để thả câu. Ông Sáu ở cầu tàu cũng thích nói chuyện.';
-  if (h !== hintKey) { hintKey = h; $('#hint').innerHTML = h; }
+  if (h !== hintKey) { hintKey = h; const el = $('#hint'); el.innerHTML = h; el.classList.remove('gone'); clearTimeout(hintTimer); hintTimer = setTimeout(() => el.classList.add('gone'), 5000); }
 }
 function showBanner(en, vi) { const b = $('#banner'); b.innerHTML = `<b>${esc(en)}</b><span>${esc(vi)}</span>`; b.classList.remove('show'); void b.offsetWidth; b.classList.add('show'); }
 
@@ -127,7 +128,8 @@ document.addEventListener('click', e => {
     case 'wear': { const key = WARD === 'face' ? 'face2' : WARD; S.look[key] = d.id || (['top', 'bottom'].includes(WARD) ? S.look[key] : null); markDirty(); renderHUD(); return openWardrobe(); }
     case 'dye-shoe': S.look.shoeC = d.c; markDirty(); renderHUD(); return openWardrobe();
     case 'shop-tab': SHOPTAB = d.t; BUY = null; return refreshNpc();
-    case 'forge-pick': FORGE = {id: d.id, quiz: null, res: null}; return refreshNpc();
+    case 'forge-pick': FORGE = {id: d.id, tab: FASH[d.id].slot, quiz: null, res: null}; refreshNpc(); { const s = document.querySelector('#modal .tierstrip'); if (s) s.scrollIntoView({block: 'nearest', behavior: 'smooth'}); } return;
+    case 'forge-tab': { const list = FASHION.filter(f => f.slot === d.t && UPGRADABLE(f.slot) && (f.price > 0 || f.chest || S.owned.includes(f.id))); const pick = list.find(f => S.owned.includes(f.id)) || list[0]; FORGE = {id: pick.id, tab: d.t, quiz: null, res: null}; return refreshNpc(); }
     case 'forge-quiz': return forgeQuiz();
     case 'forge-go': return forgeGo();
     case 'exchange': FORGE = Object.assign(FORGE || {}, {ex: true}); return refreshNpc();
@@ -145,6 +147,14 @@ document.addEventListener('click', e => {
     case 'lvinfo': return openLevel();
     case 'lv-test': return startLevelUp();
     case 'salon': return openSalon();
+    case 'spa': return openSpa();
+    case 'spa-tab': SPAS.tab = d.t; SPAS.buy = null; return spaRefresh();
+    case 'spa-back': SPAS.buy = null; return spaRefresh();
+    case 'spa-pick': return spaPick(d.id);
+    case 'spa-use': return spaUse(d.id);
+    case 'spa-ans': return spaAnswer(+d.i);
+    case 'spa-reset': return spaReset(d.k);
+    case 'spa-now': { const x = SPA[d.id]; if (x && spaOwned(x.id)) { Object.assign(S.look, spaPatch(x, S.look)); markDirty(); renderHUD(); } return closeModal(); }
     case 'sal-tab': SAL.tab = d.t; SAL.buy = null; return salonRefresh();
     case 'sal-back': SAL.buy = null; return salonRefresh();
     case 'hair-pick': return hairPick(d.id);
@@ -222,7 +232,7 @@ function normalize(d) {
   if (typeof s.last !== 'number') s.last = Date.now();
   // English level replaces the XP level; hairstyles become salon items (keep whatever the player already wears)
   if (!s.cefr) { const t = s.created ? tierOf(s.lvl || 1) : 0, st = Math.max(0, LEVELS.indexOf(s.study.level)); s.cefr = LEVELS[Math.min(t, st)]; }
-  s.hair = Array.isArray(s.hair) ? s.hair : [];
+  s.hair = Array.isArray(s.hair) ? s.hair : []; s.spa = Array.isArray(s.spa) ? s.spa : [];
   for (const h of HAIR_ITEMS) if (((h.f && s.look.hairF === h.f) || (h.b && s.look.hairB === h.b) || (h.c && s.look.hairC === h.c)) && !s.hair.includes(h.id)) s.hair.push(h.id);
   s.lvl = TIER_MAX[Math.max(0, LEVELS.indexOf(s.cefr))];
   s.tests = Array.isArray(s.tests) ? s.tests : []; s.bestBand = s.bestBand || {}; s.road = s.road || {claimed: []}; s.ieltsCount = s.ieltsCount || 0;
@@ -262,7 +272,7 @@ async function boot(hotData) {
     console.error(e); $('#loadmsg').textContent = 'Không tải được game: ' + (e.message || e);
   }
 }
-if (location.hostname === '127.0.0.1') window.__vc = () => ({S, P, ANIMS, NPCS, MAPS, view, approach, changeMap, talk, spawnAnimals, onPlot, ex: () => EX, autoSimulate, TW: TRACK_WORDS, readiness, renderHUD, FASHION, HAIR_ITEMS, chibiSVG, petSVG, hairPreview, fullLook, step: (sec) => { let t = performance.now(); for (let i = 0; i < sec * 20; i++) { t += 50; update(0.05, t); } draw(t); }});
+if (location.hostname === '127.0.0.1') window.__vc = () => ({S, P, ANIMS, NPCS, MAPS, view, approach, changeMap, talk, spawnAnimals, onPlot, ex: () => EX, autoSimulate, TW: TRACK_WORDS, readiness, renderHUD, FASHION, HAIR_ITEMS, SPA_ITEMS, spaPreview, chibiSVG, petSVG, hairPreview, fullLook, step: (sec) => { let t = performance.now(); for (let i = 0; i < sec * 20; i++) { t += 50; update(0.05, t); } draw(t); }});
 try { window.claude && window.claude.hot && window.claude.hot.snapshot && window.claude.hot.snapshot(() => { if (P && S) { S.px = P.x; S.py = P.y; } return {S}; }); } catch (e) {}
 const HOT = window.claude && window.claude.hot;
 if (HOT && HOT.ready) HOT.ready(boot); else boot((HOT && HOT.data) || {});

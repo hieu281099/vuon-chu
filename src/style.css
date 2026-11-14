@@ -527,3 +527,24 @@ textarea.field{resize:vertical;line-height:1.5}
 .lvprog span{position:relative;display:block;text-align:center;font-size:11px;font-weight:900;line-height:16px;color:var(--ink)}
 .card .hot{position:absolute;top:8px;right:8px;font-size:9.5px;font-weight:900;color:#fff;background:#ff3552;border-radius:99px;padding:1px 6px}
 @media (max-width:600px){.lvpath small{display:none}.lvbig{font-size:30px}}
+
+/* ---------- hints fade after 5 s ---------- */
+.hint{transition:opacity .5s,transform .5s}
+.hint.gone{opacity:0;pointer-events:none}
+/* ---------- forge catalogue ---------- */
+.fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;max-height:300px;overflow:auto;padding:2px}
+.fcard{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;border:2px solid transparent;background:var(--surface-2);border-radius:16px;padding:6px 4px;cursor:pointer;opacity:.5;filter:grayscale(.6)}
+.fcard.own{opacity:1;filter:none;border-color:var(--mint);background:#f0fdf8}
+.fcard.sel{border-color:var(--violet);box-shadow:0 0 0 3px rgba(124,92,255,.25);opacity:1}
+.fcard b{font-size:11.5px;line-height:1.2;text-align:center}
+.fcard .fstate{font-size:10.5px;font-weight:800;color:var(--muted)}.fcard.own .fstate{color:#047857}
+.fcard .tier{font-style:normal;font-size:10.5px;padding:0 6px}
+.pv.sm{width:64px;height:64px;border-radius:12px}
+.ownmark{color:#047857}
+.segb small{font-weight:700;opacity:.7;font-size:11px}
+.tierstrip{display:grid;grid-template-columns:repeat(7,minmax(70px,1fr));gap:6px;overflow-x:auto;padding:2px 0 6px}
+.tcell{display:flex;flex-direction:column;align-items:center;gap:3px;background:var(--surface-2);border-radius:14px;padding:6px 2px;border:2px solid transparent}
+.tcell small{font-size:10px;font-weight:800;color:var(--muted)}
+.tcell.cur{border-color:var(--violet);background:#f3efff}.tcell.done{background:#f0fdf8}
+.forge-info .warn{color:var(--bad);font-weight:800}
+@media (max-width:600px){.fgrid{grid-template-columns:repeat(auto-fill,minmax(76px,1fr));max-height:240px}.pv.sm{width:54px;height:54px}.tierstrip{grid-template-columns:repeat(7,64px)}}

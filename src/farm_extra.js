@@ -42,16 +42,16 @@ function farmBuyAnimal(id) { const i = freeSlot(); if (i < 0) return; buyAnimal(
 /* ---------- lucky chest: keys come from weekly tests, roadmap stages, rare fish and every 5 levels ---------- */
 const CHEST_PRICE = 5, PITY = 40; let LASTCHEST = 'key';
 function chestHTML() {
-  const myth = FASHION.filter(f => f.chest), have = myth.filter(f => S.owned.includes(f.id)).length + HAIR_ITEMS.filter(h => h.chest && (S.hair || []).includes(h.id)).length, total = myth.length + HAIR_ITEMS.filter(h => h.chest).length;
+  const myth = FASHION.filter(f => f.chest), have = myth.filter(f => S.owned.includes(f.id)).length + HAIR_ITEMS.filter(h => h.chest && (S.hair || []).includes(h.id)).length + SPA_ITEMS.filter(x => x.chest && spaOwned(x.id)).length, total = myth.length + HAIR_ITEMS.filter(h => h.chest).length + SPA_ITEMS.filter(x => x.chest).length;
   return `<div class="chest"><div class="chestbox" aria-hidden="true"><i></i></div><div><p>Mở rương có thể nhận: xu, ngọc lục bảo, kim cương, <b>hạt nhân sâm</b> (bán 1200 xu), đồ Sử thi, Huyền thoại và cực hiếm là <b class="myth">đồ Thần thoại</b> chỉ có trong rương (tỉ lệ 1,5%).</p>
-    <p class="note">Bảo hiểm: mở đủ ${PITY} lần chưa ra đồ Thần thoại thì lần tiếp theo chắc chắn ra. Đã mở ${S.pity || 0}/${PITY}. Bộ sưu tập Thần thoại: ${have}/${total} (gồm cả kiểu tóc).</p>
+    <p class="note">Bảo hiểm: mở đủ ${PITY} lần chưa ra đồ Thần thoại thì lần tiếp theo chắc chắn ra. Đã mở ${S.pity || 0}/${PITY}. Bộ sưu tập Thần thoại: ${have}/${total} (gồm cả kiểu tóc và spa).</p>
     <div class="row-btns"><button class="btn gold" data-act="chest-open" data-k="key" ${(S.keys || 0) < 1 ? 'disabled' : ''}>Dùng 1 chìa khoá (có ${S.keys || 0})</button><button class="btn" data-act="chest-open" data-k="di" ${S.di < CHEST_PRICE ? 'disabled' : ''}>Mở bằng ${gemIcon('di')}${CHEST_PRICE}</button></div>
     <p class="note">Kiếm chìa khoá: bài kiểm tra tuần chính thức, hoàn thành chặng lộ trình IELTS, câu được cá ngừ quý, mỗi 5 cấp.</p></div></div>
     <div class="mythrow">${myth.map(f => `<span class="${S.owned.includes(f.id) ? 'got' : ''}" title="${esc(f.vi)}">${f.slot === 'pet' ? `<img src="${svgURL(petSVG(f.id, 0, 0))}" alt="">` : `<img src="${portraitSVG(Object.assign({}, fullLook(S.look), slotPatch(f)), {full: ['back', 'hand', 'shoes', 'bag', 'neck'].includes(f.slot), hand: true})}" alt="">`}<small>${esc(f.vi)}</small></span>`).join('')}</div>`;
 }
 function rollChest() {
   const notOwned = l => l.filter(f => !S.owned.includes(f.id));
-  const myth = [...notOwned(FASHION.filter(f => f.chest)).map(item => ({item})), ...HAIR_ITEMS.filter(h => h.chest && !(S.hair || []).includes(h.id)).map(hairItem => ({hairItem}))];
+  const myth = [...notOwned(FASHION.filter(f => f.chest)).map(item => ({item})), ...HAIR_ITEMS.filter(h => h.chest && !(S.hair || []).includes(h.id)).map(hairItem => ({hairItem})), ...SPA_ITEMS.filter(x => x.chest && !spaOwned(x.id)).map(spaItem => ({spaItem}))];
   const rare = [...notOwned(FASHION.filter(f => f.rar >= 2 && f.rar <= 3 && f.price > 0)).map(item => ({item})), ...HAIR_ITEMS.filter(h => h.rar >= 2 && h.rar <= 3 && !(S.hair || []).includes(h.id)).map(hairItem => ({hairItem}))];
   S.pity = (S.pity || 0) + 1;
   const r = Math.random();
@@ -65,14 +65,15 @@ function rollChest() {
 function openChest(kind) {
   if (kind === 'key') { if ((S.keys || 0) < 1) return; S.keys--; } else { if (S.di < CHEST_PRICE) return; S.di -= CHEST_PRICE; }
   const g = rollChest(); let title, img = '', cls = 'r0';
-  if (g.hairItem) { const h = g.hairItem; S.hair = S.hair || []; S.hair.push(h.id); cls = 'r' + h.rar; title = `<b>${esc(h.vi)}</b> (${esc(h.en)}) · ${RARITY[h.rar].vi} · tóc`; img = hairPreview(h); if (h.rar >= 4) sfx('level'); }
+  if (g.spaItem) { const x = g.spaItem; S.spa = S.spa || []; S.spa.push(x.id); cls = 'r' + x.rar; title = `<b>${esc(x.vi)}</b> (${esc(x.en)}) · ${RARITY[x.rar].vi} · spa`; img = spaPreview(x); if (x.rar >= 4) sfx('level'); }
+  else if (g.hairItem) { const h = g.hairItem; S.hair = S.hair || []; S.hair.push(h.id); cls = 'r' + h.rar; title = `<b>${esc(h.vi)}</b> (${esc(h.en)}) · ${RARITY[h.rar].vi} · tóc`; img = hairPreview(h); if (h.rar >= 4) sfx('level'); }
   else if (g.item) { const f = g.item; S.owned.push(f.id); cls = 'r' + f.rar; title = `<b>${esc(f.vi)}</b> (${esc(f.en)}) · ${RARITY[f.rar].vi}`; img = f.slot === 'pet' ? svgURL(petSVG(f.id, 0, 0)) : portraitSVG(Object.assign({}, fullLook(S.look), slotPatch(f)), {full: true, hand: true}); if (f.rar >= 4) sfx('level'); }
   else if (g.seed) { S.seeds.ginseng = (S.seeds.ginseng || 0) + 1; cls = 'r3'; title = '<b>1 hạt nhân sâm</b> (ginseng) · chín sau 48 giờ, bán 1200 xu'; img = produceSVG('ginseng'); }
   else if (g.di) { S.di += g.di; cls = 'r2'; title = `<b>${g.di} kim cương</b>`; }
   else if (g.em) { S.em += g.em; cls = 'r1'; title = `<b>${g.em} ngọc lục bảo</b>`; }
   else { S.coins += g.coins; title = `<b>${g.coins} xu</b>`; }
   sfx('coin'); renderHUD(); markDirty(); saveNow(true);
-  openModal(`<div class="loot ${cls}"><h2 class="ptitle">${(g.item || g.hairItem) && (g.item || g.hairItem).rar >= 4 ? 'THẦN THOẠI!' : 'Mở rương!'}</h2>${img ? `<img class="pv big" src="${img}" alt="">` : `<div class="lootico">${g.di ? gemIcon('di') : g.em ? gemIcon('em') : coinIcon}</div>`}<p>Bạn nhận được ${title}</p>
-    ${g.item ? '<p class="note">Đồ đã vào Tủ đồ. Có thể nâng cấp ở lò rèn.</p>' : g.hairItem ? '<p class="note">Kiểu tóc đã vào bộ sưu tập, đổi ở Tủ đồ → Sửa ngoại hình hoặc Tiệm tóc.</p>' : ''}<div class="row-btns"><button class="btn gold" data-act="chest-again">Mở tiếp</button>${g.item ? `<button class="btn" data-act="wear-now" data-id="${g.item.id}">Mặc luôn</button>` : ''}${g.hairItem ? `<button class="btn" data-act="hair-now" data-id="${g.hairItem.id}">Dùng luôn</button>` : ''}<button class="btn ghost" data-act="close">Đóng</button></div></div>`, {label: 'Mở rương'});
+  openModal(`<div class="loot ${cls}"><h2 class="ptitle">${(g.item || g.hairItem || g.spaItem) && (g.item || g.hairItem || g.spaItem).rar >= 4 ? 'THẦN THOẠI!' : 'Mở rương!'}</h2>${img ? `<img class="pv big" src="${img}" alt="">` : `<div class="lootico">${g.di ? gemIcon('di') : g.em ? gemIcon('em') : coinIcon}</div>`}<p>Bạn nhận được ${title}</p>
+    ${g.item ? '<p class="note">Đồ đã vào Tủ đồ. Có thể nâng cấp ở lò rèn.</p>' : g.hairItem ? '<p class="note">Kiểu tóc đã vào bộ sưu tập, đổi ở Tủ đồ → Sửa ngoại hình hoặc Tiệm tóc.</p>' : ''}<div class="row-btns"><button class="btn gold" data-act="chest-again">Mở tiếp</button>${g.item ? `<button class="btn" data-act="wear-now" data-id="${g.item.id}">Mặc luôn</button>` : ''}${g.hairItem ? `<button class="btn" data-act="hair-now" data-id="${g.hairItem.id}">Dùng luôn</button>` : ''}${g.spaItem ? `<button class="btn" data-act="spa-now" data-id="${g.spaItem.id}">Dùng luôn</button>` : ''}<button class="btn ghost" data-act="close">Đóng</button></div></div>`, {label: 'Mở rương'});
 }
 function giveKey(n, why) { S.keys = (S.keys || 0) + n; setTimeout(() => toast(`<b>+${n} chìa khoá rương</b>${why ? ' · ' + why : ''}`), 600); markDirty(); }
