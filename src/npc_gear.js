@@ -12,6 +12,7 @@ const NPC_GEAR = {
   ha:   {hat: 'hat_halo', face2: 'face_visor', back: 'back_crystal', hand: 'hand_starstaff', aura: 'aura_galaxy', pet: 'pet_unicorn', neck: 'neck_ruby', ear: 'ear_moon', shoes: 'shoes_rainbow', bag: 'bag_galaxy'},
   bao:  {hat: 'hat_headphones', face2: 'face_star', back: 'back_guitar', hand: 'hand_mic', aura: 'aura_rainbow', pet: 'pet_fox', neck: 'neck_choker', shoes: 'shoes_cloud', bag: 'bag_heart'},
   ngan: {hat: 'hat_flower', face2: 'face_butterfly', back: 'back_phoenix', hand: 'hand_fan', aura: 'aura_butterfly', pet: 'pet_phoenix', neck: 'neck_heart', ear: 'ear_butterfly', shoes: 'shoes_sandals', bag: 'bag_tote'},
+  bay:  {hat: 'hat_cap', face2: 'face_aviator', back: 'back_bag', hand: 'hand_book', neck: 'neck_scarf', bag: 'bag_cross', shoes: 'shoes_sneaker', pet: 'pet_chick', _lv: 4},
   tam:  {hat: 'hat_beret', face2: 'face_round', bag: 'bag_cross', neck: 'neck_bowtie', pet: 'pet_chick', hand: 'hand_book', shoes: 'shoes_sandals', _lv: 4},
   thu:  {hat: 'hat_unicorn', face2: 'face_rainbowshades', back: 'back_ninetails', hand: 'hand_cotton', aura: 'aura_dragon', pet: 'pet_panda', neck: 'neck_galaxy', ear: 'ear_galaxy', bag: 'bag_bear', deco: 'deco_heartglitter', shape: 'vline', feats: ['lashes', 'glow']}
 };

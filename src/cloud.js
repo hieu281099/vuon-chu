@@ -22,7 +22,13 @@ const sessFrom = (j, username) => ({access_token: j.access_token, refresh_token:
 async function sbToken() {
   const s = SB.sess; if (!s) throw {status: 401, code: 'no_session'};
   if (s.expires_at - 90 > Date.now() / 1000) return s.access_token;
-  const j = await sbRaw('/auth/v1/token?grant_type=refresh_token', {method: 'POST', body: JSON.stringify({refresh_token: s.refresh_token})});
+  let j;
+  try { j = await sbRaw('/auth/v1/token?grant_type=refresh_token', {method: 'POST', body: JSON.stringify({refresh_token: s.refresh_token})}); }
+  catch (e) {
+    // the session was revoked or used on another device: stop retrying, keep playing locally and ask to log in again
+    if (e && (e.status === 400 || e.status === 401)) { sbSetSess(null); if (Store.mode === 'supa') { Store.mode = 'local'; setTimeout(() => toast('Phiên đăng nhập đã hết. Vào Cài đặt để đăng nhập lại, tiến độ vẫn được giữ trên máy.', 6000), 300); } throw {status: 401, code: 'session_expired'}; }
+    throw e;
+  }
   sbSetSess(sessFrom(j, s.username)); return SB.sess.access_token;
 }
 const sbApi = async (path, opts = {}) => sbRaw(path, opts, await sbToken());

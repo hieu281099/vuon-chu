@@ -49,7 +49,7 @@ function newGame() {
   Object.assign(plots[0], {c: 'carrot', p: 1}); Object.assign(plots[1], {c: 'radish', p: 0.4, w: now + 20000}); Object.assign(plots[2], {c: 'carrot', p: 0.25});
   return {v: 4, created: false, name: '', look: fullLook(DEFAULT_LOOK), owned: [...FREE_ITEMS], map: 'farm', px: 0, py: 0,
     coins: 80, em: 4, di: 1, daily: '', xp: 0, lvl: 3, plots, animals: [{t: 'chicken', st: 'hungry', r: 0}, ...Array(17).fill(null)], barnLv: 0, keys: 1, pity: 0,
-    cefr: 'A1', hair: [], spa: [], lvAns: 0, seeds: {carrot: 6, radish: 4}, inv: {}, m: {}, orders: [], streak: 0, best: 0, stats: {ok: 0, all: 0, talks: 0, fish: 0},
+    cefr: 'A1', hair: [], spa: [], lvAns: 0, bait: 5, seeds: {carrot: 6, radish: 4}, inv: {}, m: {}, orders: [], streak: 0, best: 0, stats: {ok: 0, all: 0, talks: 0, fish: 0},
     study: {track: 'general', level: 'A1', unlocked: ['A1']}, sound: true, last: now, caught: false};
 }
 async function initStore() {
@@ -429,8 +429,10 @@ function onAnimal(i) {
 
 /* ---- fishing ---- */
 function startFishing(wx, wy) {
+  if (!((S.bait || 0) > 0)) return noBait();
+  S.bait--; markDirty();
   P.act = {kind: 'fish', bx: wx * TS + 16, by: wy * TS + 16, biteAt: performance.now() + 1800 + Math.random() * 3000, bit: false};
-  P.dir = dirTo(P.x, P.y, P.act.bx, P.act.by); toast('Đã thả câu. Chờ cá cắn nhé.');
+  P.dir = dirTo(P.x, P.y, P.act.bx, P.act.by); toast(`Đã thả câu (còn ${S.bait} mồi). Chờ cá cắn nhé.`);
 }
 function onBite() {
   sfx('bite');
@@ -469,6 +471,8 @@ function npcBody(n) {
   if (role === 'salon') return salonHTML();
   if (role === 'spa') return spaHTML();
   if (role === 'lottery') return lottoHTML();
+  if (role === 'bait') return baitHTML();
+  if (role === 'post') return postHTML();
   return `<div class="row-btns"><button class="btn" data-act="chat">Nói chuyện</button><button class="btn ghost" data-act="close">Tạm biệt</button></div>`;
 }
 function orderHTML(o, k, canGive) {
@@ -663,7 +667,7 @@ function buyAnimal(i, id) { const A = ANIMAL[id]; if (!A || S.animals[i] || A.lv
 /* ===================== PANELS (bottom bar) ===================== */
 function openBag() {
   const seeds = CROPS.filter(c => S.seeds[c.id] > 0);
-  openModal(`<h2 class="ptitle">Túi đồ</h2><h3 class="ph3">Nông sản</h3>${invHTML(false)}<h3 class="ph3">Hạt giống</h3>${seeds.length ? `<div class="list">${seeds.map(c => `<div class="row-item static">${itemImg(c.id)}<span class="ri-main"><b>${c.en} seeds</b><small>${c.vi}</small></span><span class="qty">${S.seeds[c.id]}</span></div>`).join('')}</div>` : '<p class="empty">Chưa có hạt giống. Mua ở cửa hàng SEEDS trong Làng.</p>'}<h3 class="ph3">Đơn hàng đang chờ</h3>${S.orders.map((o, k) => orderHTML(o, k, false)).join('')}<p class="note">Giao đơn và bán đồ ở chợ (MARKET), gặp Chú Ba.</p><div class="row-btns"><button class="btn" data-act="farmshop" data-t="seeds">Cửa hàng nông trại</button><button class="btn gold" data-act="farmshop" data-t="chest">Rương may mắn (${S.keys || 0} chìa)</button></div>`, {label: 'Túi đồ', wide: true});
+  openModal(`<h2 class="ptitle">Túi đồ</h2><p class="note">Mồi câu: <b>${S.bait || 0}</b> · Chìa khoá rương: <b>${S.keys || 0}</b></p><h3 class="ph3">Nông sản</h3>${invHTML(false)}<h3 class="ph3">Hạt giống</h3>${seeds.length ? `<div class="list">${seeds.map(c => `<div class="row-item static">${itemImg(c.id)}<span class="ri-main"><b>${c.en} seeds</b><small>${c.vi}</small></span><span class="qty">${S.seeds[c.id]}</span></div>`).join('')}</div>` : '<p class="empty">Chưa có hạt giống. Mua ở cửa hàng SEEDS trong Làng.</p>'}<h3 class="ph3">Đơn hàng đang chờ</h3>${S.orders.map((o, k) => orderHTML(o, k, false)).join('')}<p class="note">Giao đơn và bán đồ ở chợ (MARKET), gặp Chú Ba.</p><div class="row-btns"><button class="btn" data-act="farmshop" data-t="seeds">Cửa hàng nông trại</button><button class="btn gold" data-act="farmshop" data-t="chest">Rương may mắn (${S.keys || 0} chìa)</button></div>`, {label: 'Túi đồ', wide: true});
 }
 function openStudy() {
   const {track, level, unlocked} = S.study;

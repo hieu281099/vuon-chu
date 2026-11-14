@@ -28,9 +28,9 @@ function renderHint() {
     else if (S.animals.some(a => a && a.st === 'hungry')) h = 'Vật nuôi đang đói. Vào chuồng, chạm vào con vật để cho ăn.';
     else if (sts.includes('E')) h = Object.values(S.seeds).some(n => n > 0) ? 'Còn ô đất trống. Chạm vào để gieo hạt.' : 'Hết hạt giống. Sang <b>Làng</b> mua ở cửa hàng SEEDS.';
     else h = 'Cây đang lớn, vài giờ nữa mới chín. Chạm vào ô ruộng để bón phân, hoặc mở <b>Bản đồ</b> đi dạo.';
-  } else if (S.map === 'village') h = 'Chú Ba (MARKET) nhận đơn hàng, Cô Mai (CLOTHES SHOP) bán quần áo, Ông Tư (SEEDS) bán hạt, Cô Lan (SCHOOL) dạy học, Chị Ngân (HAIR SALON) làm tóc, Cô Tám bán vé số trước POST. Bảng tin ở quảng trường.';
+  } else if (S.map === 'village') h = 'Chú Ba (MARKET) nhận đơn hàng, Cô Mai (CLOTHES SHOP) bán quần áo, Ông Tư (SEEDS) bán hạt, Cô Lan (SCHOOL) dạy học, Chị Ngân (HAIR SALON) làm tóc, Cô Tám bán vé số, Chú Bảy ở POST có thư tiếng Anh mỗi ngày. Bảng tin ở quảng trường.';
   else if (S.map === 'park') h = 'Gặp Chị Hà ở bảng IELTS CHALLENGE để làm thử thách IELTS hằng ngày. Chị Thu ở BEAUTY SPA đổi dáng mặt, đôi mắt, nét duyên.';
-  else h = 'Chạm vào mặt nước để thả câu. Ông Sáu ở cầu tàu cũng thích nói chuyện.';
+  else h = `Chạm vào mặt nước để thả câu (còn ${S.bait || 0} mồi). Mua mồi ở FISH SHOP, gặp Ông Sáu.`;
   if (h !== hintKey) { hintKey = h; const el = $('#hint'); el.innerHTML = h; el.classList.remove('gone'); clearTimeout(hintTimer); hintTimer = setTimeout(() => el.classList.add('gone'), 5000); }
 }
 function showBanner(en, vi) { const b = $('#banner'); b.innerHTML = `<b>${esc(en)}</b><span>${esc(vi)}</span>`; b.classList.remove('show'); void b.offsetWidth; b.classList.add('show'); }
@@ -100,6 +100,10 @@ document.addEventListener('click', e => {
     case 'farmshop': return openFarmShop(d.t);
     case 'minimap': return openMinimap();
     case 'lotto-buy': return lottoBuy();
+    case 'bait-buy': return baitBuy(+d.n);
+    case 'bait-go': return baitGo();
+    case 'post-pick': return postPick(+d.q, +d.v);
+    case 'post-submit': return postSubmit();
     case 'lotto-scratch': return lottoScratch(+d.i);
     case 'lotto-all': return lottoAll();
     case 'mm-go': return mmGo(d.id);
@@ -237,6 +241,7 @@ function normalize(d) {
   if (typeof s.last !== 'number') s.last = Date.now();
   // English level replaces the XP level; hairstyles become salon items (keep whatever the player already wears)
   if (!s.cefr) { const t = s.created ? tierOf(s.lvl || 1) : 0, st = Math.max(0, LEVELS.indexOf(s.study.level)); s.cefr = LEVELS[Math.min(t, st)]; }
+  if (typeof s.bait !== 'number') s.bait = 5;   // every account gets 5 free baits once
   s.hair = Array.isArray(s.hair) ? s.hair : []; s.spa = Array.isArray(s.spa) ? s.spa : [];
   for (const h of HAIR_ITEMS) if (((h.f && s.look.hairF === h.f) || (h.b && s.look.hairB === h.b) || (h.c && s.look.hairC === h.c)) && !s.hair.includes(h.id)) s.hair.push(h.id);
   s.lvl = TIER_MAX[Math.max(0, LEVELS.indexOf(s.cefr))];

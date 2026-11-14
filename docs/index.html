@@ -589,6 +589,12 @@ textarea.field{resize:vertical;line-height:1.5}
 .lcell.open img{width:42%;height:auto}.lcell.open b{font-size:12px;line-height:1.1;text-align:center}.lcell.open small{font-size:10px;color:var(--muted);font-family:var(--font);font-weight:700}
 .lcell.win{box-shadow:0 0 0 3px #ffb020,0 0 16px rgba(255,176,32,.8)}
 
+/* ---------- post office letter ---------- */
+.letter{background:#fffaf0;border:1.5px dashed #f2c27a;border-radius:16px;padding:12px 14px;margin:8px 0 12px;font-size:14.5px;line-height:1.55}
+.letter .lhead{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center;margin-bottom:6px;font-size:13px;color:var(--muted)}
+.letter .lhead b{color:var(--ink)}
+.letter p{margin:0}
+
 </style>
 
 <div id="loading" class="loading">
@@ -2382,7 +2388,7 @@ function buildMaps() {
   prop(v, 'stall_a', 12, 7); prop(v, 'stall_b', 22, 7); m_sign(v, 17, 6, 'MARKET', 'market');
   house(v, 'school', 11, 19, 9, 5, {sign: 'SCHOOL', role: 'teacher'});
   house(v, 'forge', 30, 15, 5, 5, {sign: 'UPGRADE', role: 'forge'});
-  house(v, 'post', 23, 18, 5, 4, {sign: 'POST'});
+  house(v, 'post', 23, 18, 5, 4, {sign: 'POST', role: 'post'});
   house(v, 'salon', 2, 18, 6, 4, {sign: 'HAIR SALON', role: 'salon'});
   prop(v, 'board', 12, 11); prop(v, 'well', 23, 14);
   for (const [x, y] of [[10, 9], [25, 9], [10, 17], [25, 17]]) prop(v, 'lamp', x, y);
@@ -2421,10 +2427,12 @@ function buildMaps() {
   fill(r, 'd', 0, 9, 15, 2); fill(r, 'd', 14, 9, 2, 3);
   for (let y = 13; y < 21; y++) for (let x = 14; x < 16; x++) { r.ter[y * r.w + x] = 'D'; r.block[y * r.w + x] = 0; }
   prop(r, 'boat', 19, 16, false); prop(r, 'boat', 9, 18, false);
-  house(r, 'house2', 22, 4, 5, 5, {sign: 'FISH SHOP'});
+  house(r, 'house2', 22, 4, 5, 5, {sign: 'FISH SHOP', role: 'bait'});
   for (const [x, y, k] of [[4, 4, 'palm'], [8, 6, 'round'], [29, 4, 'palm'], [31, 8, 'palm'], [12, 3, 'round'], [18, 4, 'palm']]) tree(r, x, y, k);
   prop(r, 'reeds', 3, 12, false); prop(r, 'reeds', 26, 12, false); prop(r, 'reeds', 30, 12, false); prop(r, 'rock', 7, 12);
   r.exits.push({x: 0, y: 9, w: 1, h: 2, to: 'village', tx: 34, ty: 12});
+  r.objs = r.objs.filter(o => !(o.t === 'tree' && (o.y >= 11 || ['w', 's', 'D'].includes(T_(r, o.x, o.y)))));
+  prop(r, 'reeds', 1, 12, false); prop(r, 'rock', 32, 12);
   r.spawn = [2, 9];
   M.river = r;
   return M;
@@ -2482,7 +2490,7 @@ function newGame() {
   Object.assign(plots[0], {c: 'carrot', p: 1}); Object.assign(plots[1], {c: 'radish', p: 0.4, w: now + 20000}); Object.assign(plots[2], {c: 'carrot', p: 0.25});
   return {v: 4, created: false, name: '', look: fullLook(DEFAULT_LOOK), owned: [...FREE_ITEMS], map: 'farm', px: 0, py: 0,
     coins: 80, em: 4, di: 1, daily: '', xp: 0, lvl: 3, plots, animals: [{t: 'chicken', st: 'hungry', r: 0}, ...Array(17).fill(null)], barnLv: 0, keys: 1, pity: 0,
-    cefr: 'A1', hair: [], spa: [], lvAns: 0, seeds: {carrot: 6, radish: 4}, inv: {}, m: {}, orders: [], streak: 0, best: 0, stats: {ok: 0, all: 0, talks: 0, fish: 0},
+    cefr: 'A1', hair: [], spa: [], lvAns: 0, bait: 5, seeds: {carrot: 6, radish: 4}, inv: {}, m: {}, orders: [], streak: 0, best: 0, stats: {ok: 0, all: 0, talks: 0, fish: 0},
     study: {track: 'general', level: 'A1', unlocked: ['A1']}, sound: true, last: now, caught: false};
 }
 async function initStore() {
@@ -2862,8 +2870,10 @@ function onAnimal(i) {
 
 /* ---- fishing ---- */
 function startFishing(wx, wy) {
+  if (!((S.bait || 0) > 0)) return noBait();
+  S.bait--; markDirty();
   P.act = {kind: 'fish', bx: wx * TS + 16, by: wy * TS + 16, biteAt: performance.now() + 1800 + Math.random() * 3000, bit: false};
-  P.dir = dirTo(P.x, P.y, P.act.bx, P.act.by); toast('Đã thả câu. Chờ cá cắn nhé.');
+  P.dir = dirTo(P.x, P.y, P.act.bx, P.act.by); toast(`Đã thả câu (còn ${S.bait} mồi). Chờ cá cắn nhé.`);
 }
 function onBite() {
   sfx('bite');
@@ -2902,6 +2912,8 @@ function npcBody(n) {
   if (role === 'salon') return salonHTML();
   if (role === 'spa') return spaHTML();
   if (role === 'lottery') return lottoHTML();
+  if (role === 'bait') return baitHTML();
+  if (role === 'post') return postHTML();
   return `<div class="row-btns"><button class="btn" data-act="chat">Nói chuyện</button><button class="btn ghost" data-act="close">Tạm biệt</button></div>`;
 }
 function orderHTML(o, k, canGive) {
@@ -3096,7 +3108,7 @@ function buyAnimal(i, id) { const A = ANIMAL[id]; if (!A || S.animals[i] || A.lv
 /* ===================== PANELS (bottom bar) ===================== */
 function openBag() {
   const seeds = CROPS.filter(c => S.seeds[c.id] > 0);
-  openModal(`<h2 class="ptitle">Túi đồ</h2><h3 class="ph3">Nông sản</h3>${invHTML(false)}<h3 class="ph3">Hạt giống</h3>${seeds.length ? `<div class="list">${seeds.map(c => `<div class="row-item static">${itemImg(c.id)}<span class="ri-main"><b>${c.en} seeds</b><small>${c.vi}</small></span><span class="qty">${S.seeds[c.id]}</span></div>`).join('')}</div>` : '<p class="empty">Chưa có hạt giống. Mua ở cửa hàng SEEDS trong Làng.</p>'}<h3 class="ph3">Đơn hàng đang chờ</h3>${S.orders.map((o, k) => orderHTML(o, k, false)).join('')}<p class="note">Giao đơn và bán đồ ở chợ (MARKET), gặp Chú Ba.</p><div class="row-btns"><button class="btn" data-act="farmshop" data-t="seeds">Cửa hàng nông trại</button><button class="btn gold" data-act="farmshop" data-t="chest">Rương may mắn (${S.keys || 0} chìa)</button></div>`, {label: 'Túi đồ', wide: true});
+  openModal(`<h2 class="ptitle">Túi đồ</h2><p class="note">Mồi câu: <b>${S.bait || 0}</b> · Chìa khoá rương: <b>${S.keys || 0}</b></p><h3 class="ph3">Nông sản</h3>${invHTML(false)}<h3 class="ph3">Hạt giống</h3>${seeds.length ? `<div class="list">${seeds.map(c => `<div class="row-item static">${itemImg(c.id)}<span class="ri-main"><b>${c.en} seeds</b><small>${c.vi}</small></span><span class="qty">${S.seeds[c.id]}</span></div>`).join('')}</div>` : '<p class="empty">Chưa có hạt giống. Mua ở cửa hàng SEEDS trong Làng.</p>'}<h3 class="ph3">Đơn hàng đang chờ</h3>${S.orders.map((o, k) => orderHTML(o, k, false)).join('')}<p class="note">Giao đơn và bán đồ ở chợ (MARKET), gặp Chú Ba.</p><div class="row-btns"><button class="btn" data-act="farmshop" data-t="seeds">Cửa hàng nông trại</button><button class="btn gold" data-act="farmshop" data-t="chest">Rương may mắn (${S.keys || 0} chìa)</button></div>`, {label: 'Túi đồ', wide: true});
 }
 function openStudy() {
   const {track, level, unlocked} = S.study;
@@ -3356,6 +3368,64 @@ function lottoHTML() {
     <div class="row-btns"><button class="btn gold" data-act="lotto-buy" ${left <= 0 || S.coins < LOTTO_PRICE || (c && !c.done) ? 'disabled' : ''}>${c && !c.done ? 'Cào xong vé này trước' : left <= 0 ? 'Hết vé hôm nay' : `Mua vé · ${coinIcon}${LOTTO_PRICE}`}</button></div>`;
 }
 
+/* ===================== FISHING BAIT (fish shop) and the POST OFFICE (a daily English letter) ===================== */
+// ---- bait: every account starts with 5 free baits; one bait per cast; more from Ông Sáu at the FISH SHOP
+const BAIT_PACKS = [{n: 5, price: 40}, {n: 20, price: 140}, {n: 50, price: 300}];
+function baitHTML() {
+  return `<p class="note">Mỗi lần thả câu tốn <b>1 mồi</b>. Bạn đang có <b>${S.bait || 0} mồi</b>. Cá to (tuna) có thể cho kim cương và chìa khoá rương.</p>
+    <div class="list">${BAIT_PACKS.map(p => `<button class="row-item" data-act="bait-buy" data-n="${p.n}" ${S.coins < p.price ? 'disabled' : ''}><span class="ii plus">${p.n}</span><span class="ri-main"><b>${p.n} worms</b><small>${p.n} mồi câu giun đất</small></span><span class="ri-side">${coinIcon}${p.price}</span></button>`).join('')}</div>
+    <div class="row-btns"><button class="btn ghost" data-act="chat">Nói chuyện</button></div>`;
+}
+function baitBuy(n) { const p = BAIT_PACKS.find(x => x.n === n); if (!p || S.coins < p.price) return; S.coins -= p.price; S.bait = (S.bait || 0) + p.n; sfx('coin'); speak(`${p.n} worms`, true); toast(`Đã mua <b>${p.n} mồi câu</b>. Đang có ${S.bait} mồi.`); renderHUD(); markDirty(); refreshNpc(); }
+function noBait() {
+  openModal(`<h2 class="ptitle">Hết mồi câu</h2><p class="psub">Mỗi lần thả câu cần 1 mồi. Mua mồi ở <b>FISH SHOP</b> bên bờ sông, gặp <b>Ông Sáu</b>.</p><div class="row-btns"><button class="btn gold" data-act="bait-go">Đến FISH SHOP</button><button class="btn ghost" data-act="close">Để sau</button></div>`, {label: 'Hết mồi'});
+}
+function baitGo() { closeModal(); if (S.map !== 'river') { travel('river'); return; } const n = NPCS.find(q => q.def.role === 'bait'); if (n) { const [tx, ty] = tileOf(n.x, n.y); approach(tx, ty, 1.6, () => talk(n), true); } }
+
+// ---- post office: one letter a day at your English level, two reading questions, small rewards
+const LETTERS = [
+  {lv: 'A1', from: 'Bé Na', subject: 'My new kitten', body: 'Hi! I have a new kitten. Her name is Mochi. She is white and very small. She likes milk and she sleeps on my bed. Can you come to my house on Sunday to see her? Love, Na', q: [['What colour is the kitten?', ['White', 'Black', 'Orange', 'Grey'], 0], ['When can you visit Na?', ['On Sunday', 'On Monday', 'Tonight', 'Next month'], 0]]},
+  {lv: 'A1', from: 'Tom', subject: 'Farm help', body: 'Hello friend, I am very busy today. I have ten chickens and two cows. Can you help me give them water in the morning? I will give you some eggs. Thank you! Tom', q: [['How many cows does Tom have?', ['Two', 'Ten', 'Twelve', 'One'], 0], ['What will Tom give you?', ['Some eggs', 'Some milk', 'A cow', 'Money'], 0]]},
+  {lv: 'A2', from: 'Cô Mai', subject: 'Summer sale', body: 'Dear customer, our summer sale starts next Friday. All T-shirts and shorts will be 20% cheaper. The shop opens at 8 a.m. and closes at 9 p.m. Come early because the best colours sell out quickly! Best wishes, Mai', q: [['What will be cheaper?', ['T-shirts and shorts', 'Hats and shoes', 'Dresses only', 'Everything in the village'], 0], ['Why should you come early?', ['The best colours sell out quickly', 'The shop closes at noon', 'Only the first person gets a gift', 'It will rain later'], 0]]},
+  {lv: 'A2', from: 'Ông Sáu', subject: 'Fishing trip', body: 'Hello, the weather will be sunny on Saturday, so I am planning a fishing trip on the river. We will leave at six in the morning. Please bring a hat, some water and your own fishing rod. I will bring the bait. From Sáu', q: [['Why is Sáu planning the trip on Saturday?', ['The weather will be sunny', 'He is free on Saturday', 'The fish are bigger', 'The shop is closed'], 0], ['What will Sáu bring?', ['The bait', 'A hat', 'Water', 'Fishing rods for everyone'], 0]]},
+  {lv: 'B1', from: 'Cô Lan', subject: 'English club', body: 'Dear students, from next week our English club will meet on Tuesday evenings instead of Thursday mornings, because many of you have farm work in the morning. Each meeting will include a short game, a reading task and ten minutes of speaking practice. Please let me know if you cannot come. Ms Lan', q: [['Why is the club changing its time?', ['Many students work on farms in the morning', 'The teacher is busy on Thursday', 'The school is closed in the morning', 'Students asked for longer meetings'], 0], ['What is NOT part of each meeting?', ['A writing test', 'A short game', 'A reading task', 'Speaking practice'], 0]]},
+  {lv: 'B1', from: 'Chú Ba', subject: 'Market news', body: 'Hi there, prices for strawberries have gone up this month because the cold weather damaged many farms in the north. If you have strawberries, it is a good time to sell them at the market. However, carrot prices are falling, so you may want to plant something else next season. Ba', q: [['Why have strawberry prices gone up?', ['Cold weather damaged many farms', 'More people are buying them', 'The market raised its fees', 'There was too much rain in the south'], 0], ['What does Ba suggest about carrots?', ['Plant something else next season', 'Sell them immediately', 'Keep them for winter', 'Plant more of them'], 0]]},
+  {lv: 'B2', from: 'Chị Hà', subject: 'IELTS tip of the week', body: 'Hi! A common mistake in IELTS Writing Task 2 is writing a long introduction that simply repeats the question. Examiners prefer a short, clear introduction that paraphrases the topic and states your position. Spend your words on developing two well-supported body paragraphs instead. Practising paraphrasing for five minutes a day can make a noticeable difference within a month. Hà', q: [['According to Hà, what do examiners prefer in an introduction?', ['A short paraphrase that states your position', 'A long summary of both views', 'An exact copy of the question', 'A personal story'], 0], ['What does Hà suggest practising daily?', ['Paraphrasing', 'Spelling', 'Handwriting speed', 'Listening to music'], 0]]},
+  {lv: 'B2', from: 'Cô Năm', subject: 'Upgrade safety', body: 'Dear adventurer, I have noticed that many people try to upgrade their items to +5 or +6 without preparing enough gems. Remember that failed attempts above +3 may lower your item by one level. I would recommend collecting a lucky horseshoe and answering the bonus question first, which together raise your chance considerably. Yours, Năm', q: [['What can happen when an upgrade above +3 fails?', ['The item may drop one level', 'The item disappears', 'You lose all your coins', 'Nothing happens'], 0], ['What does Năm recommend before upgrading?', ['Use a horseshoe and answer the bonus question', 'Wait until the weekend', 'Upgrade several items at once', 'Sell the item first'], 0]]},
+  {lv: 'C1', from: 'Ông Tư', subject: 'Soil and patience', body: 'My dear friend, people often assume that a successful harvest depends chiefly on luck or expensive seeds. In my experience, it is the quiet, unglamorous work, such as testing the soil, rotating crops and resisting the urge to over-water, that makes the decisive difference. Learning a language is not so different: consistent, deliberate practice outweighs occasional bursts of enthusiasm. With warm regards, Tư', q: [['What is Tư\'s main point about harvests?', ['Careful routine work matters more than luck', 'Expensive seeds guarantee success', 'Watering often is the key', 'Harvests depend mostly on weather'], 0], ['How does he connect farming to language learning?', ['Both reward steady, deliberate practice', 'Both require expensive tools', 'Both are mainly about luck', 'Both should be done in short bursts'], 0]]},
+  {lv: 'C1', from: 'Chị Thu', subject: 'Rest and productivity', body: 'Hello, I wanted to share something many of our spa guests mention. They tend to equate being busy with being productive, yet a growing body of research suggests that short, regular breaks actually sharpen concentration and reduce errors. Paradoxically, those who schedule rest often accomplish more by the end of the week than those who push through without pausing. Take care, Thu', q: [['What misconception do many guests have?', ['Being busy means being productive', 'Breaks are always too long', 'Research is unreliable', 'Rest causes errors'], 0], ['What does the word "paradoxically" suggest here?', ['The result is the opposite of what you might expect', 'The research is uncertain', 'The guests are lying', 'Resting is dangerous'], 0]]}
+];
+const today2 = () => new Date().toISOString().slice(0, 10);
+function letterToday() {
+  const lv = S.cefr || 'A1', pool = LETTERS.filter(l => l.lv === lv), d = today2();
+  const idx = [...d].reduce((a, ch) => a + ch.charCodeAt(0), 0) % pool.length;
+  return pool[idx];
+}
+let POST = null;
+function postHTML() {
+  const L = letterToday(), done = S.postDay === today2();
+  if (!POST || POST.letter !== L) POST = {letter: L, ans: {}, done: done};
+  const q = L.q.map(([qq, opts, a], qi) => { const order = POST['o' + qi] || (POST['o' + qi] = shuffle(opts.map((o, i) => i)));
+    return `<div class="eq"><p class="eqq">${qi + 1}. ${esc(qq)}</p><div class="eopts">${order.map(i => `<button class="eopt ${POST.ans[qi] === i ? 'sel' : ''} ${POST.done && i === a ? 'ok' : ''}" data-act="post-pick" data-q="${qi}" data-v="${i}" ${POST.done ? 'disabled' : ''}>${esc(opts[i])}</button>`).join('')}</div></div>`; }).join('');
+  return `<p class="note">Mỗi ngày bưu điện nhận một lá thư tiếng Anh hợp với trình độ <b>${S.cefr}</b> của bạn. Đọc thư rồi trả lời 2 câu: mỗi câu đúng được 30 xu, đúng cả hai thêm 2 ngọc lục bảo.${done ? ' <b>Hôm nay bạn đã nhận thư rồi</b>, mai quay lại nhé.' : ''}</p>
+    <div class="letter"><div class="lhead"><b>From: ${esc(L.from)}</b><span>Subject: ${esc(L.subject)}</span>${sayBtn(L.body, 'Nghe thư')}</div><p>${esc(L.body)}</p></div>
+    ${q}${POST.result ? `<div class="fb ${POST.result.ok === 2 ? 'good' : 'miss'}"><strong>${POST.result.ok}/2 câu đúng.</strong> ${POST.result.msg}</div>` : ''}
+    <div class="row-btns">${POST.done ? '' : `<button class="btn gold" data-act="post-submit" ${Object.keys(POST.ans).length < 2 ? 'disabled' : ''}>Nộp câu trả lời</button>`}<button class="btn ghost" data-act="chat">Nói chuyện</button></div>`;
+}
+function postPick(qi, v) { if (!POST || POST.done) return; POST.ans[qi] = v; refreshNpc(); }
+function postSubmit() {
+  if (!POST || POST.done || S.postDay === today2()) return;
+  const ok = POST.letter.q.filter(([q, o, a], qi) => POST.ans[qi] === a).length;
+  POST.done = true; S.postDay = today2(); S.stats.all += 2; S.stats.ok += ok; lvNoteAnswer(); lvNoteAnswer();
+  S.coins += ok * 30; let msg = ok ? `Nhận <b>${ok * 30} xu</b>.` : 'Đọc kỹ lại thư nhé, đáp án đúng đã được đánh dấu.';
+  if (ok === 2) { giveGems(2, 0, 'thư hôm nay'); msg += ' Thêm 2 ngọc lục bảo!'; sfx('level'); } else sfx(ok ? 'coin' : 'bad');
+  POST.result = {ok, msg}; renderHUD(); markDirty(); saveNow(); refreshNpc();
+}
+
+{ const sau = NPC_DEFS.find(d => d.id === 'sau'); sau.role = 'bait'; sau.home = [26, 10]; sau.greet = ['Fresh worms!', 'Good fishing today!']; sau.line = () => ({en: `Hello ${S.name}! Need some bait for fishing?`, vi: `Chào ${S.name}! Cần mồi câu không cháu?`}); }
+NPC_DEFS.push({id:'bay', name:'Chú Bảy', map:'village', home:[27, 22], role:'post', look:L_({skin:3, hairF:'regular', hairC:'#1F1B24', beard:'short', top:'top_jacket', topC:'#FFB547', bottom:'bot_pants', bottomC:'#545AF2', hat:'hat_cap'}),
+  greet:['You have mail!', 'Letters for you!'], line:() => ({en:`Hi ${S.name}! There is a letter for you today.`, vi:`Chào ${S.name}! Hôm nay có thư cho cháu đây.`})});
+
 /* ===================== NPC OUTFITS: every villager wears a unique, fully upgraded set ===================== */
 // _lv: tier for every equipped piece (6 = Cầu vồng, 5 = Hoàng kim). No two NPCs share a hat, wings, held item, aura or pet.
 const NPC_GEAR = {
@@ -3370,6 +3440,7 @@ const NPC_GEAR = {
   ha:   {hat: 'hat_halo', face2: 'face_visor', back: 'back_crystal', hand: 'hand_starstaff', aura: 'aura_galaxy', pet: 'pet_unicorn', neck: 'neck_ruby', ear: 'ear_moon', shoes: 'shoes_rainbow', bag: 'bag_galaxy'},
   bao:  {hat: 'hat_headphones', face2: 'face_star', back: 'back_guitar', hand: 'hand_mic', aura: 'aura_rainbow', pet: 'pet_fox', neck: 'neck_choker', shoes: 'shoes_cloud', bag: 'bag_heart'},
   ngan: {hat: 'hat_flower', face2: 'face_butterfly', back: 'back_phoenix', hand: 'hand_fan', aura: 'aura_butterfly', pet: 'pet_phoenix', neck: 'neck_heart', ear: 'ear_butterfly', shoes: 'shoes_sandals', bag: 'bag_tote'},
+  bay:  {hat: 'hat_cap', face2: 'face_aviator', back: 'back_bag', hand: 'hand_book', neck: 'neck_scarf', bag: 'bag_cross', shoes: 'shoes_sneaker', pet: 'pet_chick', _lv: 4},
   tam:  {hat: 'hat_beret', face2: 'face_round', bag: 'bag_cross', neck: 'neck_bowtie', pet: 'pet_chick', hand: 'hand_book', shoes: 'shoes_sandals', _lv: 4},
   thu:  {hat: 'hat_unicorn', face2: 'face_rainbowshades', back: 'back_ninetails', hand: 'hand_cotton', aura: 'aura_dragon', pet: 'pet_panda', neck: 'neck_galaxy', ear: 'ear_galaxy', bag: 'bag_bear', deco: 'deco_heartglitter', shape: 'vline', feats: ['lashes', 'glow']}
 };
@@ -3392,13 +3463,16 @@ const lvIdx = () => Math.max(0, LEVELS.indexOf((S && S.cefr) || 'A1'));
 function syncLvl() { S.lvl = TIER_MAX[lvIdx()]; }
 
 // how ready the player is for the next level: 70% from mastered words of the current level, 30% from recent practice
+// rules for leaving each level (index = current level): share of its words at 3 stars, answers needed, test length, pass mark
+const LV_RULES = [{words: 0.6, ans: 30, n: 15, pass: 11}, {words: 0.7, ans: 60, n: 18, pass: 13}, {words: 0.75, ans: 100, n: 20, pass: 15}, {words: 0.85, ans: 160, n: 22, pass: 17}];
+const lvRule = () => LV_RULES[Math.min(LV_RULES.length - 1, lvIdx())];
 const READY_ANS = 30;
 function readiness() {
   const i = lvIdx(); if (i >= LEVELS.length - 1) return {pct: 1, max: true, known: 0, target: 0, ans: 0};
-  const ws = levelWords(LEVELS[i], S.study.track), target = Math.max(4, Math.ceil(ws.length * 0.6));
-  const known = ws.filter(w => S.m[w.key] && S.m[w.key].m >= 3).length, ans = Math.min(READY_ANS, S.lvAns || 0);
-  const pct = Math.min(1, known / target) * 0.7 + (ans / READY_ANS) * 0.3;
-  return {pct: Math.min(1, pct), known: Math.min(known, target), target, ans, next: LEVELS[i + 1]};
+  const ws = levelWords(LEVELS[i], S.study.track), target = Math.max(4, Math.ceil(ws.length * lvRule().words)), need = lvRule().ans;
+  const known = ws.filter(w => S.m[w.key] && S.m[w.key].m >= 3).length, ans = Math.min(need, S.lvAns || 0);
+  const pct = Math.min(1, known / target) * 0.7 + (ans / need) * 0.3;
+  return {pct: Math.min(1, pct), known: Math.min(known, target), target, ans, need, next: LEVELS[i + 1]};
 }
 const isReady = () => { const r = readiness(); return !r.max && r.pct >= 1; };
 const LVUP_COOLDOWN = 20 * 60000;
@@ -3416,10 +3490,12 @@ function lvNoteAnswer() {
 function buildLevelUp() {
   const next = LEVELS[lvIdx() + 1], cur = S.cefr, qs = [];
   let pool = shuf(levelWords(next, S.study.track)); if (pool.length < 10) pool = pool.concat(shuf(TRACK_WORDS.general[next] || []).filter(w => !pool.includes(w)));
-  pool.slice(0, 10).forEach(w => qs.push(vocabQ(w, next)));
+  const rule = lvRule(), nv = rule.n - 5, prev = shuf(levelWords(cur, S.study.track));
+  pool.slice(0, nv).forEach(w => qs.push(vocabQ(w, next)));
+  if (pool.length < nv) prev.slice(0, nv - pool.length).forEach(w => qs.push(vocabQ(w, next)));
   shuf(GRAMMAR[next]).slice(0, 5).forEach(([q, o, a]) => qs.push(mcqFrom(q, o, a, {lv: next})));
-  return {id: 'levelup', kind: 'levelup', title: `Bài test lên trình độ ${next}`, target: next, sections: [{id: 'V', skill: 'grammar', title: 'Từ vựng & Ngữ pháp', minutes: 10,
-    note: `15 câu ở trình độ ${next}. Đúng từ 11/15 câu (70%) là lên ${next} và mở khoá đồ, cây trồng, vật nuôi của trình độ này. Bạn đang ở ${cur}.`, parts: [{title: 'Chọn đáp án đúng', questions: shuf(qs)}]}]};
+  return {id: 'levelup', kind: 'levelup', title: `Bài test lên trình độ ${next}`, target: next, pass: rule.pass, sections: [{id: 'V', skill: 'grammar', title: 'Từ vựng & Ngữ pháp', minutes: 10,
+    note: `${qs.length} câu ở trình độ ${next}. Đúng từ ${rule.pass}/${qs.length} câu là lên ${next} và mở khoá đồ, cây trồng, vật nuôi của trình độ này. Bạn đang ở ${cur}.`, parts: [{title: 'Chọn đáp án đúng', questions: shuf(qs)}]}]};
 }
 function startLevelUp() {
   if (!isReady()) { openLevel(); return; }
@@ -3451,8 +3527,8 @@ function openLevel() {
     <h3 class="ph3">Tiến độ lên ${r.next}</h3>
     <div class="lvprog"><i style="--w:${Math.round(r.pct * 100)}%"></i><span>${Math.round(r.pct * 100)}%</span></div>
     <ul class="rtasks"><li class="${r.known >= r.target ? 'ok' : ''}"><i></i><span>Thuộc từ vựng ${S.cefr} (3 sao trở lên)</span><em>${r.known}/${r.target}</em></li>
-    <li class="${r.ans >= READY_ANS ? 'ok' : ''}"><i></i><span>Trả lời câu hỏi khi chăm nông trại, học, mua đồ</span><em>${r.ans}/${READY_ANS}</em></li></ul>
-    <p class="note">Khi đủ 100%, game sẽ báo bạn đã sẵn sàng. Bài test có 15 câu ở trình độ ${r.next}, đúng từ 11 câu là lên cấp. Lên cấp mở khoá cây trồng, vật nuôi, đồ và kiểu tóc của trình độ mới, kèm ngọc, kim cương và chìa khoá rương.</p>
+    <li class="${r.ans >= r.need ? 'ok' : ''}"><i></i><span>Trả lời câu hỏi khi chăm nông trại, học, mua đồ</span><em>${r.ans}/${r.need}</em></li></ul>
+    <p class="note">Khi đủ 100%, game sẽ báo bạn đã sẵn sàng. Bài test có ${lvRule().n} câu ở trình độ ${r.next}, đúng từ ${lvRule().pass} câu là lên cấp. Trình độ càng cao càng cần thuộc nhiều từ, luyện nhiều câu hơn và bài test khó hơn. Lên cấp mở khoá cây trồng, vật nuôi, đồ và kiểu tóc của trình độ mới, kèm ngọc, kim cương và chìa khoá rương.</p>
     <div class="row-btns"><button class="btn gold" data-act="lv-test" ${!isReady() || cd ? 'disabled' : ''}>${cd ? `Thi lại sau ${Math.ceil(cd / 60000)} phút` : isReady() ? `Thi lên ${r.next}` : `Chưa sẵn sàng (${Math.round(r.pct * 100)}%)`}</button><button class="btn ghost" data-act="t-place">Kiểm tra xếp lớp</button><button class="btn ghost" data-act="study">Học từ vựng</button></div>`}
     ${hist.length ? `<h3 class="ph3">Các bài test gần đây</h3><ul class="hist">${hist.map(h => `<li><span>${h.date}</span><b>${esc(h.title)}</b><em>${h.pct}%</em></li>`).join('')}</ul>` : ''}`, {label: 'Trình độ tiếng Anh', wide: true});
 }
@@ -3724,7 +3800,13 @@ const sessFrom = (j, username) => ({access_token: j.access_token, refresh_token:
 async function sbToken() {
   const s = SB.sess; if (!s) throw {status: 401, code: 'no_session'};
   if (s.expires_at - 90 > Date.now() / 1000) return s.access_token;
-  const j = await sbRaw('/auth/v1/token?grant_type=refresh_token', {method: 'POST', body: JSON.stringify({refresh_token: s.refresh_token})});
+  let j;
+  try { j = await sbRaw('/auth/v1/token?grant_type=refresh_token', {method: 'POST', body: JSON.stringify({refresh_token: s.refresh_token})}); }
+  catch (e) {
+    // the session was revoked or used on another device: stop retrying, keep playing locally and ask to log in again
+    if (e && (e.status === 400 || e.status === 401)) { sbSetSess(null); if (Store.mode === 'supa') { Store.mode = 'local'; setTimeout(() => toast('Phiên đăng nhập đã hết. Vào Cài đặt để đăng nhập lại, tiến độ vẫn được giữ trên máy.', 6000), 300); } throw {status: 401, code: 'session_expired'}; }
+    throw e;
+  }
   sbSetSess(sessFrom(j, s.username)); return SB.sess.access_token;
 }
 const sbApi = async (path, opts = {}) => sbRaw(path, opts, await sbToken());
@@ -4249,7 +4331,7 @@ function recordResult() {
     const weekly = daysSince(S.weekTest) >= 7; R.official = weekly;
     if (weekly) { S.weekTest = today(); giveGems(3, 1, 'kiểm tra tuần'); giveKey(1, 'kiểm tra tuần'); if (promoteTo(R.level, 'kiểm tra xếp lớp')) R.promoted = R.level; }
   }
-  if (R.kind === 'levelup') { R.passed = R.raw >= 11; if (R.passed) { promoteTo(EX.test.target, `lên trình độ ${EX.test.target}`); R.promoted = EX.test.target; } else S.lvFailAt = Date.now(); }
+  if (R.kind === 'levelup') { R.passed = R.raw >= (EX.test.pass || 11); if (R.passed) { promoteTo(EX.test.target, `lên trình độ ${EX.test.target}`); R.promoted = EX.test.target; } else S.lvFailAt = Date.now(); }
   if (R.kind === 'auto' && R.pct >= 70) { const hours = R.pct >= 90 ? 48 : 24; S.auto = {until: Date.now() + hours * 3600e3, log: {}, hours}; R.autoHours = hours; }
   if (EX.onFinish) try { EX.onFinish(R); } catch (e) {}
   addXP(Math.round((R.pct || 60) / 5)); renderHUD(); markDirty(); saveNow(true);
@@ -4300,7 +4382,7 @@ function showReport() {
   if (R.kind === 'ielts') head = `<div class="score big"><small>Band tổng (ước tính)</small><b>${R.overall != null ? R.overall.toFixed(1) : '…'}</b>${R.complete ? '' : '<span class="note">Chỉ tính các kỹ năng đã làm</span>'}</div>`;
   if (R.kind === 'toeic') head = `<div class="score big"><small>Điểm TOEIC (ước tính)</small><b>${R.overall}</b><span class="note">/ ${Object.keys(R.sections).length * 495}</span></div>`;
   if (R.kind === 'placement') head = `<div class="score big"><small>Trình độ đánh giá được</small><b>${R.level}</b><span class="note">${R.raw}/${R.total} câu đúng (${R.pct}%)</span></div>`;
-  if (R.kind === 'levelup') head = `<div class="score big ${R.raw >= 11 ? 'pass' : 'fail'}"><small>Bài test lên ${esc(EX.test.target)}</small><b>${R.raw}/${R.total}</b><span class="note">${R.pct}% · cần 11/15 câu</span></div>`;
+  if (R.kind === 'levelup') head = `<div class="score big ${R.raw >= (EX.test.pass || 11) ? 'pass' : 'fail'}"><small>Bài test lên ${esc(EX.test.target)}</small><b>${R.raw}/${R.total}</b><span class="note">${R.pct}% · cần ${EX.test.pass || 11}/${R.total} câu</span></div>`;
   if (R.kind === 'auto') head = `<div class="score big ${R.pct >= 70 ? 'pass' : 'fail'}"><small>Điểm bài test Auto Farm</small><b>${R.raw}/${R.total}</b><span class="note">${R.pct}% · cần 70% để mở</span></div>`;
   const cards = Object.entries(R.sections).map(([id, r]) => {
     const sec = T.sections.find(s => s.id === id);
@@ -4314,7 +4396,7 @@ function showReport() {
   }).join('');
   let tail = '';
   if (R.kind === 'placement') tail = `<div class="lvbars">${LEVELS.map(L => { const [a, b] = R.byLevel[L] || [0, 0]; return `<div><span>${L}</span><i style="--w:${b ? a / b * 100 : 0}%"></i><small>${a}/${b}</small></div>`; }).join('')}</div>` + (R.official === undefined ? '' : R.official ? (R.promoted ? `<div class="fb good"><strong>Lên trình độ!</strong> Hệ thống đã tự nâng bạn lên <b>${R.promoted}</b>. Thưởng 3 ngọc lục bảo và 1 kim cương.</div>` : `<div class="fb good"><strong>Đã ghi nhận bài kiểm tra tuần.</strong> Trình độ đánh giá: ${R.level}. ${LEVELS.indexOf(R.level) < LEVELS.indexOf(S.study.level) ? `Bạn đang học ${S.study.level}, có thể hạ xuống ${R.level} trong mục Học tập nếu thấy khó.` : 'Giữ trình độ hiện tại.'}</div>`) : `<div class="fb miss"><strong>Bài luyện tập.</strong> Bài kiểm tra tuần chính thức (tự nâng trình độ, có thưởng) mở lại sau ${Math.ceil(7 - daysSince(S.weekTest))} ngày.</div>`);
-  if (R.kind === 'levelup') tail = R.raw >= 11 ? `<div class="fb good"><strong>Chúc mừng, bạn đã lên ${esc(EX.test.target)}!</strong> Nhân vật đã lên cấp. Đồ, kiểu tóc, cây trồng và vật nuôi của trình độ mới đã mở khoá.</div>` : `<div class="fb miss"><strong>Chưa đạt.</strong> Ôn lại từ vựng ${esc(EX.test.target)} trong mục Học tập, sau 20 phút có thể thi lại.</div>`;
+  if (R.kind === 'levelup') tail = R.raw >= (EX.test.pass || 11) ? `<div class="fb good"><strong>Chúc mừng, bạn đã lên ${esc(EX.test.target)}!</strong> Nhân vật đã lên cấp. Đồ, kiểu tóc, cây trồng và vật nuôi của trình độ mới đã mở khoá.</div>` : `<div class="fb miss"><strong>Chưa đạt.</strong> Ôn lại từ vựng ${esc(EX.test.target)} trong mục Học tập, sau 20 phút có thể thi lại.</div>`;
   if (R.kind === 'auto') tail = R.pct >= 70 ? `<div class="fb good"><strong>Đã mở Auto Farm ${R.autoHours || (R.pct >= 90 ? 48 : 24)} giờ!</strong> Nông trại sẽ tự tưới, nhổ cỏ, thu hoạch, gieo lại hạt và chăm vật nuôi, kể cả khi bạn tắt game.</div>` : `<div class="fb miss"><strong>Chưa đạt.</strong> Cần đúng ít nhất 11/15 câu. Ôn lại từ vựng trong mục Học tập rồi thử lại.</div>`;
   if (R.promoted && R.kind === 'ielts') tail += `<div class="fb good"><strong>Lên trình độ!</strong> Band ${R.overall} tương đương ${R.promoted}, hệ thống đã nâng trình độ học của bạn.</div>`;
   openModal(`<h2 class="ptitle">Kết quả${R.timeout ? ' (hết giờ)' : ''}</h2><p class="psub">${esc(T.title)}</p>${head}<div class="rcards">${cards}</div>${tail}<div class="row-btns end"><button class="btn ghost" data-act="tests">Trung tâm thi</button><button class="btn" data-act="close">Xong</button></div>`, {label: 'Kết quả', wide: true});
@@ -4657,8 +4739,8 @@ function drawPet(id, lv, x, y, tnow, moving) {
 
 /* ===================== MINIMAP: where you are and where the NPCs are; tap to open a larger map with a list ===================== */
 const MM_TER = {g: '#8FD16A', d: '#EBD3A0', c: '#F3E7D2', w: '#5AB7F0', s: '#F3E2A8', D: '#B98A5C'};
-const ROLE_VI = {shop: 'Quần áo', market: 'Chợ', seeds: 'Hạt giống', forge: 'Lò rèn', teacher: 'Trường học', ielts: 'IELTS', salon: 'Tiệm tóc', spa: 'Spa', chat: 'Trò chuyện', home: 'Nhà', lottery: 'Vé số'};
-const ROLE_COL = {shop: '#FF6FB5', market: '#FF8A3D', seeds: '#3DBE6C', forge: '#9B5CFF', teacher: '#4D8BFF', ielts: '#FFB020', salon: '#E25BD8', spa: '#2DD4BF', chat: '#8E8AA8', lottery: '#FF3552'};
+const ROLE_VI = {shop: 'Quần áo', market: 'Chợ', seeds: 'Hạt giống', forge: 'Lò rèn', teacher: 'Trường học', ielts: 'IELTS', salon: 'Tiệm tóc', spa: 'Spa', chat: 'Trò chuyện', home: 'Nhà', lottery: 'Vé số', bait: 'Mồi câu', post: 'Bưu điện'};
+const ROLE_COL = {shop: '#FF6FB5', market: '#FF8A3D', seeds: '#3DBE6C', forge: '#9B5CFF', teacher: '#4D8BFF', ielts: '#FFB020', salon: '#E25BD8', spa: '#2DD4BF', chat: '#8E8AA8', lottery: '#FF3552', bait: '#36A8AE', post: '#F29A1F'};
 const MM_CACHE = {};
 // static layer of a map (terrain, buildings, trees, exits), drawn once per map at `k` px per tile
 function mmBase(m, k) {
@@ -4743,9 +4825,9 @@ function renderHint() {
     else if (S.animals.some(a => a && a.st === 'hungry')) h = 'Vật nuôi đang đói. Vào chuồng, chạm vào con vật để cho ăn.';
     else if (sts.includes('E')) h = Object.values(S.seeds).some(n => n > 0) ? 'Còn ô đất trống. Chạm vào để gieo hạt.' : 'Hết hạt giống. Sang <b>Làng</b> mua ở cửa hàng SEEDS.';
     else h = 'Cây đang lớn, vài giờ nữa mới chín. Chạm vào ô ruộng để bón phân, hoặc mở <b>Bản đồ</b> đi dạo.';
-  } else if (S.map === 'village') h = 'Chú Ba (MARKET) nhận đơn hàng, Cô Mai (CLOTHES SHOP) bán quần áo, Ông Tư (SEEDS) bán hạt, Cô Lan (SCHOOL) dạy học, Chị Ngân (HAIR SALON) làm tóc, Cô Tám bán vé số trước POST. Bảng tin ở quảng trường.';
+  } else if (S.map === 'village') h = 'Chú Ba (MARKET) nhận đơn hàng, Cô Mai (CLOTHES SHOP) bán quần áo, Ông Tư (SEEDS) bán hạt, Cô Lan (SCHOOL) dạy học, Chị Ngân (HAIR SALON) làm tóc, Cô Tám bán vé số, Chú Bảy ở POST có thư tiếng Anh mỗi ngày. Bảng tin ở quảng trường.';
   else if (S.map === 'park') h = 'Gặp Chị Hà ở bảng IELTS CHALLENGE để làm thử thách IELTS hằng ngày. Chị Thu ở BEAUTY SPA đổi dáng mặt, đôi mắt, nét duyên.';
-  else h = 'Chạm vào mặt nước để thả câu. Ông Sáu ở cầu tàu cũng thích nói chuyện.';
+  else h = `Chạm vào mặt nước để thả câu (còn ${S.bait || 0} mồi). Mua mồi ở FISH SHOP, gặp Ông Sáu.`;
   if (h !== hintKey) { hintKey = h; const el = $('#hint'); el.innerHTML = h; el.classList.remove('gone'); clearTimeout(hintTimer); hintTimer = setTimeout(() => el.classList.add('gone'), 5000); }
 }
 function showBanner(en, vi) { const b = $('#banner'); b.innerHTML = `<b>${esc(en)}</b><span>${esc(vi)}</span>`; b.classList.remove('show'); void b.offsetWidth; b.classList.add('show'); }
@@ -4815,6 +4897,10 @@ document.addEventListener('click', e => {
     case 'farmshop': return openFarmShop(d.t);
     case 'minimap': return openMinimap();
     case 'lotto-buy': return lottoBuy();
+    case 'bait-buy': return baitBuy(+d.n);
+    case 'bait-go': return baitGo();
+    case 'post-pick': return postPick(+d.q, +d.v);
+    case 'post-submit': return postSubmit();
     case 'lotto-scratch': return lottoScratch(+d.i);
     case 'lotto-all': return lottoAll();
     case 'mm-go': return mmGo(d.id);
@@ -4952,6 +5038,7 @@ function normalize(d) {
   if (typeof s.last !== 'number') s.last = Date.now();
   // English level replaces the XP level; hairstyles become salon items (keep whatever the player already wears)
   if (!s.cefr) { const t = s.created ? tierOf(s.lvl || 1) : 0, st = Math.max(0, LEVELS.indexOf(s.study.level)); s.cefr = LEVELS[Math.min(t, st)]; }
+  if (typeof s.bait !== 'number') s.bait = 5;   // every account gets 5 free baits once
   s.hair = Array.isArray(s.hair) ? s.hair : []; s.spa = Array.isArray(s.spa) ? s.spa : [];
   for (const h of HAIR_ITEMS) if (((h.f && s.look.hairF === h.f) || (h.b && s.look.hairB === h.b) || (h.c && s.look.hairC === h.c)) && !s.hair.includes(h.id)) s.hair.push(h.id);
   s.lvl = TIER_MAX[Math.max(0, LEVELS.indexOf(s.cefr))];

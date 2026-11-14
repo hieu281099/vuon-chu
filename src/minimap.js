@@ -1,7 +1,7 @@
 /* ===================== MINIMAP: where you are and where the NPCs are; tap to open a larger map with a list ===================== */
 const MM_TER = {g: '#8FD16A', d: '#EBD3A0', c: '#F3E7D2', w: '#5AB7F0', s: '#F3E2A8', D: '#B98A5C'};
-const ROLE_VI = {shop: 'Quần áo', market: 'Chợ', seeds: 'Hạt giống', forge: 'Lò rèn', teacher: 'Trường học', ielts: 'IELTS', salon: 'Tiệm tóc', spa: 'Spa', chat: 'Trò chuyện', home: 'Nhà', lottery: 'Vé số'};
-const ROLE_COL = {shop: '#FF6FB5', market: '#FF8A3D', seeds: '#3DBE6C', forge: '#9B5CFF', teacher: '#4D8BFF', ielts: '#FFB020', salon: '#E25BD8', spa: '#2DD4BF', chat: '#8E8AA8', lottery: '#FF3552'};
+const ROLE_VI = {shop: 'Quần áo', market: 'Chợ', seeds: 'Hạt giống', forge: 'Lò rèn', teacher: 'Trường học', ielts: 'IELTS', salon: 'Tiệm tóc', spa: 'Spa', chat: 'Trò chuyện', home: 'Nhà', lottery: 'Vé số', bait: 'Mồi câu', post: 'Bưu điện'};
+const ROLE_COL = {shop: '#FF6FB5', market: '#FF8A3D', seeds: '#3DBE6C', forge: '#9B5CFF', teacher: '#4D8BFF', ielts: '#FFB020', salon: '#E25BD8', spa: '#2DD4BF', chat: '#8E8AA8', lottery: '#FF3552', bait: '#36A8AE', post: '#F29A1F'};
 const MM_CACHE = {};
 // static layer of a map (terrain, buildings, trees, exits), drawn once per map at `k` px per tile
 function mmBase(m, k) {

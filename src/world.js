@@ -63,7 +63,7 @@ function buildMaps() {
   prop(v, 'stall_a', 12, 7); prop(v, 'stall_b', 22, 7); m_sign(v, 17, 6, 'MARKET', 'market');
   house(v, 'school', 11, 19, 9, 5, {sign: 'SCHOOL', role: 'teacher'});
   house(v, 'forge', 30, 15, 5, 5, {sign: 'UPGRADE', role: 'forge'});
-  house(v, 'post', 23, 18, 5, 4, {sign: 'POST'});
+  house(v, 'post', 23, 18, 5, 4, {sign: 'POST', role: 'post'});
   house(v, 'salon', 2, 18, 6, 4, {sign: 'HAIR SALON', role: 'salon'});
   prop(v, 'board', 12, 11); prop(v, 'well', 23, 14);
   for (const [x, y] of [[10, 9], [25, 9], [10, 17], [25, 17]]) prop(v, 'lamp', x, y);
@@ -102,10 +102,12 @@ function buildMaps() {
   fill(r, 'd', 0, 9, 15, 2); fill(r, 'd', 14, 9, 2, 3);
   for (let y = 13; y < 21; y++) for (let x = 14; x < 16; x++) { r.ter[y * r.w + x] = 'D'; r.block[y * r.w + x] = 0; }
   prop(r, 'boat', 19, 16, false); prop(r, 'boat', 9, 18, false);
-  house(r, 'house2', 22, 4, 5, 5, {sign: 'FISH SHOP'});
+  house(r, 'house2', 22, 4, 5, 5, {sign: 'FISH SHOP', role: 'bait'});
   for (const [x, y, k] of [[4, 4, 'palm'], [8, 6, 'round'], [29, 4, 'palm'], [31, 8, 'palm'], [12, 3, 'round'], [18, 4, 'palm']]) tree(r, x, y, k);
   prop(r, 'reeds', 3, 12, false); prop(r, 'reeds', 26, 12, false); prop(r, 'reeds', 30, 12, false); prop(r, 'rock', 7, 12);
   r.exits.push({x: 0, y: 9, w: 1, h: 2, to: 'village', tx: 34, ty: 12});
+  r.objs = r.objs.filter(o => !(o.t === 'tree' && (o.y >= 11 || ['w', 's', 'D'].includes(T_(r, o.x, o.y)))));
+  prop(r, 'reeds', 1, 12, false); prop(r, 'rock', 32, 12);
   r.spawn = [2, 9];
   M.river = r;
   return M;
