@@ -77,11 +77,11 @@ const FASHION = [
 ];
 const FASH = Object.fromEntries(FASHION.map(f => [f.id, f]));
 const RARITY = [{vi:'Thường', c:'#8E8AA8'}, {vi:'Hiếm', c:'#4D8BFF'}, {vi:'Sử thi', c:'#B05CFF'}, {vi:'Huyền thoại', c:'#FFB020'}, {vi:'Thần thoại', c:'#FF3552'}];
-const SLOTS = [['top','Áo'], ['bottom','Quần váy'], ['hat','Mũ'], ['face','Kính'], ['back','Lưng'], ['hand','Cầm tay'], ['aura','Hào quang'], ['pet','Thú cưng']];
-const UPGRADABLE = s => ['hat','face','back','hand','aura','pet'].includes(s);
+const SLOTS = [['top','Áo'], ['bottom','Quần váy'], ['shoes','Giày'], ['hat','Mũ'], ['face','Kính'], ['mouth','Miệng'], ['deco','Hình dán'], ['ear','Hoa tai'], ['neck','Vòng cổ'], ['back','Lưng'], ['bag','Túi'], ['hand','Cầm tay'], ['aura','Hào quang'], ['pet','Thú cưng']];
+const UPGRADABLE = s => ['hat','face','back','hand','aura','pet','mouth','deco','ear','neck','shoes','bag'].includes(s);
 const DEFAULT_LOOK = {skin:0, hairF:'regular', hairB:null, hairC:'#1F1B24', face:'smile', beard:null,
   top:'top_tee', topC:'#FF3552', bottom:'bot_pants', bottomC:'#545AF2', shoeC:'#1F1B24',
-  hat:null, face2:null, back:null, hand:null, aura:null, pet:null, lv:{}};
+  hat:null, face2:null, back:null, hand:null, aura:null, pet:null, mouth:null, deco:null, ear:null, neck:null, shoes:null, bag:null, lv:{}};
 
 /* ---------- SVG parts ---------- */
 const tpl = (s, c) => s.split('{C}').join(c);
@@ -161,6 +161,7 @@ function legSVG(L, x, dy, skin) {
   if (pants === 'pants' && L.bottom === 'bot_cargo') s += `<rect x="${x + 2}" y="${y + 5}" width="9" height="7" rx="1.5" fill="${shade(L.bottomC, -0.18)}"/>`;
   if (pants === 'aodai') s += `<rect x="${x}" y="${y}" width="13" height="15" fill="#FFFFFF"/>`;
   if (pants === 'shorts') s += `<path d="M${x} ${y + 6.5}C${x} ${y + 2.9} ${x + 2.9} ${y} ${x + 6.5} ${y}S${x + 13} ${y + 2.9} ${x + 13} ${y + 6.5}V${y + 11}H${x}Z" fill="${L.bottomC}"/>`;
+  const sh2 = L.shoes && FASH[L.shoes]; if (sh2) { const lv2 = (L.lv || {})[L.shoes] || 0; return s + glowWrap(lv2, shoeSVG(L.shoes, sh2.col, lv2, x, y)); }
   s += `<rect x="${x}" y="${y + 15}" width="13" height="3" fill="#FFFFFF"/><path d="M${x} ${y + 18}H${x + 13}V${y + 21.5}C${x + 13} ${y + 25.1} ${x + 10.1} ${y + 28} ${x + 6.5} ${y + 28}S${x} ${y + 25.1} ${x} ${y + 21.5}Z" fill="${sh}"/>`;
   return s;
 }
@@ -203,15 +204,24 @@ function chibiInner(L, f, dir) {
   const tool = f.tool ? handItem : '';
   s += armSVG(L, 44, f.arms ? f.arms[0] : 0, skin, back ? tool : '');
   s += `<path d="M55 113H90V132C90 135.3 87.3 138 84 138H61C57.7 138 55 135.3 55 132V113Z" fill="${skin.b}"/>` + topSVG(L, f) + skirtSVG(L);
+  const acc = (k, fn) => L[k] && FASH[L[k]] ? glowWrap(lv[L[k]], fn(L[k], FASH[L[k]].col, lv[L[k]] || 0)) : '';
+  if (!back) {
+    if (L.bag && HANDBAGS.includes(L.bag)) s += `<g transform="rotate(${f.arms ? f.arms[0] : 0} 50 116)">${acc('bag', bagSVG)}</g>`;
+  }
   if (L.back && !back) s += backStraps(L.back, FASH[L.back].col);
   s += armSVG(L, 89, f.arms ? f.arms[1] : 0, skin, back ? '' : tool);
+  if (!back && L.bag && !HANDBAGS.includes(L.bag)) s += acc('bag', bagSVG);
   s += headSVG(L, skin, back);
   if (!back) {
+    s += `<g transform="translate(72.5 118) scale(1.25) translate(-72.5 -118)">${acc('neck', neckSVG)}</g>`;
     s += NEMO.faces[face] || NEMO.faces.smile;
+    s += acc('deco', decoSVG);
     if (L.beard) s += tpl(NEMO.beards[L.beard], L.hairC);
     if (L.face2) s += glowWrap(lv[L.face2], faceItemSVG(L.face2, FASH[L.face2].col, lv[L.face2] || 0));
+    s += acc('mouth', mouthSVG);
   }
   if (L.hairF && L.hairF !== 'none') s += tpl(NEMO.hairF[L.hairF], L.hairC);
+  if (!back) s += acc('ear', earSVG);
   if (L.hairB && back) s += tpl(NEMO.hairB[L.hairB], L.hairC);
   if (L.hat) s += glowWrap(lv[L.hat], hatSVG(L.hat, FASH[L.hat].col, lv[L.hat] || 0));
   // held item on top of everything, following the arm's swing and leaning away from the head

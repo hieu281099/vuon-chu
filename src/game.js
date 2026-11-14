@@ -489,13 +489,15 @@ function seedsHTML() {
 }
 function buySeed(id) { const c = CROP[id], price = c.cost * 5; if (!c || c.lvl > S.lvl || S.coins < price) return; S.coins -= price; S.seeds[id] = (S.seeds[id] || 0) + 5; sfx('coin'); speak(`${c.en} seeds`, true); toast(`Đã mua 5 hạt <b>${c.en}</b>.`); refreshNpc(); renderHUD(); markDirty(); }
 let SHOPTAB = 'top';
+// previews of things worn on the face hide wings and held items so the item itself stays visible
+const FACE_SLOTS = ['hat', 'face', 'mouth', 'deco', 'ear', 'neck'];
 const priceTag = f => f.chest ? 'Chỉ có trong rương' : f.price === 0 ? 'Miễn phí' : (f.cur === 'gem' ? gemIcon('di') + f.price : coinIcon + f.price);
 const canAfford = f => f.chest ? false : f.cur === 'gem' ? S.di >= f.price : S.coins >= f.price;
 function slotPatch(f) { return f.slot === 'face' ? {face2: f.id} : {[f.slot]: f.id}; }
 function itemCard(f, L, act, extra = '') {
   const own = S.owned.includes(f.id), lock = (f.lvl || 1) > S.lvl, lv = (S.look.lv || {})[f.id] || 0;
-  const tryL = Object.assign({}, L, slotPatch(f)); if (lv) tryL.lv = Object.assign({}, L.lv, {[f.id]: lv});
-  const img = f.slot === 'pet' ? `<img class="pv pet" src="${svgURL(petSVG(f.id, lv, 0))}" alt="">` : f.slot === 'aura' ? `<span class="pv aura" style="--c:${f.col}"></span>` : `<img class="pv" src="${portraitSVG(tryL, {full: ['back', 'hand'].includes(f.slot), hand: true})}" alt="">`;
+  const tryL = Object.assign({}, L, slotPatch(f)); if (FACE_SLOTS.includes(f.slot)) Object.assign(tryL, {back: null, hand: null}); if (lv) tryL.lv = Object.assign({}, L.lv, {[f.id]: lv});
+  const img = f.slot === 'pet' ? `<img class="pv pet" src="${svgURL(petSVG(f.id, lv, 0))}" alt="">` : f.slot === 'aura' ? `<span class="pv aura" style="--c:${f.col}"></span>` : `<img class="pv" src="${portraitSVG(tryL, {full: ['back', 'hand', 'shoes', 'bag', 'neck'].includes(f.slot), hand: true})}" alt="">`;
   return `<button class="card r${f.rar || 0}" data-act="${act}" data-id="${f.id}" ${extra}><span class="rar">${RARITY[f.rar || 0].vi}</span>${lv ? `<span class="plus t${lv}">+${lv}</span>` : ''}${img}<b>${act === 'shop-pick' && !own ? '???' : esc(f.en)}</b><small>${esc(f.vi)}</small>${act === 'shop-pick' ? `<span class="price">${own ? 'Đã có' : lock ? needTag(f.lvl) : priceTag(f)}</span>` : ''}</button>`;
 }
 function shopHTML() {
@@ -505,7 +507,7 @@ function shopHTML() {
     <div class="cards">${list.map(f => itemCard(f, L, 'shop-pick', S.owned.includes(f.id) || (f.lvl || 1) > S.lvl || !canAfford(f) ? 'disabled' : '')).join('')}</div>`;
 }
 function buyHTML() {
-  const f = FASH[BUY.id], L = fullLook(S.look), tryL = Object.assign({}, L, slotPatch(f));
+  const f = FASH[BUY.id], L = fullLook(S.look), tryL = Object.assign({}, L, slotPatch(f)); if (FACE_SLOTS.includes(f.slot)) Object.assign(tryL, {back: null, hand: null});
   const img = f.slot === 'pet' ? svgURL(petSVG(f.id, 0, 0)) : portraitSVG(tryL, {full: true, hand: true});
   return `<div class="buyq"><img class="pv big" src="${img}" alt=""><div><p class="q-ask">Cô Mai hỏi: “What is this in English?” ${sayBtn('What is this in English?')}</p><div class="q-word vi">${esc(f.vi)}</div><span class="price">${priceTag(f)}</span></div></div>
     <div class="opts">${BUY.opts.map((o, i) => `<button class="opt ${BUY.done ? (o === f.en ? 'right' : i === BUY.pick ? 'wrong' : '') : ''}" data-buy="${i}" ${BUY.done ? 'disabled' : ''}><kbd>${i + 1}</kbd><span>${esc(o)}</span></button>`).join('')}</div>

@@ -47,7 +47,7 @@ function chestHTML() {
     <p class="note">Bảo hiểm: mở đủ ${PITY} lần chưa ra đồ Thần thoại thì lần tiếp theo chắc chắn ra. Đã mở ${S.pity || 0}/${PITY}. Bộ sưu tập Thần thoại: ${have}/${total} (gồm cả kiểu tóc).</p>
     <div class="row-btns"><button class="btn gold" data-act="chest-open" data-k="key" ${(S.keys || 0) < 1 ? 'disabled' : ''}>Dùng 1 chìa khoá (có ${S.keys || 0})</button><button class="btn" data-act="chest-open" data-k="di" ${S.di < CHEST_PRICE ? 'disabled' : ''}>Mở bằng ${gemIcon('di')}${CHEST_PRICE}</button></div>
     <p class="note">Kiếm chìa khoá: bài kiểm tra tuần chính thức, hoàn thành chặng lộ trình IELTS, câu được cá ngừ quý, mỗi 5 cấp.</p></div></div>
-    <div class="mythrow">${myth.map(f => `<span class="${S.owned.includes(f.id) ? 'got' : ''}" title="${esc(f.vi)}">${f.slot === 'pet' ? `<img src="${svgURL(petSVG(f.id, 0, 0))}" alt="">` : `<img src="${portraitSVG(Object.assign({}, fullLook(S.look), slotPatch(f)), {full: ['back', 'hand'].includes(f.slot), hand: true})}" alt="">`}<small>${esc(f.vi)}</small></span>`).join('')}</div>`;
+    <div class="mythrow">${myth.map(f => `<span class="${S.owned.includes(f.id) ? 'got' : ''}" title="${esc(f.vi)}">${f.slot === 'pet' ? `<img src="${svgURL(petSVG(f.id, 0, 0))}" alt="">` : `<img src="${portraitSVG(Object.assign({}, fullLook(S.look), slotPatch(f)), {full: ['back', 'hand', 'shoes', 'bag', 'neck'].includes(f.slot), hand: true})}" alt="">`}<small>${esc(f.vi)}</small></span>`).join('')}</div>`;
 }
 function rollChest() {
   const notOwned = l => l.filter(f => !S.owned.includes(f.id));
