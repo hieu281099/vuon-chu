@@ -113,10 +113,10 @@ function extraFace(id, c, lv) {
   const t = lv ? tierFill(lv, c) : c;
   switch (id) {
     case 'face_mask': return `<path d="M44 92Q72.5 84 101 92V104Q72.5 118 44 104Z" fill="${t}"/><path d="M50 98H95M52 104H93" stroke="#E2E6EF" stroke-width="1.5"/><path d="M44 94L30 88M101 94L115 88" stroke="#E2E6EF" stroke-width="2"/>`;
-    case 'face_star': { const st = x => `<path transform="translate(${x} 82)" d="M0 -14L4 -4L15 -4L6 3L9 14L0 7L-9 14L-6 3L-15 -4L-4 -4Z" fill="${t}"/>`; return `${st(50)}${st(95)}<path d="M64 80H81" stroke="${shade(c, -0.3)}" stroke-width="3"/>`; }
-    case 'face_aviator': return `<path d="M34 74H66Q66 94 52 94Q36 94 34 74Z" fill="${t}" opacity=".9"/><path d="M79 74H111Q109 94 93 94Q79 94 79 74Z" fill="${t}" opacity=".9"/><path d="M30 74H115" stroke="#C9A24A" stroke-width="3"/><path d="M40 80L50 78" stroke="#FFFFFF" stroke-width="2.5" opacity=".6"/>`;
+    case 'face_star': { const st = x => `<circle cx="${x}" cy="82" r="9.5" fill="${t}"/><path transform="translate(${x} 82) scale(1.08)" d="M0 -14L4 -4L15 -4L6 3L9 14L0 7L-9 14L-6 3L-15 -4L-4 -4Z" fill="${t}"/><circle cx="${x}" cy="82.5" r="7" fill="#1F1B24" opacity=".35"/>`; return `${st(58)}${st(87)}<path d="M70 80H75" stroke="${shade(c, -0.3)}" stroke-width="3"/><path d="M45.5 79L31 75M99.5 79L114 75" stroke="${shade(c, -0.3)}" stroke-width="2.5" stroke-linecap="round"/><path d="M53 78.5Q55 76.5 57.5 76.5M82 78.5Q84 76.5 86.5 76.5" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" opacity=".8" fill="none"/>`; }
+    case 'face_aviator': return `<path d="M45 73H71Q70.5 93 58 93Q45.5 93 45 73Z" fill="${t}" opacity=".9"/><path d="M74 73H100Q99.5 93 87 93Q74.5 93 74 73Z" fill="${t}" opacity=".9"/><path d="M31 73H114" stroke="#C9A24A" stroke-width="3"/><path d="M50 78L58 76M79 78L87 76" stroke="#FFFFFF" stroke-width="2.5" opacity=".6"/>`;
     case 'face_visor': return `<rect x="28" y="70" width="89" height="24" rx="12" fill="${t}" opacity=".85"/><rect x="34" y="74" width="40" height="5" rx="2.5" fill="#FFFFFF" opacity=".5"/>`;
-    case 'face_monocle': return `<circle cx="95" cy="82" r="13" fill="#FFFFFF" fill-opacity=".25" stroke="${t}" stroke-width="3.5"/><path d="M106 90Q114 110 104 124" stroke="${t}" stroke-width="1.5" fill="none"/>`;
+    case 'face_monocle': return `<circle cx="87" cy="82" r="12.5" fill="#FFFFFF" fill-opacity=".25" stroke="${t}" stroke-width="3.5"/><path d="M80 76.5Q83 73.5 87 73.5" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity=".75" fill="none"/><path d="M98 89Q110 108 102 124" stroke="${t}" stroke-width="1.5" fill="none"/>`;
   }
   return extraFace2(id, c, lv);
 }

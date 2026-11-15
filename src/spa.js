@@ -107,3 +107,5 @@ SPA_ITEMS.push(
 );
 SPA_ITEMS.sort((a, b) => SPA_TABS.findIndex(t => t[0] === a.k) - SPA_TABS.findIndex(t => t[0] === b.k) || a.rar - b.rar);
 for (const x of SPA_ITEMS) SPA[x.id] = x;
+
+grindable(SPA_ITEMS);

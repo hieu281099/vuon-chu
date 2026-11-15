@@ -103,9 +103,9 @@ function extraFace2(id, c, lv) {
   const t = lv ? tierFill(lv, c) : c;
   switch (id) {
     case 'face_mustache': return `<path d="M50 100Q60 92 72.5 98Q85 92 95 100Q86 106 72.5 101Q59 106 50 100Z" fill="${t}"/>`;
-    case 'face_eyepatch': return `<path d="M28 66L118 92" stroke="${t}" stroke-width="3"/><ellipse cx="95" cy="83" rx="13" ry="11" fill="${t}"/>`;
-    case 'face_goggles': return `<path d="M24 82H121" stroke="${shade(c, -0.3)}" stroke-width="5"/><rect x="34" y="70" width="32" height="24" rx="12" fill="${t}" opacity=".85" stroke="#1F1B24" stroke-width="2.5"/><rect x="79" y="70" width="32" height="24" rx="12" fill="${t}" opacity=".85" stroke="#1F1B24" stroke-width="2.5"/><path d="M40 76L48 74M85 76L93 74" stroke="#FFFFFF" stroke-width="2.5" opacity=".7"/>`;
-    case 'face_butterfly': return `<path d="M72.5 82Q60 60 34 66Q26 84 40 94Q58 98 72.5 86Q87 98 105 94Q119 84 111 66Q85 60 72.5 82Z" fill="${t}"/><ellipse cx="52" cy="80" rx="8" ry="6" fill="#1F1B24" opacity=".75"/><ellipse cx="93" cy="80" rx="8" ry="6" fill="#1F1B24" opacity=".75"/>${starDots([[36, 70, 3], [109, 70, 3]], '#FFC83D')}`;
+    case 'face_eyepatch': return `<path d="M28 68L118 90" stroke="${t}" stroke-width="3"/><ellipse cx="87" cy="82" rx="12" ry="11" fill="${t}"/>`;
+    case 'face_goggles': return `<path d="M24 82H121" stroke="${shade(c, -0.3)}" stroke-width="5"/><rect x="44.5" y="70.5" width="27" height="23" rx="11" fill="${t}" opacity=".85" stroke="#1F1B24" stroke-width="2.5"/><rect x="73.5" y="70.5" width="27" height="23" rx="11" fill="${t}" opacity=".85" stroke="#1F1B24" stroke-width="2.5"/><path d="M50 76L56 74.5M79 76L85 74.5" stroke="#FFFFFF" stroke-width="2.5" opacity=".7"/>`;
+    case 'face_butterfly': return `<path d="M72.5 82Q60 60 34 66Q26 84 40 94Q58 98 72.5 86Q87 98 105 94Q119 84 111 66Q85 60 72.5 82Z" fill="${t}"/><ellipse cx="58" cy="81" rx="8" ry="6.5" fill="#1F1B24" opacity=".75"/><ellipse cx="87" cy="81" rx="8" ry="6.5" fill="#1F1B24" opacity=".75"/>${starDots([[36, 70, 3], [109, 70, 3]], '#FFC83D')}`;
     case 'face_cyber': return `<path d="M26 72H119L113 92H32Z" fill="${t}" opacity=".8"/><path d="M32 80H113" stroke="#FFFFFF" stroke-width="2" opacity=".8"/><path d="M26 72H119" stroke="#1F1B24" stroke-width="3"/>`;
   }
   return extraFace3(id, c, lv);

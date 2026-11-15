@@ -33,8 +33,8 @@ const BOTTOM_ART = {
 function extraFace3(id, c, lv) {
   const t = lv ? tierFill(lv, c) : c;
   switch (id) {
-    case 'face_starshades': return `${starDots([[50, 82, 13], [95, 82, 13]], t)}<path d="M62 80H83" stroke="${shade(c, -0.3)}" stroke-width="3"/><circle cx="50" cy="82" r="4" fill="#1F1B24" opacity=".6"/><circle cx="95" cy="82" r="4" fill="#1F1B24" opacity=".6"/><path d="M108 70l12 -8M112 76l14 -4" stroke="#FFE48A" stroke-width="2" stroke-linecap="round"/>`;
-    case 'face_rainbowshades': return `<rect x="34" y="72" width="32" height="20" rx="10" fill="url(#rb)" opacity=".9"/><rect x="79" y="72" width="32" height="20" rx="10" fill="url(#rb)" opacity=".9"/><path d="M66 80H79" stroke="#FFFFFF" stroke-width="3"/><path d="M40 78L50 75M85 78L95 75" stroke="#FFFFFF" stroke-width="2.5" opacity=".8"/>`;
+    case 'face_starshades': return `<circle cx="58" cy="82" r="9.5" fill="${t}"/><circle cx="87" cy="82" r="9.5" fill="${t}"/>${starDots([[58, 82, 13], [87, 82, 13]], t)}<path d="M70 80H75" stroke="${shade(c, -0.3)}" stroke-width="3"/><path d="M45.5 79L31 75M99.5 79L114 75" stroke="${shade(c, -0.3)}" stroke-width="2.5" stroke-linecap="round"/><circle cx="58" cy="82.5" r="6.5" fill="#1F1B24" opacity=".45"/><circle cx="87" cy="82.5" r="6.5" fill="#1F1B24" opacity=".45"/><path d="M104 68l12 -8M108 74l14 -4" stroke="#FFE48A" stroke-width="2" stroke-linecap="round"/>`;
+    case 'face_rainbowshades': return `<rect x="44.5" y="72" width="27" height="21" rx="10" fill="url(#rb)" opacity=".9"/><rect x="73.5" y="72" width="27" height="21" rx="10" fill="url(#rb)" opacity=".9"/><path d="M71 80H74" stroke="#FFFFFF" stroke-width="3"/><path d="M45.5 79L31 75M99.5 79L114 75" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/><path d="M50 78L58 75M79 78L87 75" stroke="#FFFFFF" stroke-width="2.5" opacity=".8"/>`;
     case 'face_dragoneye': return `<circle cx="87" cy="82" r="13" fill="#FFC83D" stroke="${t}" stroke-width="4"/><ellipse cx="87" cy="82" rx="2.4" ry="8" fill="#1F1B24"/><path d="M98 72Q110 60 120 66Q108 70 104 78Z" fill="${t}"/><path d="M98 94Q104 110 96 122" stroke="${t}" stroke-width="2" fill="none"/>`;
   }
   return '';
@@ -43,7 +43,7 @@ function extraHand3(id, c, lv) {
   const t = tierFill(lv, c);
   switch (id) {
     case 'hand_magicbook': return `<rect x="-8" y="6" width="30" height="24" rx="3" fill="${lv ? t : c}"/><rect x="-5" y="8" width="24" height="20" fill="#FFF3DC"/><path d="M7 8V28" stroke="${shade(c, -0.3)}" stroke-width="1.5"/>${starDots([[7, -6, 7]], '#FFE48A')}<circle cx="7" cy="-6" r="10" fill="#FFE48A" opacity=".25"/><path d="M-2 14H4M10 14H16M-2 19H4M10 19H16" stroke="#C9B4F5" stroke-width="1.2"/>`;
-    case 'hand_moonstaff': return `<path d="M6 32L18 -46" stroke="#E6EEF8" stroke-width="4" stroke-linecap="round"/><path d="M28 -70A16 16 0 1 0 28 -38A11 11 0 1 1 28 -70Z" fill="${lv ? t : 'url(#hg_silver)'}" stroke="#FFFFFF" stroke-width="1.2"/>${starDots([[30, -54, 5]], '#FFE48A')}<circle cx="20" cy="-54" r="20" fill="#B9E6FF" opacity=".2"/>`;
+    case 'hand_moonstaff': return `<path d="M6 32L18 -46" stroke="#E6EEF8" stroke-width="4" stroke-linecap="round"/><path d="M28 -70A16 16 0 1 0 28 -38A11 11 0 1 1 28 -70Z" fill="${lv >= 5 ? t : 'url(#hg_silver)'}" stroke="#FFFFFF" stroke-width="1.2"/>${starDots([[30, -54, 5]], '#FFE48A')}<circle cx="20" cy="-54" r="20" fill="#B9E6FF" opacity=".2"/>`;
   }
   return '';
 }

@@ -719,3 +719,6 @@ html,body{-webkit-tap-highlight-color:transparent}
 .modewarn{margin:4px 0 8px;font-size:12px;font-weight:700;color:var(--bad)}
 .mode-play .dock .dk[data-act="study"],.mode-play .dock .dk[data-act="tests"]{display:none!important}
 @media (max-width:460px){.modepick{grid-template-columns:1fr}}
+
+.sw.orig{position:relative;box-shadow:0 0 0 2px #fff,0 0 0 4px var(--gold)}
+.sw.orig::after{content:'gốc';position:absolute;left:50%;bottom:-15px;transform:translateX(-50%);font-size:9.5px;font-weight:800;color:var(--muted)}

@@ -94,8 +94,8 @@ function hairPatch(h) { const p = {}; if (h.f) p.hairF = h.f; if (h.b !== undefi
 function hairPreview(h, L) { return portraitSVG(Object.assign({}, L || fullLook(S.look), hairPatch(h), {hat: null})); }
 
 let SAL = {tab: 'style', buy: null};
-const salPrice = h => h.chest ? 'Chỉ có trong rương' : (h.cur === 'gem' ? gemIcon('di') : coinIcon) + h.price;
-const salAfford = h => !h.chest && (h.cur === 'gem' ? S.di >= h.price : S.coins >= h.price);
+const salPrice = h => h.chest && !h.price ? 'Chỉ có trong rương' : (h.cur === 'gem' ? gemIcon('di') : coinIcon) + h.price;
+const salAfford = h => !(h.chest && !h.price) && (h.cur === 'gem' ? S.di >= h.price : S.coins >= h.price);
 function salonHTML() {
   if (SAL.buy) return salonBuyHTML();
   const L = fullLook(S.look), list = HAIR_ITEMS.filter(h => hairKind(h) === SAL.tab).sort((a, b) => (a.rar || 0) - (b.rar || 0) || (a.cur === 'gem') - (b.cur === 'gem') || a.price - b.price), own = S.hair || [];
@@ -130,3 +130,5 @@ function hairAnswer(i) {
   salonRefresh(); renderHUD(); markDirty();
 }
 function hairWear(id) { const h = HAIR[id]; if (!h || !(S.hair || []).includes(id)) return; Object.assign(S.look, hairPatch(h)); markDirty(); renderHUD(); salonRefresh(); toast(`Đã đổi sang <b>${esc(h.vi)}</b>.`); }
+
+grindable(HAIR_ITEMS);

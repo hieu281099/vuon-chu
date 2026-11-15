@@ -16,8 +16,16 @@ const FACE_VI = {smile:'Mỉm cười', cute:'Dễ thương', laughs:'Cười t�
 
 // ---- tiers for upgraded items (+0..+6) ----
 const TIER = [null, '#DDE6F5', '#3DDC84', '#4D8BFF', '#B05CFF', '#FFB020', 'rainbow'];
-const TIER_VI = ['Thường', 'Bạc', 'Lục bảo', 'Lam ngọc', 'Tím huyền', 'Hoàng kim', 'Cầu vồng'];
-function tierFill(lv, base) { if (!lv) return base; return TIER[lv] === 'rainbow' ? 'url(#rb)' : TIER[lv]; }
+const TIER_VI = ['Thường', 'Khai mở', 'Tinh luyện', 'Linh khí', 'Huyền quang', 'Thánh hoá', 'Tối thượng'];
+// upgraded items keep their own colour up to +4; +5 leans toward their element colour, +6 turns into that element's material
+const FX_MAT = {fire: 'url(#hg_fire)', galaxy: 'url(#hg_galaxy)', gold: 'url(#hg_gold)', ocean: 'url(#hg_ocean)', ice: 'url(#hg_silver)', crystal: 'url(#rb)', holy: 'url(#hg_gold)'};
+const mixHex = (a, b, k) => { if (!a || a[0] !== '#' || a.length < 7 || !b || b[0] !== '#') return a; const x = parseInt(a.slice(1, 7), 16), y = parseInt(b.slice(1, 7), 16), m = s => Math.round(((x >> s) & 255) * (1 - k) + ((y >> s) & 255) * k); return '#' + ((1 << 24) + (m(16) << 16) + (m(8) << 8) + m(0)).toString(16).slice(1); };
+function tierFill(lv, base) {
+  if (!lv || lv < 5) return base;
+  const T = fxTheme(FX_ID);
+  if (lv >= 6) return FX_MAT[T.key] || mixHex(base, T.c[0], 0.55);
+  return mixHex(base, T.c[0], 0.35);
+}
 const shade = (hex, f) => { if (!hex || hex[0] !== '#') return hex; const n = parseInt(hex.slice(1), 16); let r = n >> 16, g = (n >> 8) & 255, b = n & 255; const t = f < 0 ? 0 : 255, p = Math.abs(f); r = Math.round((t - r) * p + r); g = Math.round((t - g) * p + g); b = Math.round((t - b) * p + b); return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1); };
 
 // ---- fashion catalogue: slot, names, price (coin or diamond), level, rarity, default colour ----
@@ -88,37 +96,37 @@ const tpl = (s, c) => s.split('{C}').join(c);
 function hatSVG(id, c, lv) {
   const t = tierFill(lv, c), d = shade(c, -0.25), gem = lv ? tierFill(lv, '#fff') : '#FFFFFF';
   switch (id) {
-    case 'hat_cap': return `<path d="M27 56 Q29 20 72.5 18 Q116 20 118 56 Z" fill="${c}"/><path d="M72.5 18 Q60 30 58 56 M72.5 18 Q85 30 87 56" stroke="${shade(c, .25)}" stroke-width="3" fill="none"/><path d="M72 52 Q104 44 134 54 Q104 62 72 58Z" fill="${d}"/><circle cx="72.5" cy="19" r="5" fill="${lv ? t : d}"/>`;
-    case 'hat_beanie': return `<path d="M26 62 Q26 16 72.5 14 Q119 16 119 62Z" fill="${c}"/><rect x="23" y="52" width="99" height="15" rx="7.5" fill="${d}"/>${[35,47,59,71,83,95,107].map(x => `<rect x="${x}" y="54" width="3" height="11" rx="1.5" fill="${shade(c, -0.4)}" opacity=".5"/>`).join('')}<circle cx="72.5" cy="13" r="11" fill="${lv ? t : '#FFFFFF'}"/>`;
+    case 'hat_cap': return `<path d="M27 56 Q29 20 72.5 18 Q116 20 118 56 Z" fill="${c}"/><path d="M72.5 18 Q60 30 58 56 M72.5 18 Q85 30 87 56" stroke="${shade(c, .25)}" stroke-width="3" fill="none"/><path d="M72 52 Q104 44 134 54 Q104 62 72 58Z" fill="${d}"/><circle cx="72.5" cy="19" r="5" fill="${lv >= 5 ? t : d}"/>`;
+    case 'hat_beanie': return `<path d="M26 62 Q26 16 72.5 14 Q119 16 119 62Z" fill="${c}"/><rect x="23" y="52" width="99" height="15" rx="7.5" fill="${d}"/>${[35,47,59,71,83,95,107].map(x => `<rect x="${x}" y="54" width="3" height="11" rx="1.5" fill="${shade(c, -0.4)}" opacity=".5"/>`).join('')}<circle cx="72.5" cy="13" r="11" fill="${lv >= 5 ? t : '#FFFFFF'}"/>`;
     case 'hat_nonla': return `<path d="M30 58 Q50 112 72.5 116 Q95 112 115 58" stroke="${t}" stroke-width="3" fill="none"/><path d="M-2 58 L72.5 2 L147 58 Q72.5 70 -2 58Z" fill="#F2D58A"/><path d="M72.5 2 L20 56 M72.5 2 L46 61 M72.5 2 L72.5 63 M72.5 2 L99 61 M72.5 2 L125 56" stroke="#D9B260" stroke-width="2"/><path d="M-2 58 Q72.5 70 147 58" stroke="#C99A45" stroke-width="3" fill="none"/>`;
-    case 'hat_cat': return `<path d="M30 52 L34 6 L64 34Z" fill="${c}"/><path d="M115 52 L111 6 L81 34Z" fill="${c}"/><path d="M37 42 L39 18 L55 34Z" fill="${lv ? t : '#FF8FC7'}"/><path d="M108 42 L106 18 L90 34Z" fill="${lv ? t : '#FF8FC7'}"/>`;
-    case 'hat_bunny': return `<path d="M30 46 Q72.5 24 115 46" stroke="${shade(c, -0.15)}" stroke-width="7" fill="none" stroke-linecap="round"/><ellipse cx="52" cy="2" rx="12" ry="34" fill="${c}" transform="rotate(-12 52 2)"/><ellipse cx="93" cy="2" rx="12" ry="34" fill="${c}" transform="rotate(12 93 2)"/><ellipse cx="52" cy="4" rx="6" ry="24" fill="${lv ? t : '#FFB3D1'}" transform="rotate(-12 52 4)"/><ellipse cx="93" cy="4" rx="6" ry="24" fill="${lv ? t : '#FFB3D1'}" transform="rotate(12 93 4)"/>`;
+    case 'hat_cat': return `<path d="M30 52 L34 6 L64 34Z" fill="${c}"/><path d="M115 52 L111 6 L81 34Z" fill="${c}"/><path d="M37 42 L39 18 L55 34Z" fill="${lv >= 5 ? t : '#FF8FC7'}"/><path d="M108 42 L106 18 L90 34Z" fill="${lv >= 5 ? t : '#FF8FC7'}"/>`;
+    case 'hat_bunny': return `<path d="M30 46 Q72.5 24 115 46" stroke="${shade(c, -0.15)}" stroke-width="7" fill="none" stroke-linecap="round"/><ellipse cx="52" cy="2" rx="12" ry="34" fill="${c}" transform="rotate(-12 52 2)"/><ellipse cx="93" cy="2" rx="12" ry="34" fill="${c}" transform="rotate(12 93 2)"/><ellipse cx="52" cy="4" rx="6" ry="24" fill="${lv >= 5 ? t : '#FFB3D1'}" transform="rotate(-12 52 4)"/><ellipse cx="93" cy="4" rx="6" ry="24" fill="${lv >= 5 ? t : '#FFB3D1'}" transform="rotate(12 93 4)"/>`;
     case 'hat_flower': { const fl = (x, y, col) => `<g transform="translate(${x} ${y})">${[0,72,144,216,288].map(a => `<circle cx="${Math.cos(a * Math.PI / 180) * 6}" cy="${Math.sin(a * Math.PI / 180) * 6}" r="5.5" fill="${col}"/>`).join('')}<circle r="4" fill="#FFC83D"/></g>`;
-      return `<path d="M24 50 Q72.5 18 121 50" stroke="#3DBE6C" stroke-width="5" fill="none"/>${fl(30, 44, c)}${fl(52, 32, lv ? t : '#FFFFFF')}${fl(72.5, 27, c)}${fl(93, 32, lv ? t : '#FFFFFF')}${fl(115, 44, c)}`; }
-    case 'hat_witch': return `<ellipse cx="72.5" cy="44" rx="62" ry="12" fill="${d}"/><path d="M38 44 Q52 -6 110 -24 Q90 6 107 44Z" fill="${c}"/><path d="M41 34 Q72.5 40 104 34 L106 42 Q72.5 48 39 42Z" fill="${lv ? t : '#FFC83D'}"/><circle cx="110" cy="-22" r="5" fill="${lv ? t : '#FFC83D'}"/>`;
-    case 'hat_headphones': return `<path d="M17 86 Q17 14 72.5 12 Q128 14 128 86" stroke="${c}" stroke-width="8" fill="none" stroke-linecap="round"/><rect x="2" y="66" width="22" height="40" rx="10" fill="${d}"/><rect x="121" y="66" width="22" height="40" rx="10" fill="${d}"/><circle cx="13" cy="86" r="6" fill="${lv ? t : '#FFFFFF'}"/><circle cx="132" cy="86" r="6" fill="${lv ? t : '#FFFFFF'}"/>`;
-    case 'hat_grad': return `<path d="M40 40 Q72.5 30 105 40 L105 56 Q72.5 48 40 56Z" fill="${shade(c, -0.1)}"/><path d="M10 34 L72.5 12 L135 34 L72.5 56Z" fill="${c}"/><path d="M72.5 34 L120 40 L120 66" stroke="${lv ? t : '#FFC83D'}" stroke-width="3" fill="none"/><circle cx="120" cy="70" r="6" fill="${lv ? t : '#FFC83D'}"/><circle cx="72.5" cy="34" r="4" fill="${lv ? t : '#FFC83D'}"/>`;
+      return `<path d="M24 50 Q72.5 18 121 50" stroke="#3DBE6C" stroke-width="5" fill="none"/>${fl(30, 44, c)}${fl(52, 32, lv >= 5 ? t : '#FFFFFF')}${fl(72.5, 27, c)}${fl(93, 32, lv >= 5 ? t : '#FFFFFF')}${fl(115, 44, c)}`; }
+    case 'hat_witch': return `<ellipse cx="72.5" cy="44" rx="62" ry="12" fill="${d}"/><path d="M38 44 Q52 -6 110 -24 Q90 6 107 44Z" fill="${c}"/><path d="M41 34 Q72.5 40 104 34 L106 42 Q72.5 48 39 42Z" fill="${lv >= 5 ? t : '#FFC83D'}"/><circle cx="110" cy="-22" r="5" fill="${lv >= 5 ? t : '#FFC83D'}"/>`;
+    case 'hat_headphones': return `<path d="M17 86 Q17 14 72.5 12 Q128 14 128 86" stroke="${c}" stroke-width="8" fill="none" stroke-linecap="round"/><rect x="2" y="66" width="22" height="40" rx="10" fill="${d}"/><rect x="121" y="66" width="22" height="40" rx="10" fill="${d}"/><circle cx="13" cy="86" r="6" fill="${lv >= 5 ? t : '#FFFFFF'}"/><circle cx="132" cy="86" r="6" fill="${lv >= 5 ? t : '#FFFFFF'}"/>`;
+    case 'hat_grad': return `<path d="M40 40 Q72.5 30 105 40 L105 56 Q72.5 48 40 56Z" fill="${shade(c, -0.1)}"/><path d="M10 34 L72.5 12 L135 34 L72.5 56Z" fill="${c}"/><path d="M72.5 34 L120 40 L120 66" stroke="${lv >= 5 ? t : '#FFC83D'}" stroke-width="3" fill="none"/><circle cx="120" cy="70" r="6" fill="${lv >= 5 ? t : '#FFC83D'}"/><circle cx="72.5" cy="34" r="4" fill="${lv >= 5 ? t : '#FFC83D'}"/>`;
     case 'hat_crown': return `<path d="M34 46 L30 10 L52 28 L72.5 2 L93 28 L115 10 L111 46Z" fill="${lv ? t : c}"/><rect x="32" y="38" width="81" height="10" rx="4" fill="${shade(c, -0.2)}"/><circle cx="72.5" cy="30" r="6" fill="#FF3552"/><circle cx="50" cy="40" r="4" fill="#4D8BFF"/><circle cx="95" cy="40" r="4" fill="#3DDC84"/><circle cx="72.5" cy="2" r="4" fill="${gem}"/>`;
   }
   return extraHat(id, c, lv, t, d);
 }
 function faceItemSVG(id, c, lv) {
-  if (id === 'face_round') return tpl(NEMO.glasses.round, lv ? tierFill(lv, c) : c);
-  if (id === 'face_square') return tpl(NEMO.glasses.square, lv ? tierFill(lv, c) : c);
-  if (id === 'face_heart') { const t = lv ? tierFill(lv, c) : c; const h = x => `<path transform="translate(${x} 70)" d="M0 6 C0 -2 10 -4 14 3 C18 -4 28 -2 28 6 C28 14 18 20 14 24 C10 20 0 14 0 6Z" fill="${t}"/>`; return `${h(36)}${h(81)}<path d="M64 78 H81" stroke="${shade(c, -0.3)}" stroke-width="3"/><path d="M40 75 Q44 71 48 74 M85 75 Q89 71 93 74" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" opacity=".7" fill="none"/>`; }
+  if (id === 'face_round') { const t = lv ? tierFill(lv, c) : c; return `<g fill="#DDEBFF" fill-opacity=".28" stroke="${t}" stroke-width="3"><circle cx="58" cy="82" r="12.5"/><circle cx="87" cy="82" r="12.5"/></g><path d="M70.5 80Q72.5 77 74.5 80" stroke="${t}" stroke-width="2.5" fill="none"/><path d="M45.5 79L31 75M99.5 79L114 75" stroke="${t}" stroke-width="2.5" stroke-linecap="round"/><path d="M51 77Q53.5 74 57 73.5M80 77Q82.5 74 86 73.5" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity=".75" fill="none"/>`; }
+  if (id === 'face_square') { const t = lv ? tierFill(lv, c) : c; return `<g fill="#1F1B24" fill-opacity=".8" stroke="${t}" stroke-width="3"><rect x="45" y="71.5" width="26" height="21" rx="6"/><rect x="74" y="71.5" width="26" height="21" rx="6"/></g><path d="M71 79H74" stroke="${t}" stroke-width="3"/><path d="M45.5 79L31 75M99.5 79L114 75" stroke="${t}" stroke-width="2.5" stroke-linecap="round"/><path d="M51 77Q53.5 74 57 73.5M80 77Q82.5 74 86 73.5" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity=".75" fill="none"/>`; }
+  if (id === 'face_heart') { const t = lv ? tierFill(lv, c) : c; const h = x => `<path transform="translate(${x - 12.6} 72.5) scale(.9)" d="M0 6 C0 -2 10 -4 14 3 C18 -4 28 -2 28 6 C28 14 18 20 14 24 C10 20 0 14 0 6Z" fill="${t}"/>`; return `${h(58)}${h(87)}<path d="M70 78H75" stroke="${shade(c, -0.3)}" stroke-width="3"/><path d="M45.5 79L31 75M99.5 79L114 75" stroke="${shade(c, -0.3)}" stroke-width="2.5" stroke-linecap="round"/><path d="M48 76Q51 72.5 55 74.5M77 76Q80 72.5 84 74.5" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" opacity=".7" fill="none"/>`; }
   return extraFace(id, c, lv);
 }
 // wing / back item, drawn once for the right side then mirrored. flap in degrees.
 function backSVG(id, c, lv, flap, front) {
-  const t = tierFill(lv, c), l2 = lv ? t : shade(c, 0.35), d = shade(c, -0.2);
+  const t = tierFill(lv, c), l2 = lv >= 5 ? t : shade(c, 0.35), d = shade(c, -0.2);
   const pair = (inner, ax, ay) => wingStack(inner, lv, (body, k) => `<g transform="translate(${ax + 6} ${ay - 6}) rotate(${-flap}) scale(${k})">${body}</g><g transform="translate(${145 - ax - 6} ${ay - 6}) scale(-1 1) rotate(${-flap}) scale(${k})">${body}</g>`);
   switch (id) {
     case 'back_angel': return pair(`<path d="M0 0 C18 -40 70 -58 86 -26 C76 -22 74 -14 80 -8 C66 -8 62 2 68 8 C54 8 50 18 54 24 C36 20 14 14 0 0Z" fill="${lv ? t : c}"/><path d="M8 -2 C24 -30 60 -42 72 -24 C58 -18 52 -8 56 0 C40 2 26 6 8 -2Z" fill="${lv ? shade(TIER[lv] === 'rainbow' ? '#FFFFFF' : TIER[lv], 0.45) : '#EEF2FF'}"/>`, 80, 122);
     case 'back_devil': return pair(`<path d="M0 0 L36 -44 L44 -22 L60 -36 L60 -12 L80 -18 L66 6 Q44 0 34 14 Q20 4 0 0Z" fill="${lv ? t : c}"/><path d="M8 -2 L36 -36 M36 -36 L40 6 M60 -12 L46 6" stroke="${d}" stroke-width="3" fill="none"/>`, 80, 122);
-    case 'back_butterfly': return pair(`<ellipse cx="36" cy="-24" rx="34" ry="26" fill="${c}" transform="rotate(-25 36 -24)"/><ellipse cx="30" cy="16" rx="22" ry="17" fill="${l2}" transform="rotate(20 30 16)"/><circle cx="40" cy="-28" r="9" fill="${lv ? t : '#FFFFFF'}" opacity=".9"/><circle cx="30" cy="16" r="6" fill="#FFFFFF" opacity=".8"/>`, 82, 124);
+    case 'back_butterfly': return pair(`<ellipse cx="36" cy="-24" rx="34" ry="26" fill="${c}" transform="rotate(-25 36 -24)"/><ellipse cx="30" cy="16" rx="22" ry="17" fill="${l2}" transform="rotate(20 30 16)"/><circle cx="40" cy="-28" r="9" fill="${lv >= 5 ? t : '#FFFFFF'}" opacity=".9"/><circle cx="30" cy="16" r="6" fill="#FFFFFF" opacity=".8"/>`, 82, 124);
     case 'back_fairy': return pair(`<ellipse cx="34" cy="-30" rx="14" ry="40" fill="${c}" opacity=".55" transform="rotate(48 34 -30)"/><ellipse cx="26" cy="14" rx="10" ry="26" fill="${l2}" opacity=".55" transform="rotate(-50 26 14)"/><ellipse cx="34" cy="-30" rx="14" ry="40" fill="none" stroke="#FFFFFF" stroke-width="2" transform="rotate(48 34 -30)"/>`, 82, 124);
     case 'back_cape': return front ? `<path d="M48 112 L97 112 L118 158 Q72.5 170 27 158Z" fill="${lv ? t : c}"/><path d="M48 112 L97 112 L94 120 Q72.5 126 51 120Z" fill="${d}"/>` : `<path d="M50 112 L95 112 L116 160 Q72.5 168 29 160Z" fill="${lv ? t : c}"/>`;
-    case 'back_bag': return front ? `<rect x="42" y="108" width="61" height="44" rx="14" fill="${c}"/><rect x="50" y="128" width="45" height="18" rx="7" fill="${lv ? t : d}"/>` : `<rect x="40" y="110" width="65" height="36" rx="12" fill="${c}"/>`;
+    case 'back_bag': return front ? `<rect x="42" y="108" width="61" height="44" rx="14" fill="${c}"/><rect x="50" y="128" width="45" height="18" rx="7" fill="${lv >= 5 ? t : d}"/>` : `<rect x="40" y="110" width="65" height="36" rx="12" fill="${c}"/>`;
   }
   return extraBack(id, c, lv, front, pair);
 }
@@ -129,7 +137,7 @@ function handSVG(id, c, lv) {
   switch (id) {
     case 'hand_balloon': return `<path d="M6 26 Q20 -20 26 -78" stroke="#8E8AA8" stroke-width="1.5" fill="none"/><ellipse cx="27" cy="-96" rx="17" ry="20" fill="${lv ? t : c}"/><path d="M24 -77 L30 -77 L27 -73Z" fill="${shade(c, -0.25)}"/><ellipse cx="21" cy="-103" rx="4" ry="7" fill="#FFFFFF" opacity=".55"/>`;
     case 'hand_lollipop': return `<path d="M6 28 L16 -6" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round"/><circle cx="18" cy="-16" r="13" fill="${lv ? t : c}"/><path d="M18 -16 m-8 0 a8 8 0 1 1 8 8 a5 5 0 1 1 -5 -5" stroke="#FFFFFF" stroke-width="3" fill="none"/>`;
-    case 'hand_sunflower': return `<path d="M6 28 L14 -20" stroke="#3DBE6C" stroke-width="3.5"/><path d="M10 0 Q20 -6 24 2 Q16 6 10 0Z" fill="#3DBE6C"/>${Array.from({length: 10}, (_, i) => { const a = i * 36 * Math.PI / 180; return `<ellipse cx="${15 + Math.cos(a) * 10}" cy="${-30 + Math.sin(a) * 10}" rx="6" ry="3.5" fill="${c}" transform="rotate(${i * 36} ${15 + Math.cos(a) * 10} ${-30 + Math.sin(a) * 10})"/>`; }).join('')}<circle cx="15" cy="-30" r="7" fill="${lv ? t : '#8B5A3C'}"/>`;
+    case 'hand_sunflower': return `<path d="M6 28 L14 -20" stroke="#3DBE6C" stroke-width="3.5"/><path d="M10 0 Q20 -6 24 2 Q16 6 10 0Z" fill="#3DBE6C"/>${Array.from({length: 10}, (_, i) => { const a = i * 36 * Math.PI / 180; return `<ellipse cx="${15 + Math.cos(a) * 10}" cy="${-30 + Math.sin(a) * 10}" rx="6" ry="3.5" fill="${c}" transform="rotate(${i * 36} ${15 + Math.cos(a) * 10} ${-30 + Math.sin(a) * 10})"/>`; }).join('')}<circle cx="15" cy="-30" r="7" fill="${lv >= 5 ? t : '#8B5A3C'}"/>`;
     case 'hand_umbrella': return `<path d="M6 28 L16 -70" stroke="#5B3423" stroke-width="3"/><path d="M-40 -66 Q16 -126 72 -66 Q58 -74 44 -66 Q30 -74 16 -66 Q2 -74 -12 -66 Q-26 -74 -40 -66Z" fill="${lv ? t : c}"/><path d="M16 -110 L16 -66" stroke="${shade(c, 0.4)}" stroke-width="2"/>`;
     case 'hand_wand': return `<path d="M6 28 L20 -14" stroke="#5B3423" stroke-width="3.5" stroke-linecap="round"/><path d="M22 -38 L26 -26 L39 -26 L29 -18 L33 -6 L22 -13 L11 -6 L15 -18 L5 -26 L18 -26Z" fill="${lv ? t : c}"/>`;
     case 'tool_can': return `<rect x="-4" y="16" width="26" height="18" rx="5" fill="#4D8BFF"/><path d="M20 20 L36 8" stroke="#4D8BFF" stroke-width="5" stroke-linecap="round"/><path d="M2 16 Q10 4 18 16" stroke="#3567CC" stroke-width="3" fill="none"/>`;
@@ -200,22 +208,23 @@ const HAND_FIT = {
 };
 // frame: {legs:[dl,dr], bob, arms:[rl,rr], face, tool, flap}
 function chibiInner(L, f, dir) {
+  L = itemCols(L);
   ANIM_PH = f.ph || 0;
   const skin = SKIN_TONES[L.skin] || SKIN_TONES[0], lv = L.lv || {}, back = dir === 'u';
   const bob = f.bob || 0, face = f.face || L.face || 'smile';
-  const backItem = L.back ? tierWrap('back', lv[L.back] || 0, itemFx(artId(L.back), lv[L.back] || 0, backSVG(artId(L.back), FASH[L.back].col, lv[L.back] || 0, f.flap || 0, back)), f.flap) : '';
-  const handItem = f.tool ? handSVG(f.tool, '#fff', 0) : (L.hand ? tierWrap('hand', lv[L.hand] || 0, itemFx(artId(L.hand), lv[L.hand] || 0, handSVG(artId(L.hand), FASH[L.hand].col, lv[L.hand] || 0)), f.flap) : '');
+  const backItem = L.back ? tierWrap('back', lv[L.back] || 0, itemFx(artId(L.back), lv[L.back] || 0, backSVG(artId(L.back), FASH[L.back].col, lv[L.back] || 0, f.flap || 0, back)), f.flap, L.back) : '';
+  const handItem = f.tool ? handSVG(f.tool, '#fff', 0) : (L.hand ? tierWrap('hand', lv[L.hand] || 0, itemFx(artId(L.hand), lv[L.hand] || 0, handSVG(artId(L.hand), FASH[L.hand].col, lv[L.hand] || 0)), f.flap, L.hand) : '');
   let s = '';
   if (!back) s += backItem;
   if (L.hairB && !back) s += `<g transform="translate(0 ${bob})">${tpl(NEMO.hairB[L.hairB], L.hairC)}</g>`;
   const shoeLv = L.shoes ? (lv[L.shoes] || 0) : 0;
-  s += tierBehind('shoes', shoeLv) + legSVG(L, 59, f.legs ? f.legs[0] : 0, skin) + legSVG(L, 73, f.legs ? f.legs[1] : 0, skin) + tierFront('shoes', shoeLv, f.flap);
+  s += tierBehind('shoes', shoeLv, L.shoes) + legSVG(L, 59, f.legs ? f.legs[0] : 0, skin) + legSVG(L, 73, f.legs ? f.legs[1] : 0, skin) + tierFront('shoes', shoeLv, f.flap, L.shoes);
   s += `<g transform="translate(0 ${bob})">`;
   // farm tools stay in the arm layer; fashion items held in the hand are drawn last (see below) so the big head never hides them
   const tool = f.tool ? handItem : '';
   s += armSVG(L, 44, f.arms ? f.arms[0] : 0, skin, back ? tool : '');
   s += `<path d="M55 113H90V132C90 135.3 87.3 138 84 138H61C57.7 138 55 135.3 55 132V113Z" fill="${skin.b}"/>` + topSVG(L, f) + skirtSVG(L);
-  const acc = (k, fn) => L[k] && FASH[L[k]] ? tierWrap(k, lv[L[k]] || 0, itemFx(artId(L[k]), lv[L[k]] || 0, fn(artId(L[k]), FASH[L[k]].col, lv[L[k]] || 0)), f.flap) : '';
+  const acc = (k, fn) => L[k] && FASH[L[k]] ? tierWrap(k, lv[L[k]] || 0, itemFx(artId(L[k]), lv[L[k]] || 0, fn(artId(L[k]), FASH[L[k]].col, lv[L[k]] || 0)), f.flap, L[k]) : '';
   if (!back) {
     if (L.bag && HANDBAGS.includes(artId(L.bag))) s += `<g transform="rotate(${f.arms ? f.arms[0] : 0} 50 116)">${acc('bag', bagSVG)}</g>`;
   }
@@ -229,13 +238,13 @@ function chibiInner(L, f, dir) {
     s += featsSVG(L, skin, 'face');
     s += acc('deco', decoSVG);
     if (L.beard) s += tpl(NEMO.beards[L.beard], L.hairC);
-    if (L.face2) s += tierWrap('face', lv[L.face2] || 0, itemFx(artId(L.face2), lv[L.face2] || 0, faceItemSVG(artId(L.face2), FASH[L.face2].col, lv[L.face2] || 0)), f.flap);
+    if (L.face2) s += tierWrap('face', lv[L.face2] || 0, itemFx(artId(L.face2), lv[L.face2] || 0, faceItemSVG(artId(L.face2), FASH[L.face2].col, lv[L.face2] || 0)), f.flap, L.face2);
     s += acc('mouth', mouthSVG);
   }
   if (L.hairF && L.hairF !== 'none') s += tpl(NEMO.hairF[L.hairF], L.hairC);
   if (!back) s += acc('ear', earSVG) + featsSVG(L, skin, 'hair');
   if (L.hairB && back) s += tpl(NEMO.hairB[L.hairB], L.hairC);
-  if (L.hat) s += tierWrap('hat', lv[L.hat] || 0, itemFx(artId(L.hat), lv[L.hat] || 0, hatSVG(artId(L.hat), FASH[L.hat].col, lv[L.hat] || 0)), f.flap) + hatAccent(lv[L.hat] || 0);
+  if (L.hat) s += tierWrap('hat', lv[L.hat] || 0, itemFx(artId(L.hat), lv[L.hat] || 0, hatSVG(artId(L.hat), FASH[L.hat].col, lv[L.hat] || 0)), f.flap, L.hat) + hatAccent(lv[L.hat] || 0, L.hat);
   // held item on top of everything, following the arm's swing and leaning away from the head
   if (handItem && !f.tool) {
     const fit = HAND_FIT[L.hand] || HAND_FIT._, ax = back ? 44 : 89, rot = f.arms ? f.arms[back ? 0 : 1] : 0, lean = (back ? -1 : 1) * fit[1];
@@ -314,8 +323,8 @@ function petSVG(id, lv, frame) {
     default: body = petBody2(id, c, hop, eyes); break;
     case 'pet_dragon': body = `<path d="M8 ${30 + hop} q-8 -14 6 -18 q0 8 8 10z M52 ${30 + hop} q8 -14 -6 -18 q0 8 -8 10z" fill="${shade(c, -0.25)}"/><ellipse cx="30" cy="${38 + hop}" rx="18" ry="17" fill="${c}"/><ellipse cx="30" cy="${45 + hop}" rx="10" ry="8" fill="#FFF3B0"/><path d="M22 ${22 + hop} l-3 -8 l6 5z M38 ${22 + hop} l3 -8 l-6 5z" fill="#FFC83D"/>${eyes(23, 37, 33 + hop)}<path d="M46 50 q10 4 8 -6" stroke="${c}" stroke-width="5" fill="none" stroke-linecap="round"/>`; break;
   }
-  const glow = lv >= 4 ? `<ellipse cx="30" cy="34" rx="28" ry="26" fill="${TIER[lv] === 'rainbow' ? '#FFE48A' : TIER[lv]}" opacity=".28"/>` : '';
-  const pt = petTier(lv, hop);
+  const glow = lv >= 4 ? `<ellipse cx="30" cy="34" rx="28" ry="26" fill="${fxTheme(P.id).c[0]}" opacity=".24"/>` : '';
+  const pt = petTier(lv, hop, P.id);
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-6 -16 72 78" width="132" height="143">${RB_DEF}${glow}${pt.back}${body}${lv ? bow : ''}${crown}${pt.front}</svg>`;
 }
 const PET_CACHE = new Map();
@@ -327,7 +336,7 @@ function petImage(id, lv, frame) {
 
 /* ---------- auras (canvas particles) ---------- */
 function drawAura(g, id, lv, x, y, t) {
-  const base = FASH[id].col; id = artId(id); const col = id === 'aura_dragon' ? `hsl(${10 + (t / 20) % 40} 100% 60%)` : id === 'aura_galaxy' || id === 'aura_rainbow' ? `hsl(${(t / 6) % 360} 90% 70%)` : lv ? (TIER[lv] === 'rainbow' ? `hsl(${(t / 8) % 360} 90% 65%)` : TIER[lv]) : base;
+  const base = FASH[id].col; id = artId(id); const col = id === 'aura_dragon' ? `hsl(${10 + (t / 20) % 40} 100% 60%)` : id === 'aura_galaxy' || id === 'aura_rainbow' ? `hsl(${(t / 6) % 360} 90% 70%)` : base;
   const n = 5 + lv * 2, r = 18 + lv;
   g.save(); g.globalAlpha = 0.35 + lv * 0.05; g.fillStyle = col; g.beginPath(); g.ellipse(x, y, r, r * 0.38, 0, 0, Math.PI * 2); g.fill(); g.globalAlpha = 1;
   if (lv >= 3) { g.strokeStyle = col; g.lineWidth = 1.2; g.globalAlpha = 0.7; g.beginPath(); g.ellipse(x, y, r * 1.35, r * 0.52, 0, 0, Math.PI * 2); g.stroke(); g.globalAlpha = 1; }

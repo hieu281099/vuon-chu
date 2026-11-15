@@ -153,9 +153,12 @@ document.addEventListener('click', e => {
     case 'forge-go': return forgeGo();
     case 'exchange': FORGE = Object.assign(FORGE || {}, {ex: true}); return refreshNpc();
     case 'forge-back': if (FORGE) FORGE.ex = false; return refreshNpc();
+    case 'ex-di': { const n = +d.n; if (S.em >= n * EX_DI) { S.em -= n * EX_DI; S.di += n; sfx('coin'); renderHUD(); markDirty(); } return refreshNpc(); }
     case 'ex': { const n = +d.n; if (S.coins >= n * 100) { S.coins -= n * 100; S.em += n; sfx('coin'); renderHUD(); markDirty(); } return refreshNpc(); }
     case 'cc-tab': CC.name = $('#cc-name').value; CC.tab = d.t; return renderCreator();
-    case 'dye': { const k = {top: 'topC', bottom: 'bottomC'}[WARD]; if (k) { S.look[k] = d.c; markDirty(); renderHUD(); openWardrobe(); } return; }
+    case 'dye': { const k = {top: 'topC', bottom: 'bottomC'}[WARD]; if (!k) return; const it = FASH[S.look[WARD]];
+      if (it && it.col) { S.look.dye = Object.assign({}, S.look.dye); if (d.c) S.look.dye[it.id] = d.c; else delete S.look.dye[it.id]; } else if (d.c) S.look[k] = d.c;
+      markDirty(); renderHUD(); openWardrobe(); return; }
     case 'creator': return openCreator(false);
     case 'cc': CC.name = $('#cc-name') ? $('#cc-name').value : CC.name; CC.look[d.k] = d.k === 'skin' ? +d.v : (d.v === 'null' ? null : d.v); return renderCreator();
     case 'cc-mode': CC.name = $('#cc-name').value; CC.mode = d.v; if (CC.mode === 'play' && CC.tab === 'study') CC.tab = 'body'; return renderCreator();

@@ -44,4 +44,28 @@ FASHION.push(
   {id:'pet_owl_galaxy', base:'pet_owl', slot:'pet', en:'galaxy owl', vi:'Cú ngân hà', price:0, rar:4, chest:1, col:GALAXY}
 );
 // the shape an item is drawn with (variants reuse an existing design in their own material)
-const artId = id => (id && FASH[id] && FASH[id].base) || id;
+// also remembers which item is being drawn, so its upgrade colours follow that item's style
+let FX_ID = null;
+const artId = id => { FX_ID = id; return (id && FASH[id] && FASH[id].base) || id; };
+
+/* ---------- every top and bottom has its own signature colour (free starter clothes keep the colour picked in the creator) ---------- */
+const ITEM_COLS = {
+  top_long: '#4DA3FF', top_hoodie: '#9B6BFF', top_jacket: '#2F8F5B', top_sailor: '#1F3C88', top_overalls: '#FFD34D', top_aodai: '#E8364F',
+  top_crop: '#FF6FB5', top_tracksuit: '#00A884', top_puffer: '#FF8A3D', top_varsity: '#B3123E', top_suit: '#2B2A40', top_idol: '#C13BFF', top_gown: '#D81B60',
+  top_striped: '#1E88E5', top_polo: '#43A047', top_school: '#1F3C88', top_cardigan: '#C9A27E', top_denim: '#4A6FA5', top_chef: '#E53935', top_maid: '#2B2A40',
+  top_hero: '#E53935', top_astro: '#FF8A3D', top_princess: '#FF9ECF', top_armor: '#9AA5B1',
+  bot_shorts: '#C8A86B', bot_skirt: '#FF8FA3', bot_jeans: '#3D6CB9', bot_cargo: '#6B7B3A', bot_pleated: '#2E4A7D', bot_tutu: '#FFB3D9',
+  bot_joggers: '#5F6670', bot_mini: '#E53935', bot_plaid: '#B3123E', bot_leather: '#1F1B24'
+};
+for (const f of FASHION) if (ITEM_COLS[f.id] && !f.col) f.col = ITEM_COLS[f.id];
+const itemCols = L => {
+  const t = FASH[L.top], b = FASH[L.bottom];
+  if (!(t && t.col) && !(b && b.col)) return L;
+  const dy = L.dye || {};   // a dyed item keeps the player's colour, otherwise its own
+  return Object.assign({}, L, t && t.col ? {topC: dy[t.id] || t.col} : {}, b && b.col ? {bottomC: dy[b.id] || b.col} : {});
+};
+
+/* ---------- grinding path: chest-only mythics can also be bought (very expensive), so free players can reach them ---------- */
+const MYTH_PRICE = 300, MYTH_LVL = 20;
+const grindable = list => { for (const f of list) if (f.chest && !f.price) Object.assign(f, {price: MYTH_PRICE, cur: 'gem', lvl: Math.max(f.lvl || 1, MYTH_LVL)}); };
+grindable(FASHION);

@@ -510,8 +510,8 @@ function buySeed(id) { const c = CROP[id], price = c.cost * 5; if (!c || c.lvl >
 let SHOPTAB = 'top';
 // previews of things worn on the face hide wings and held items so the item itself stays visible
 const FACE_SLOTS = ['hat', 'face', 'mouth', 'deco', 'ear', 'neck'];
-const priceTag = f => f.chest ? 'Chỉ có trong rương' : f.price === 0 ? 'Miễn phí' : (f.cur === 'gem' ? gemIcon('di') + f.price : coinIcon + f.price);
-const canAfford = f => f.chest ? false : f.cur === 'gem' ? S.di >= f.price : S.coins >= f.price;
+const priceTag = f => f.chest && !f.price ? 'Chỉ có trong rương' : f.price === 0 ? 'Miễn phí' : (f.cur === 'gem' ? gemIcon('di') + f.price : coinIcon + f.price);
+const canAfford = f => f.chest && !f.price ? false : f.cur === 'gem' ? S.di >= f.price : S.coins >= f.price;
 function slotPatch(f) { return f.slot === 'face' ? {face2: f.id} : {[f.slot]: f.id}; }
 function itemCard(f, L, act, extra = '') {
   const own = S.owned.includes(f.id), lock = (f.lvl || 1) > S.lvl, lv = (S.look.lv || {})[f.id] || 0;
@@ -559,23 +559,23 @@ function forgeHTML() {
   const list = all.filter(f => f.slot === FORGE.tab).sort((a, b) => (a.rar || 0) - (b.rar || 0) || (a.cur === 'gem') - (b.cur === 'gem') || a.price - b.price), mine = all.filter(f => own(f.id));
   const f = FASH[FORGE.id], have = own(f.id), lv = have ? ((S.look.lv || {})[f.id] || 0) : 0, nx = lv + 1, cost = UP_COST[nx];
   const look = (m, l) => { const x = Object.assign({}, L, slotPatch(m), {lv: Object.assign({}, L.lv, {[m.id]: l})}); if (FACE_SLOTS.includes(m.slot)) Object.assign(x, {back: null, hand: null}); return x; };
-  const img = (m, l, cls) => m.slot === 'pet' ? `<img class="pv ${cls} pet" src="${svgURL(petSVG(m.id, l, 0))}" alt="">` : m.slot === 'aura' ? `<span class="pv ${cls} aura" style="--c:${l ? (TIER[l] === 'rainbow' ? '#FFB020' : TIER[l]) : m.col}"></span>` : `<img class="pv ${cls}" src="${portraitSVG(look(m, l), {full: ['back', 'hand', 'shoes', 'bag', 'neck'].includes(m.slot), hand: true})}" alt="">`;
+  const img = (m, l, cls) => m.slot === 'pet' ? `<img class="pv ${cls} pet" src="${svgURL(petSVG(m.id, l, 0))}" alt="">` : m.slot === 'aura' ? `<span class="pv ${cls} aura" style="--c:${m.col}"></span>` : `<img class="pv ${cls}" src="${portraitSVG(look(m, l), {full: ['back', 'hand', 'shoes', 'bag', 'neck'].includes(m.slot), hand: true})}" alt="">`;
   const card = m => { const o = own(m.id), l = (S.look.lv || {})[m.id] || 0;
     return `<button class="fcard r${m.rar || 0} ${o ? 'own' : ''} ${m.id === f.id ? 'sel' : ''}" data-act="forge-pick" data-id="${m.id}" aria-pressed="${m.id === f.id}">${img(m, o ? l : 0, 'sm')}<b>${esc(m.vi)}</b><span class="fstate">${o ? (l ? `<i class="tier t${l}">+${l}</i>` : 'Đã có') : 'Chưa có'}</span></button>`; };
   const bonus = (FORGE.quiz === true ? 15 : 0) + (FORGE.shoe ? 10 : 0), chance = cost ? Math.min(100, cost.ch + bonus) : 0, enough = cost && S.em >= cost.em && S.di >= cost.di;
-  const howGet = f.chest ? 'Món này chỉ rơi ra từ <b>Rương may mắn</b>.' : `Mua ở cửa hàng của <b>Cô Mai</b> trong Làng (${priceTag(f)}${(f.lvl || 1) > S.lvl ? ', ' + needTag(f.lvl) : ''}).`;
+  const howGet = f.chest ? `Món này rơi ra từ <b>Rương may mắn</b>, hoặc mua ở cửa hàng của <b>Cô Mai</b> với giá ${priceTag(f)}${(f.lvl || 1) > S.lvl ? ', ' + needTag(f.lvl) : ''}.` : `Mua ở cửa hàng của <b>Cô Mai</b> trong Làng (${priceTag(f)}${(f.lvl || 1) > S.lvl ? ', ' + needTag(f.lvl) : ''}).`;
   return `<div class="forge">
     <p class="note">Chỉ đồ <b>Sử thi trở lên</b> và vài món <b>đặc cách</b> mới nâng cấp được, mỗi cấp thêm hiệu ứng mới. Bạn có <b>${mine.length}/${all.length}</b> món nâng cấp được. Món <b class="ownmark">viền xanh, ghi “Đã có”</b> là của bạn, món mờ là chưa có. Bấm vào bất kỳ món nào để xem các cấp +1 đến +6.</p>
     <div class="seg">${slots.map(([k, l]) => { const n = all.filter(m => m.slot === k), o = n.filter(m => own(m.id)).length; return `<button class="segb" data-act="forge-tab" data-t="${k}" aria-pressed="${FORGE.tab === k}">${l} <small>${o}/${n.length}</small></button>`; }).join('')}</div>
     <div class="fgrid">${list.map(card).join('')}</div>
-    <h3 class="ph3">${esc(f.vi)} <small>(${esc(f.en)}) · ${RARITY[f.rar || 0].vi}</small></h3>
-    <div class="tierstrip">${[0, 1, 2, 3, 4, 5, 6].map(l => `<div class="tcell ${have && l === lv ? 'cur' : ''} ${have && l < lv ? 'done' : ''}"><span class="tier t${l}">${l ? '+' + l : 'Gốc'}</span>${img(f, l, 'sm')}<small>${l ? TIER_VI[l] : 'Thường'}</small><em class="perk">${TIER_PERK[l]}</em></div>`).join('')}</div>
+    <h3 class="ph3">${esc(f.vi)} <small>(${esc(f.en)}) · ${RARITY[f.rar || 0].vi} · hệ <b>${fxTheme(f.id).vi}</b></small></h3>
+    <div class="tierstrip">${[0, 1, 2, 3, 4, 5, 6].map(l => `<div class="tcell ${have && l === lv ? 'cur' : ''} ${have && l < lv ? 'done' : ''}"><span class="tier t${l}">${l ? '+' + l : 'Gốc'}</span>${img(f, l, 'sm')}<small>${l ? TIER_VI[l] : 'Thường'}</small><em class="perk">${tierPerk(f.id, l)}</em></div>`).join('')}</div>
     ${!have ? `<div class="fb miss"><strong>Bạn chưa có món này.</strong> ${howGet}</div>` : `
     <div class="forge-stage"><div class="fs-item"><span class="tier t${lv}">${lv ? '+' + lv + ' ' + TIER_VI[lv] : 'Chưa nâng'}</span>${img(f, lv, 'big')}</div>
       ${nx <= 6 ? `<div class="fs-arrow" aria-hidden="true">→</div><div class="fs-item next"><span class="tier t${nx}">+${nx} ${TIER_VI[nx]}</span>${img(f, nx, 'big')}</div>` : ''}</div>
     ${nx <= 6 ? `<div class="forge-info"><span>Cần ${gemIcon('em')}<b>${cost.em}</b>${cost.di ? ` ${gemIcon('di')}<b>${cost.di}</b>` : ''}</span><span>Tỉ lệ thành công <b class="${chance >= 70 ? 'ok' : chance >= 45 ? 'mid' : 'low'}">${chance}%</b>${bonus ? ` (đã cộng ${bonus}%)` : ''}</span>${nx >= 4 ? '<span class="warn">Thất bại có thể tụt 1 cấp</span>' : ''}</div>
       <div class="row-btns">${FORGE.quiz === null ? `<button class="btn ghost" data-act="forge-quiz">Trả lời 1 câu khó để +15%</button>` : ''}${S.inv.horseshoe > 0 ? `<button class="btn ghost" data-act="forge-shoe" aria-pressed="${!!FORGE.shoe}">${FORGE.shoe ? 'Đã dùng' : 'Dùng'} móng ngựa may mắn (+10%) · còn ${S.inv.horseshoe}</button>` : ''}<button class="btn gold" data-act="forge-go" ${enough ? '' : 'disabled'}>Nâng lên +${nx}</button><button class="btn ghost sm" data-act="exchange">Đổi xu lấy ngọc</button></div>
-      ${enough ? '' : `<p class="note">Chưa đủ ngọc. Ngọc lục bảo có được khi trả lời đúng 5 câu liên tiếp, lên trình độ, giao đơn, học bài. Kim cương có được khi thi đậu và khi câu được cá ngừ.</p>`}` : `<div class="fb good"><strong>Tối đa!</strong> Món này đã đạt +6 Cầu vồng.</div>`}`}
+      ${enough ? '' : `<p class="note">Chưa đủ ngọc. Ngọc lục bảo có được khi trả lời đúng 5 câu liên tiếp, lên trình độ, giao đơn, học bài. Kim cương có được khi thi đậu và khi câu được cá ngừ.</p>`}` : `<div class="fb good"><strong>Tối đa!</strong> Món này đã đạt +6 Tối thượng.</div>`}`}
     ${FORGE.res ? `<div class="fb ${FORGE.res.ok ? 'good' : 'miss'}"><strong>${FORGE.res.ok ? 'Thành công!' : 'Thất bại'}</strong> ${FORGE.res.msg}</div>` : ''}
   </div>`;
 }
@@ -593,8 +593,10 @@ function forgeQuiz() {
   startQuiz({tag: 'Câu hỏi may mắn', onResult: ok => { FORGE = {id: keepId, quiz: ok, res: null}; return ok ? 'Tỉ lệ nâng cấp được cộng 15%.' : 'Không được cộng tỉ lệ lần này.'; }, onClose: () => { setTimeout(() => { if (npc) talk(npc); }, 30); }});
 }
 function exchangeHTML() {
-  return `<h3 class="ph3">Đổi xu lấy ngọc lục bảo</h3><p class="note">100 xu đổi 1 ngọc lục bảo. Kim cương không đổi được, chỉ kiếm bằng học tập và câu cá.</p><div class="row-btns"><button class="btn" data-act="ex" data-n="1" ${S.coins < 100 ? 'disabled' : ''}>Đổi 1 ${gemIcon('em')} (100 xu)</button><button class="btn" data-act="ex" data-n="5" ${S.coins < 500 ? 'disabled' : ''}>Đổi 5 ${gemIcon('em')} (500 xu)</button><button class="btn ghost" data-act="forge-back">Quay lại</button></div>`;
+  return `<h3 class="ph3">Đổi xu lấy ngọc lục bảo</h3><p class="note">100 xu đổi 1 ngọc lục bảo.</p><div class="row-btns"><button class="btn" data-act="ex" data-n="1" ${S.coins < 100 ? 'disabled' : ''}>Đổi 1 ${gemIcon('em')} (100 xu)</button><button class="btn" data-act="ex" data-n="5" ${S.coins < 500 ? 'disabled' : ''}>Đổi 5 ${gemIcon('em')} (500 xu)</button></div>
+    <h3 class="ph3">Đổi ngọc lục bảo lấy kim cương</h3><p class="note">${EX_DI} ngọc lục bảo đổi 1 kim cương. Rất đắt, nhưng chăm cày là mua được cả đồ Huyền thoại và Thần thoại (đồ trong rương cũng bán với giá ${MYTH_PRICE} kim cương, cần cấp ${MYTH_LVL}).</p><div class="row-btns"><button class="btn" data-act="ex-di" data-n="1" ${S.em < EX_DI ? 'disabled' : ''}>Đổi 1 ${gemIcon('di')} (${EX_DI} ${gemIcon('em')})</button><button class="btn" data-act="ex-di" data-n="5" ${S.em < EX_DI * 5 ? 'disabled' : ''}>Đổi 5 ${gemIcon('di')} (${EX_DI * 5} ${gemIcon('em')})</button><button class="btn ghost" data-act="forge-back">Quay lại</button></div>`;
 }
+const EX_DI = 20;
 function giveGems(em, di, why) {
   S.em += em || 0; S.di += di || 0;
   const parts = []; if (em) parts.push(`${em} ngọc lục bảo`); if (di) parts.push(`${di} kim cương`);
@@ -704,7 +706,7 @@ function openWardrobe() {
   openModal(`<h2 class="ptitle">Tủ đồ</h2><div class="ward"><div class="ward-prev"><div class="stagebox"><img class="pv hero" src="${portraitSVG(L, {full: true, hand: true})}" alt="Nhân vật của bạn">${L.pet ? `<img class="petmini" src="${svgURL(petSVG(L.pet, (L.lv || {})[L.pet] || 0, 0))}" alt="">` : ''}</div><button class="btn ghost sm" data-act="creator">Sửa ngoại hình</button><button class="btn sm" data-act="salon">Tiệm tóc</button><button class="btn sm" data-act="spa">Spa</button></div><div class="ward-main">
     <div class="seg">${SLOTS.map(([k, l]) => `<button class="segb" data-act="ward-slot" data-t="${k}" aria-pressed="${WARD === k}">${l}</button>`).join('')}</div>
     <div class="cards">${optional ? `<button class="card ${!cur ? 'on' : ''}" data-act="wear" data-id=""><span class="pv none">Trống</span><b>Bỏ ra</b><small>không dùng</small></button>` : ''}${items.map(f => itemCard(f, L, 'wear', cur === f.id ? 'aria-pressed="true"' : '')).join('') || '<p class="empty">Chưa có món nào. Mua ở CLOTHES SHOP trong Làng.</p>'}</div>
-    ${colorKey ? `<h3 class="ph3">Đổi màu</h3><div class="swatches">${CLOTH_COLS.map(c => `<button class="sw" style="background:${c}" data-act="dye" data-c="${c}" aria-pressed="${L[colorKey] === c}" aria-label="${c}"></button>`).join('')}</div>` : ''}
+    ${colorKey ? (() => { const it = FASH[L[WARD]], eff = itemCols(L)[colorKey], own = it && it.col; return `<h3 class="ph3">Đổi màu</h3><div class="swatches">${own ? `<button class="sw orig" style="background:${it.col}" data-act="dye" data-c="" aria-pressed="${eff === it.col}" aria-label="Màu gốc của món đồ" title="Màu gốc"></button>` : ''}${CLOTH_COLS.map(c => `<button class="sw" style="background:${c}" data-act="dye" data-c="${c}" aria-pressed="${eff === c}" aria-label="${c}"></button>`).join('')}</div>`; })() : ''}
     ${WARD === 'bottom' ? `<h3 class="ph3">Màu giày</h3><div class="swatches">${CLOTH_COLS.map(c => `<button class="sw" style="background:${c}" data-act="dye-shoe" data-c="${c}" aria-pressed="${L.shoeC === c}" aria-label="${c}"></button>`).join('')}</div>` : ''}
   </div></div>`, {label: 'Tủ đồ', wide: true});
 }
