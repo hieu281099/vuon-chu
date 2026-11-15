@@ -28,6 +28,8 @@ function mmDraw(cv, k, big) {
   for (const n of NPCS) { const [x, y] = at(n.x, n.y), r = Math.max(2.6, k * (big ? 0.6 : 0.55));
     g.fillStyle = ROLE_COL[n.def.role] || '#8E8AA8'; g.strokeStyle = '#FFFFFF'; g.lineWidth = big ? 2 : 1.2; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill(); g.stroke();
     if (big) { g.font = `800 ${Math.round(k * 1.1)}px Nunito, sans-serif`; g.textAlign = 'center'; g.lineWidth = 3; g.strokeStyle = 'rgba(30,27,58,.85)'; g.strokeText(n.def.name, x, y - r - 4); g.fillStyle = '#FFFFFF'; g.fillText(n.def.name, x, y - r - 4); } }
+  for (const o of Object.values(MP.others)) { const [x, y] = at(o.x, o.y), r = Math.max(2.8, k * 0.6); g.fillStyle = '#3B82F6'; g.strokeStyle = '#FFFFFF'; g.lineWidth = big ? 2 : 1.2; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill(); g.stroke();
+    if (big) { g.font = `800 ${Math.round(k * 1.1)}px Nunito, sans-serif`; g.textAlign = 'center'; g.lineWidth = 3; g.strokeStyle = 'rgba(30,27,58,.85)'; g.strokeText(o.name, x, y - r - 4); g.fillStyle = '#BFDBFE'; g.fillText(o.name, x, y - r - 4); } }
   const [px, py] = at(P.x, P.y), pulse = 1 + 0.25 * Math.sin(performance.now() / 220), pr = Math.max(3.2, k * 0.7) * pulse;
   g.fillStyle = 'rgba(255,111,181,.35)'; g.beginPath(); g.arc(px, py, pr * 1.9, 0, Math.PI * 2); g.fill();
   g.fillStyle = '#FF3D8E'; g.strokeStyle = '#FFFFFF'; g.lineWidth = big ? 2.5 : 1.6; g.beginPath(); g.arc(px, py, pr, 0, Math.PI * 2); g.fill(); g.stroke();
@@ -36,7 +38,7 @@ function mmDraw(cv, k, big) {
 function mmTick() {
   const cv = $('#minimap'); if (!cv || !S || !MAPS) return;
   const m = MAPS[S.map], wrap = $('#mmwrap'); if (!m || !wrap) return;
-  wrap.hidden = $('#app').hidden; $('#mmname').textContent = m.vi;
+  wrap.hidden = $('#app').hidden; { const n = Object.keys(MP.others).length; $('#mmname').textContent = m.vi + (MP_MAPS.includes(S.map) && mpOn() ? ` · ${n + 1} người` : ''); }
   mmDraw(cv, window.innerWidth < 600 ? 3 : 4, false);
   const bigCv = $('#mmbig'); if (bigCv) mmDraw(bigCv, Math.max(8, Math.floor(Math.min(window.innerWidth - 60, 720) / m.w)), true);
 }
@@ -47,7 +49,7 @@ function openMinimap() {
   const places = m.objs.filter(o => o.t === 'house' && o.sign).map(o => `<span class="chip">${esc(o.sign)}</span>`).join('');
   openModal(`<h2 class="ptitle">Bản đồ ${esc(m.vi)}</h2><p class="psub">Chấm hồng là bạn, chấm màu là người trong làng. Ô vàng là lối sang khu khác.</p>
     <div class="mmbigwrap"><canvas id="mmbig"></canvas></div>${places ? `<div class="chips">${places}</div>` : ''}
-    <h3 class="ph3">Mọi người ở khu này</h3>${list ? `<div class="list">${list}</div>` : '<p class="empty">Khu này không có ai.</p>'}
+    ${Object.keys(MP.others).length ? `<h3 class="ph3">Người chơi đang ở đây</h3><div class="list">${Object.values(MP.others).map(o => `<button class="row-item" data-act="mp-card" data-id="${o.uid}"><span class="mmdot" style="background:#3B82F6"></span><span class="ri-main"><b>${esc(o.name)}</b><small>Trình độ ${esc(o.cefr)}</small></span><span class="ri-side">Xem</span></button>`).join('')}</div>` : (MP_MAPS.includes(S.map) ? (mpOn() ? '<p class="note">Chưa có người chơi nào khác ở khu này.</p>' : '<p class="note">Đăng nhập tài khoản Vườn Chữ để gặp người chơi khác ở Làng, Công viên, Bờ sông.</p>') : '')}<h3 class="ph3">Mọi người ở khu này</h3>${list ? `<div class="list">${list}</div>` : '<p class="empty">Khu này không có ai.</p>'}
     <div class="row-btns"><button class="btn ghost" data-act="map">Chuyển khu</button></div>`, {label: 'Bản đồ khu vực', wide: true});
   mmTick();
 }

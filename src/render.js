@@ -116,6 +116,12 @@ function draw(tnow) {
     if (n.look.pet) { n.pet = n.pet || {x: n.x - 20, y: n.y}; n.pet.x += (n.x - 22 - n.pet.x) * 0.08; n.pet.y += (n.y + 2 - n.pet.y) * 0.08; ents.push({y: n.pet.y, d: () => drawPet(n.look.pet, (n.look.lv || {})[n.look.pet] || 0, n.pet.x, n.pet.y, tnow, moving)}); }
     ents.push({y: n.y, d: () => { shadow(n.x, n.y); if (n.look.aura && FASH[n.look.aura]) drawAura(ctx, n.look.aura, (n.look.lv || {})[n.look.aura] || 0, n.x, n.y, tnow); drawChibi(ctx, n.look, chibiFrame(moving, n.phase, tnow, null, 0, n.def.id), n.dir, n.x, n.y, pxs, 'npc-' + n.def.id); }});
   }
+  const OTHERS = mpList();
+  for (const o of OTHERS) {
+    const ol = o.look;
+    if (ol.pet && FASH[ol.pet]) { o.pet = o.pet || {x: o.x - 20, y: o.y}; o.pet.x += (o.x - 22 - o.pet.x) * 0.08; o.pet.y += (o.y + 2 - o.pet.y) * 0.08; ents.push({y: o.pet.y, d: () => drawPet(ol.pet, (ol.lv || {})[ol.pet] || 0, o.pet.x, o.pet.y, tnow, o.moving)}); }
+    ents.push({y: o.y, d: () => { if (ol.aura && FASH[ol.aura]) drawAura(ctx, ol.aura, (ol.lv || {})[ol.aura] || 0, o.x, o.y, tnow); shadow(o.x, o.y); drawChibi(ctx, ol, chibiFrame(o.moving, o.phase, tnow, null, o.emote, 'p-' + o.uid), o.dir, o.x, o.y, pxs, 'p-' + o.uid); }});
+  }
   const L = fullLook(S.look);
   if (L.pet) { const tx = P.x + (P.dir === 'l' ? 24 : -24), ty = P.y + 2; P.pet = P.pet || {x: tx, y: ty}; P.pet.x += (tx - P.pet.x) * 0.07; P.pet.y += (ty - P.pet.y) * 0.07; ents.push({y: P.pet.y, d: () => drawPet(L.pet, (L.lv || {})[L.pet] || 0, P.pet.x, P.pet.y, tnow, P.moving)}); }
   ents.push({y: P.y + 0.1, d: () => {
@@ -140,6 +146,7 @@ function draw(tnow) {
   if (m.id === 'farm') m.plots.forEach((pp, i) => { const b = plotBadge(i, now); if (!b) return; badge(sx(pp[0] * TS + 16), sy(pp[1] * TS - 14) + Math.sin(tnow / 300 + i) * 2, b); });
   if (m.id === 'farm') ANIMS.forEach((a, i) => { const st = S.animals[i]; if (!a || !st) return; const y = sy(a.y - ANI_SIZE[a.t][1]) + Math.sin(tnow / 300 + i) * 2; if (st.st === 'ready') badge(sx(a.x), y, 'gift'); else if (st.st === 'hungry') bubble(sx(a.x), y + 8, 'Hungry!'); else { const k = clamp(1 - (st.r - now) / (ANIMAL[a.t].time * 1000), 0, 1); progress(sx(a.x), sy(a.y) + 8, k); } });
   for (const n of NPCS) { nameTag(sx(n.x), sy(n.y - 68), n.def.name, '#10b981'); if (n.bubble) bubble(sx(n.x), sy(n.y - 78), n.bubble.text); }
+  for (const o of OTHERS) { nameTag(sx(o.x), sy(o.y - 68), `${o.name} · ${o.cefr}`, '#3b82f6'); if (o.say && tnow - o.say.t < 5000) bubble(sx(o.x), sy(o.y - 78), o.say.text); }
   nameTag(sx(P.x), sy(P.y - 68), S.name || 'Bạn', '#7c5cff');
   if (P.say && tnow - P.say.t < 4000) bubble(sx(P.x), sy(P.y - 78), P.say.text);
   if (P.act && P.act.kind === 'fish' && P.act.bit) bubble(sx(P.act.bx), sy(P.act.by - 6), '!');

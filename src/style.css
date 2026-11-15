@@ -650,3 +650,7 @@ textarea.field{resize:vertical;line-height:1.5}
 html,body{-webkit-tap-highlight-color:transparent}
 *{-webkit-tap-highlight-color:transparent}
 #world,.stage{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;outline:none}
+
+/* ---------- other players ---------- */
+.pcard{display:flex;gap:16px;align-items:center;flex-wrap:wrap}.pcard .pv.big{background:linear-gradient(160deg,#dbeafe,#fce7f3)}
+.pcard>div{flex:1 1 240px}

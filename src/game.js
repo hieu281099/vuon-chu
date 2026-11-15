@@ -339,7 +339,7 @@ function arrive() {
 }
 function changeMap(to, tx, ty) {
   S.map = to; const c = center(tx, ty); P.x = c.x; P.y = c.y; P.path = []; P.act = null; P.dir = tx < 3 ? 'r' : 'l';
-  spawnNPCs(); FX = []; renderHUD(); markDirty();
+  spawnNPCs(); FX = []; renderHUD(); markDirty(); mpJoin();
   const M = MAPS[to]; showBanner(M.en, M.vi); speak(M.en, true);
 }
 function spawnNPCs() {

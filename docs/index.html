@@ -657,6 +657,10 @@ html,body{-webkit-tap-highlight-color:transparent}
 *{-webkit-tap-highlight-color:transparent}
 #world,.stage{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;outline:none}
 
+/* ---------- other players ---------- */
+.pcard{display:flex;gap:16px;align-items:center;flex-wrap:wrap}.pcard .pv.big{background:linear-gradient(160deg,#dbeafe,#fce7f3)}
+.pcard>div{flex:1 1 240px}
+
 </style>
 
 <div id="rotate" class="rotate" role="dialog" aria-label="Xoay ngang điện thoại"><div class="rotcard">
@@ -2849,7 +2853,7 @@ function arrive() {
 }
 function changeMap(to, tx, ty) {
   S.map = to; const c = center(tx, ty); P.x = c.x; P.y = c.y; P.path = []; P.act = null; P.dir = tx < 3 ? 'r' : 'l';
-  spawnNPCs(); FX = []; renderHUD(); markDirty();
+  spawnNPCs(); FX = []; renderHUD(); markDirty(); mpJoin();
   const M = MAPS[to]; showBanner(M.en, M.vi); speak(M.en, true);
 }
 function spawnNPCs() {
@@ -4025,6 +4029,100 @@ function acctHTML() {
   return `<div class="acct"><b>Tài khoản</b><p class="note">${where} Đăng nhập tài khoản Vườn Chữ để chơi chung tiến độ trên web và app.</p><p class="note" id="savebadge" data-state="ok"></p><div class="row-btns"><button class="btn sm" data-act="login">Đăng nhập</button><button class="btn ghost sm" data-act="register">Tạo tài khoản</button></div></div>`;
 }
 
+/* ===================== MULTIPLAYER: meet other players in public areas (Supabase Realtime: presence + broadcast) ===================== */
+// One channel per public map. The farm stays private. Only logged-in Vườn Chữ accounts appear to each other.
+const MP_MAPS = ['village', 'park', 'river'];
+const MP = {ws: null, ref: 0, topic: null, joinRef: null, joined: false, others: {}, hb: null, retry: 0, sent: {x: 0, y: 0, dir: '', t: 0}, lookKey: '', lastStep: performance.now()};
+const BAD_WORDS = /\b(đm|dm|vcl|vkl|địt|dit me|lồn|cặc|đéo|fuck|shit|bitch|dick|cunt)\b/gi;
+const cleanText = t => String(t || '').slice(0, 60).replace(BAD_WORDS, m => '*'.repeat(m.length));
+const mpOn = () => Store.mode === 'supa' && !!SB.sess && !!Store.uid;
+function mpSend(topic, event, payload) { if (MP.ws && MP.ws.readyState === 1) { const ref = String(++MP.ref); MP.ws.send(JSON.stringify({topic, event, payload, ref})); return ref; } return null; }
+function mpConnect() {
+  if (MP.ws || !mpOn() || typeof WebSocket === 'undefined') return;
+  let ws; try { ws = new WebSocket(`${SB.url.replace(/^http/, 'ws')}/realtime/v1/websocket?apikey=${encodeURIComponent(SB.key)}&vsn=1.0.0`); } catch (e) { return; }
+  MP.ws = ws;
+  ws.onopen = () => { MP.retry = 0; clearInterval(MP.hb); MP.hb = setInterval(() => mpSend('phoenix', 'heartbeat', {}), 25000); MP.topic = null; mpJoin(); };
+  ws.onmessage = e => { try { mpOnMsg(JSON.parse(e.data)); } catch (er) {} };
+  ws.onclose = () => { clearInterval(MP.hb); MP.ws = null; MP.topic = null; MP.joined = false; MP.others = {}; if (mpOn()) setTimeout(mpConnect, Math.min(30000, 2000 * (++MP.retry))); };
+  ws.onerror = () => {};
+}
+function mpMe() {
+  return {uid: Store.uid, name: (S.name || SB.sess.username).slice(0, 16), user: SB.sess.username, look: S.look, cefr: S.cefr || 'A1', track: S.study.track, x: Math.round(P.x), y: Math.round(P.y), dir: P.dir};
+}
+// join the channel of the current map (leaving the previous one)
+function mpJoin() {
+  if (!MP.ws) { mpConnect(); return; }
+  const want = mpOn() && MP_MAPS.includes(S.map) ? `realtime:vc-${S.map}` : null;
+  if (MP.topic === want) return;
+  if (MP.topic) mpSend(MP.topic, 'phx_leave', {});
+  MP.topic = want; MP.joined = false; MP.others = {};
+  if (want) MP.joinRef = mpSend(want, 'phx_join', {config: {broadcast: {self: false, ack: false}, presence: {key: Store.uid}, private: false}});
+}
+function mpTrack() { if (MP.joined) { MP.lookKey = JSON.stringify(S.look) + S.name + S.cefr; mpSend(MP.topic, 'presence', {type: 'presence', event: 'track', payload: mpMe()}); } }
+function mpCast(event, payload) { if (MP.joined) mpSend(MP.topic, 'broadcast', {type: 'broadcast', event, payload: Object.assign({uid: Store.uid}, payload)}); }
+function mpUpsert(m) {
+  if (!m || !m.uid || m.uid === Store.uid) return;
+  const o = MP.others[m.uid] || (MP.others[m.uid] = {uid: m.uid, x: m.x, y: m.y, tx: m.x, ty: m.y, dir: m.dir || 'd', phase: 0, moving: false});
+  Object.assign(o, {name: cleanText(m.name) || 'Người chơi', user: m.user, cefr: m.cefr || 'A1', track: m.track, look: fullLook(m.look || {}), seen: Date.now()});
+  if (typeof m.x === 'number') { o.tx = m.x; o.ty = m.y; }
+}
+function mpOnMsg(msg) {
+  const {topic, event, payload, ref} = msg;
+  if (topic !== MP.topic) return;
+  if (event === 'phx_reply' && ref === MP.joinRef) { if (payload && payload.status === 'ok') { MP.joined = true; mpTrack(); } return; }
+  if (event === 'presence_state') { for (const [k, v] of Object.entries(payload || {})) if (v.metas && v.metas[0]) mpUpsert(v.metas[v.metas.length - 1]); return; }
+  if (event === 'presence_diff') {
+    for (const [k, v] of Object.entries(payload.joins || {})) if (v.metas && v.metas[0]) mpUpsert(v.metas[v.metas.length - 1]);
+    for (const k of Object.keys(payload.leaves || {})) if (!(payload.joins || {})[k]) delete MP.others[k];
+    return;
+  }
+  if (event !== 'broadcast' || !payload) return;
+  const ev = payload.event, d = payload.payload || {}, o = MP.others[d.uid];
+  if (ev === 'mv' && o) { o.tx = d.x; o.ty = d.y; o.dir = d.dir || o.dir; o.seen = Date.now(); }
+  if (ev === 'say' && o) { o.say = {text: cleanText(d.text), t: performance.now()}; }
+  if (ev === 'emote' && o) { o.emote = performance.now(); o.say = {text: cleanText(d.text || 'Hi!'), t: performance.now()}; }
+  if ((ev === 'wave' || ev === 'like') && d.to === Store.uid) {
+    const who = o ? o.name : cleanText(d.name);
+    if (o) o.emote = performance.now();
+    if (ev === 'wave') toast(`<b>${esc(who)}</b> vẫy tay chào bạn! 👋`, 4000);
+    else { S.likes = (S.likes || 0) + 1; markDirty(); toast(`<b>${esc(who)}</b> khen bộ đồ của bạn đẹp quá!`, 4000); sfx('coin'); }
+  }
+}
+// every 150 ms: send our position when it changed (and a keep-alive every 4 s), re-announce when our look changes
+setInterval(() => {
+  if (!S || !P) return;
+  if (mpOn() && !MP.ws) mpConnect();
+  if (!MP.joined) return;
+  const now = Date.now(), moved = Math.hypot(P.x - MP.sent.x, P.y - MP.sent.y) > 2 || P.dir !== MP.sent.dir;
+  if (moved || now - MP.sent.t > 4000) { mpCast('mv', {x: Math.round(P.x), y: Math.round(P.y), dir: P.dir}); MP.sent = {x: P.x, y: P.y, dir: P.dir, t: now}; }
+  if (JSON.stringify(S.look) + S.name + S.cefr !== MP.lookKey) mpTrack();
+}, 150);
+// other players in this area, smoothly following their latest position
+function mpList() {
+  const now = performance.now(), dt = Math.min(0.1, (now - MP.lastStep) / 1000); MP.lastStep = now;
+  const list = [];
+  for (const o of Object.values(MP.others)) {
+    if (Date.now() - (o.seen || 0) > 45000) { delete MP.others[o.uid]; continue; }
+    const dx = o.tx - o.x, dy = o.ty - o.y, d = Math.hypot(dx, dy);
+    if (d > 260) { o.x = o.tx; o.y = o.ty; }
+    else if (d > 0.5) { const step = Math.min(d, Math.max(70, d * 6) * dt); o.x += dx / d * step; o.y += dy / d * step; }
+    o.moving = d > 1.5; if (o.moving) o.phase += dt * 10;
+    list.push(o);
+  }
+  return list;
+}
+function mpAt(wx, wy) { return Object.values(MP.others).find(o => Math.abs(wx - o.x) < 14 && wy > o.y - 56 && wy < o.y + 6); }
+function openPlayer(o) {
+  const L = o.look;
+  openModal(`<div class="pcard"><img class="pv big" src="${portraitSVG(L, {full: true, hand: true})}" alt=""><div>
+    <h2 class="ptitle">${esc(o.name)}</h2><p class="psub">@${esc(o.user || '')} · Trình độ <b>${esc(o.cefr)}</b>${o.track && TRACKS[o.track] ? ' · ' + esc(TRACKS[o.track].vi) : ''}</p>
+    <div class="row-btns"><button class="btn" data-act="mp-wave" data-id="${o.uid}">Vẫy tay chào</button><button class="btn gold" data-act="mp-like" data-id="${o.uid}">Khen bộ đồ</button><button class="btn ghost" data-act="mp-go" data-id="${o.uid}">Đi tới</button></div>
+    <p class="note">Nói chuyện bằng ô "Nói tiếng Anh…" ở góc dưới: mọi người trong khu đều thấy bong bóng chat của bạn.</p></div></div>`, {label: 'Người chơi', wide: true});
+}
+function mpWave(uid) { const o = MP.others[uid]; if (!o) return; P.emote = performance.now(); P.say = {text: `Hi, ${o.name}!`, t: performance.now()}; mpCast('wave', {to: uid, name: S.name}); mpCast('emote', {text: `Hi, ${o.name}!`}); closeModal(); }
+function mpLike(uid) { const o = MP.others[uid]; if (!o) return; mpCast('like', {to: uid, name: S.name}); toast(`Đã khen bộ đồ của <b>${esc(o.name)}</b>.`); closeModal(); }
+function mpGo(uid) { const o = MP.others[uid]; if (!o) return; closeModal(); const [tx, ty] = tileOf(o.x, o.y); approach(tx, ty, 1.4, null, true); }
+
 /* ===================== TEST BANK (original material written for Vườn Chữ) ===================== */
 // Question shapes: {t:'mcq', q, options:[...], answer:index} | {t:'tfng', q, answer:'TRUE'|'FALSE'|'NOT GIVEN'}
 //                  {t:'gap', q, answer:[accepted strings]} | {t:'write', ...} | {t:'speak', ...}
@@ -4707,6 +4805,12 @@ function draw(tnow) {
     if (n.look.pet) { n.pet = n.pet || {x: n.x - 20, y: n.y}; n.pet.x += (n.x - 22 - n.pet.x) * 0.08; n.pet.y += (n.y + 2 - n.pet.y) * 0.08; ents.push({y: n.pet.y, d: () => drawPet(n.look.pet, (n.look.lv || {})[n.look.pet] || 0, n.pet.x, n.pet.y, tnow, moving)}); }
     ents.push({y: n.y, d: () => { shadow(n.x, n.y); if (n.look.aura && FASH[n.look.aura]) drawAura(ctx, n.look.aura, (n.look.lv || {})[n.look.aura] || 0, n.x, n.y, tnow); drawChibi(ctx, n.look, chibiFrame(moving, n.phase, tnow, null, 0, n.def.id), n.dir, n.x, n.y, pxs, 'npc-' + n.def.id); }});
   }
+  const OTHERS = mpList();
+  for (const o of OTHERS) {
+    const ol = o.look;
+    if (ol.pet && FASH[ol.pet]) { o.pet = o.pet || {x: o.x - 20, y: o.y}; o.pet.x += (o.x - 22 - o.pet.x) * 0.08; o.pet.y += (o.y + 2 - o.pet.y) * 0.08; ents.push({y: o.pet.y, d: () => drawPet(ol.pet, (ol.lv || {})[ol.pet] || 0, o.pet.x, o.pet.y, tnow, o.moving)}); }
+    ents.push({y: o.y, d: () => { if (ol.aura && FASH[ol.aura]) drawAura(ctx, ol.aura, (ol.lv || {})[ol.aura] || 0, o.x, o.y, tnow); shadow(o.x, o.y); drawChibi(ctx, ol, chibiFrame(o.moving, o.phase, tnow, null, o.emote, 'p-' + o.uid), o.dir, o.x, o.y, pxs, 'p-' + o.uid); }});
+  }
   const L = fullLook(S.look);
   if (L.pet) { const tx = P.x + (P.dir === 'l' ? 24 : -24), ty = P.y + 2; P.pet = P.pet || {x: tx, y: ty}; P.pet.x += (tx - P.pet.x) * 0.07; P.pet.y += (ty - P.pet.y) * 0.07; ents.push({y: P.pet.y, d: () => drawPet(L.pet, (L.lv || {})[L.pet] || 0, P.pet.x, P.pet.y, tnow, P.moving)}); }
   ents.push({y: P.y + 0.1, d: () => {
@@ -4731,6 +4835,7 @@ function draw(tnow) {
   if (m.id === 'farm') m.plots.forEach((pp, i) => { const b = plotBadge(i, now); if (!b) return; badge(sx(pp[0] * TS + 16), sy(pp[1] * TS - 14) + Math.sin(tnow / 300 + i) * 2, b); });
   if (m.id === 'farm') ANIMS.forEach((a, i) => { const st = S.animals[i]; if (!a || !st) return; const y = sy(a.y - ANI_SIZE[a.t][1]) + Math.sin(tnow / 300 + i) * 2; if (st.st === 'ready') badge(sx(a.x), y, 'gift'); else if (st.st === 'hungry') bubble(sx(a.x), y + 8, 'Hungry!'); else { const k = clamp(1 - (st.r - now) / (ANIMAL[a.t].time * 1000), 0, 1); progress(sx(a.x), sy(a.y) + 8, k); } });
   for (const n of NPCS) { nameTag(sx(n.x), sy(n.y - 68), n.def.name, '#10b981'); if (n.bubble) bubble(sx(n.x), sy(n.y - 78), n.bubble.text); }
+  for (const o of OTHERS) { nameTag(sx(o.x), sy(o.y - 68), `${o.name} · ${o.cefr}`, '#3b82f6'); if (o.say && tnow - o.say.t < 5000) bubble(sx(o.x), sy(o.y - 78), o.say.text); }
   nameTag(sx(P.x), sy(P.y - 68), S.name || 'Bạn', '#7c5cff');
   if (P.say && tnow - P.say.t < 4000) bubble(sx(P.x), sy(P.y - 78), P.say.text);
   if (P.act && P.act.kind === 'fish' && P.act.bit) bubble(sx(P.act.bx), sy(P.act.by - 6), '!');
@@ -4837,6 +4942,8 @@ function mmDraw(cv, k, big) {
   for (const n of NPCS) { const [x, y] = at(n.x, n.y), r = Math.max(2.6, k * (big ? 0.6 : 0.55));
     g.fillStyle = ROLE_COL[n.def.role] || '#8E8AA8'; g.strokeStyle = '#FFFFFF'; g.lineWidth = big ? 2 : 1.2; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill(); g.stroke();
     if (big) { g.font = `800 ${Math.round(k * 1.1)}px Nunito, sans-serif`; g.textAlign = 'center'; g.lineWidth = 3; g.strokeStyle = 'rgba(30,27,58,.85)'; g.strokeText(n.def.name, x, y - r - 4); g.fillStyle = '#FFFFFF'; g.fillText(n.def.name, x, y - r - 4); } }
+  for (const o of Object.values(MP.others)) { const [x, y] = at(o.x, o.y), r = Math.max(2.8, k * 0.6); g.fillStyle = '#3B82F6'; g.strokeStyle = '#FFFFFF'; g.lineWidth = big ? 2 : 1.2; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill(); g.stroke();
+    if (big) { g.font = `800 ${Math.round(k * 1.1)}px Nunito, sans-serif`; g.textAlign = 'center'; g.lineWidth = 3; g.strokeStyle = 'rgba(30,27,58,.85)'; g.strokeText(o.name, x, y - r - 4); g.fillStyle = '#BFDBFE'; g.fillText(o.name, x, y - r - 4); } }
   const [px, py] = at(P.x, P.y), pulse = 1 + 0.25 * Math.sin(performance.now() / 220), pr = Math.max(3.2, k * 0.7) * pulse;
   g.fillStyle = 'rgba(255,111,181,.35)'; g.beginPath(); g.arc(px, py, pr * 1.9, 0, Math.PI * 2); g.fill();
   g.fillStyle = '#FF3D8E'; g.strokeStyle = '#FFFFFF'; g.lineWidth = big ? 2.5 : 1.6; g.beginPath(); g.arc(px, py, pr, 0, Math.PI * 2); g.fill(); g.stroke();
@@ -4845,7 +4952,7 @@ function mmDraw(cv, k, big) {
 function mmTick() {
   const cv = $('#minimap'); if (!cv || !S || !MAPS) return;
   const m = MAPS[S.map], wrap = $('#mmwrap'); if (!m || !wrap) return;
-  wrap.hidden = $('#app').hidden; $('#mmname').textContent = m.vi;
+  wrap.hidden = $('#app').hidden; { const n = Object.keys(MP.others).length; $('#mmname').textContent = m.vi + (MP_MAPS.includes(S.map) && mpOn() ? ` · ${n + 1} người` : ''); }
   mmDraw(cv, window.innerWidth < 600 ? 3 : 4, false);
   const bigCv = $('#mmbig'); if (bigCv) mmDraw(bigCv, Math.max(8, Math.floor(Math.min(window.innerWidth - 60, 720) / m.w)), true);
 }
@@ -4856,7 +4963,7 @@ function openMinimap() {
   const places = m.objs.filter(o => o.t === 'house' && o.sign).map(o => `<span class="chip">${esc(o.sign)}</span>`).join('');
   openModal(`<h2 class="ptitle">Bản đồ ${esc(m.vi)}</h2><p class="psub">Chấm hồng là bạn, chấm màu là người trong làng. Ô vàng là lối sang khu khác.</p>
     <div class="mmbigwrap"><canvas id="mmbig"></canvas></div>${places ? `<div class="chips">${places}</div>` : ''}
-    <h3 class="ph3">Mọi người ở khu này</h3>${list ? `<div class="list">${list}</div>` : '<p class="empty">Khu này không có ai.</p>'}
+    ${Object.keys(MP.others).length ? `<h3 class="ph3">Người chơi đang ở đây</h3><div class="list">${Object.values(MP.others).map(o => `<button class="row-item" data-act="mp-card" data-id="${o.uid}"><span class="mmdot" style="background:#3B82F6"></span><span class="ri-main"><b>${esc(o.name)}</b><small>Trình độ ${esc(o.cefr)}</small></span><span class="ri-side">Xem</span></button>`).join('')}</div>` : (MP_MAPS.includes(S.map) ? (mpOn() ? '<p class="note">Chưa có người chơi nào khác ở khu này.</p>' : '<p class="note">Đăng nhập tài khoản Vườn Chữ để gặp người chơi khác ở Làng, Công viên, Bờ sông.</p>') : '')}<h3 class="ph3">Mọi người ở khu này</h3>${list ? `<div class="list">${list}</div>` : '<p class="empty">Khu này không có ai.</p>'}
     <div class="row-btns"><button class="btn ghost" data-act="map">Chuyển khu</button></div>`, {label: 'Bản đồ khu vực', wide: true});
   mmTick();
 }
@@ -4909,6 +5016,7 @@ cv.addEventListener('pointerdown', e => {
   const wx = view.camX + (e.clientX - r.left) / view.s, wy = view.camY + (e.clientY - r.top) / view.s, [tx, ty] = tileOf(wx, wy);
   tapMark = {x: wx, y: wy, t: performance.now()};
   try { AC && AC.state === 'suspended' && AC.resume(); } catch (er) {}
+  { const o = mpAt(wx, wy); if (o) return openPlayer(o); }
   for (const n of NPCS) if (Math.abs(wx - n.x) < 14 && wy > n.y - 56 && wy < n.y + 6) { const [nx, ny] = tileOf(n.x, n.y); return approach(nx, ny, 1.6, () => talk(n), true); }
   if (m.id === 'farm') {
     for (let i = 0; i < ANIMS.length; i++) { const a = ANIMS[i]; if (!a) continue; const [aw, ah] = ANI_SIZE[a.t]; if (Math.abs(wx - a.x) < aw / 2 && wy > a.y - ah && wy < a.y + 6) { const [ax, ay] = tileOf(a.x, a.y); return approach(ax, ay, 99, () => onAnimal(i)); } }
@@ -5050,7 +5158,11 @@ document.addEventListener('click', e => {
     case 'settings': return openSettings();
     case 'credits': return openCredits();
     case 'help': return openHelp();
-    case 'emote': P.emote = performance.now(); P.say = {text: rand(['Hello!', 'Yay!', 'Hi there!']), t: performance.now()}; return;
+    case 'emote': { const tx = rand(['Hello!', 'Yay!', 'Hi there!']); P.emote = performance.now(); P.say = {text: tx, t: performance.now()}; mpCast('emote', {text: tx}); return; }
+    case 'mp-wave': return mpWave(d.id);
+    case 'mp-card': { const o = MP.others[d.id]; return o ? openPlayer(o) : closeModal(); }
+    case 'mp-like': return mpLike(d.id);
+    case 'mp-go': return mpGo(d.id);
     case 'sound': S.sound = !S.sound; markDirty(); return openSettings();
     case 'reset':
       if (Date.now() - resetArmed < 4000) { resetArmed = 0; S = newGame(); startWorld(); saveNow(true); openCreator(true); }
@@ -5060,7 +5172,7 @@ document.addEventListener('click', e => {
 });
 $('#chatform').addEventListener('submit', e => {
   e.preventDefault(); const inp = $('#chatinput'), text = inp.value.trim().slice(0, 60); if (!text || !P) return;
-  P.say = {text, t: performance.now()}; inp.value = '';
+  P.say = {text: cleanText(text), t: performance.now()}; inp.value = ''; mpCast('say', {text});
   const near = NPCS.filter(n => Math.hypot(n.x - P.x, n.y - P.y) < 5 * TS);
   if (near.length && /\b(hi|hello|hey|good (morning|afternoon|evening))\b/i.test(text)) { const n = near[0]; setTimeout(() => { n.bubble = {text: `Hello, ${S.name}!`, t: performance.now()}; speak(`Hello, ${S.name}!`, true); }, 600); }
   else if (near.length && /\b(thank|thanks)\b/i.test(text)) { const n = near[0]; setTimeout(() => { n.bubble = {text: 'You are welcome!', t: performance.now()}; }, 600); }
@@ -5153,7 +5265,7 @@ async function boot(hotData) {
 try { if (localStorage.getItem('vc-portrait-ok')) document.documentElement.classList.add('portrait-ok'); } catch (e) {}
 document.getElementById('rot-skip').addEventListener('click', () => { document.documentElement.classList.add('portrait-ok'); try { localStorage.setItem('vc-portrait-ok', '1'); } catch (e) {} });
 window.addEventListener('pointerdown', function lockOnce() { window.removeEventListener('pointerdown', lockOnce); try { if (screen.orientation && screen.orientation.lock && (matchMedia('(display-mode: fullscreen)').matches || matchMedia('(display-mode: standalone)').matches)) screen.orientation.lock('landscape').catch(() => {}); } catch (e) {} }, {passive: true});
-if (location.hostname === '127.0.0.1') window.__vc = () => ({S, P, ANIMS, NPCS, MAPS, view, approach, changeMap, talk, spawnAnimals, onPlot, ex: () => EX, autoSimulate, TW: TRACK_WORDS, NPC_DEFS, readiness, renderHUD, FASHION, HAIR_ITEMS, SPA_ITEMS, spaPreview, chibiSVG, petSVG, hairPreview, fullLook, step: (sec) => { let t = performance.now(); for (let i = 0; i < sec * 20; i++) { t += 50; update(0.05, t); } draw(t); }});
+if (['127.0.0.1', 'localhost'].includes(location.hostname)) window.__vc = () => ({S, P, ANIMS, NPCS, MAPS, view, approach, changeMap, talk, spawnAnimals, onPlot, ex: () => EX, autoSimulate, TW: TRACK_WORDS, NPC_DEFS, MP, readiness, renderHUD, FASHION, HAIR_ITEMS, SPA_ITEMS, spaPreview, chibiSVG, petSVG, hairPreview, fullLook, step: (sec) => { let t = performance.now(); for (let i = 0; i < sec * 20; i++) { t += 50; update(0.05, t); } draw(t); }});
 try { window.claude && window.claude.hot && window.claude.hot.snapshot && window.claude.hot.snapshot(() => { if (P && S) { S.px = P.x; S.py = P.y; } return {S}; }); } catch (e) {}
 const HOT = window.claude && window.claude.hot;
 if (HOT && HOT.ready) HOT.ready(boot); else boot((HOT && HOT.data) || {});

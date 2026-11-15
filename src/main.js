@@ -42,6 +42,7 @@ cv.addEventListener('pointerdown', e => {
   const wx = view.camX + (e.clientX - r.left) / view.s, wy = view.camY + (e.clientY - r.top) / view.s, [tx, ty] = tileOf(wx, wy);
   tapMark = {x: wx, y: wy, t: performance.now()};
   try { AC && AC.state === 'suspended' && AC.resume(); } catch (er) {}
+  { const o = mpAt(wx, wy); if (o) return openPlayer(o); }
   for (const n of NPCS) if (Math.abs(wx - n.x) < 14 && wy > n.y - 56 && wy < n.y + 6) { const [nx, ny] = tileOf(n.x, n.y); return approach(nx, ny, 1.6, () => talk(n), true); }
   if (m.id === 'farm') {
     for (let i = 0; i < ANIMS.length; i++) { const a = ANIMS[i]; if (!a) continue; const [aw, ah] = ANI_SIZE[a.t]; if (Math.abs(wx - a.x) < aw / 2 && wy > a.y - ah && wy < a.y + 6) { const [ax, ay] = tileOf(a.x, a.y); return approach(ax, ay, 99, () => onAnimal(i)); } }
@@ -183,7 +184,11 @@ document.addEventListener('click', e => {
     case 'settings': return openSettings();
     case 'credits': return openCredits();
     case 'help': return openHelp();
-    case 'emote': P.emote = performance.now(); P.say = {text: rand(['Hello!', 'Yay!', 'Hi there!']), t: performance.now()}; return;
+    case 'emote': { const tx = rand(['Hello!', 'Yay!', 'Hi there!']); P.emote = performance.now(); P.say = {text: tx, t: performance.now()}; mpCast('emote', {text: tx}); return; }
+    case 'mp-wave': return mpWave(d.id);
+    case 'mp-card': { const o = MP.others[d.id]; return o ? openPlayer(o) : closeModal(); }
+    case 'mp-like': return mpLike(d.id);
+    case 'mp-go': return mpGo(d.id);
     case 'sound': S.sound = !S.sound; markDirty(); return openSettings();
     case 'reset':
       if (Date.now() - resetArmed < 4000) { resetArmed = 0; S = newGame(); startWorld(); saveNow(true); openCreator(true); }
@@ -193,7 +198,7 @@ document.addEventListener('click', e => {
 });
 $('#chatform').addEventListener('submit', e => {
   e.preventDefault(); const inp = $('#chatinput'), text = inp.value.trim().slice(0, 60); if (!text || !P) return;
-  P.say = {text, t: performance.now()}; inp.value = '';
+  P.say = {text: cleanText(text), t: performance.now()}; inp.value = ''; mpCast('say', {text});
   const near = NPCS.filter(n => Math.hypot(n.x - P.x, n.y - P.y) < 5 * TS);
   if (near.length && /\b(hi|hello|hey|good (morning|afternoon|evening))\b/i.test(text)) { const n = near[0]; setTimeout(() => { n.bubble = {text: `Hello, ${S.name}!`, t: performance.now()}; speak(`Hello, ${S.name}!`, true); }, 600); }
   else if (near.length && /\b(thank|thanks)\b/i.test(text)) { const n = near[0]; setTimeout(() => { n.bubble = {text: 'You are welcome!', t: performance.now()}; }, 600); }
@@ -286,7 +291,7 @@ async function boot(hotData) {
 try { if (localStorage.getItem('vc-portrait-ok')) document.documentElement.classList.add('portrait-ok'); } catch (e) {}
 document.getElementById('rot-skip').addEventListener('click', () => { document.documentElement.classList.add('portrait-ok'); try { localStorage.setItem('vc-portrait-ok', '1'); } catch (e) {} });
 window.addEventListener('pointerdown', function lockOnce() { window.removeEventListener('pointerdown', lockOnce); try { if (screen.orientation && screen.orientation.lock && (matchMedia('(display-mode: fullscreen)').matches || matchMedia('(display-mode: standalone)').matches)) screen.orientation.lock('landscape').catch(() => {}); } catch (e) {} }, {passive: true});
-if (location.hostname === '127.0.0.1') window.__vc = () => ({S, P, ANIMS, NPCS, MAPS, view, approach, changeMap, talk, spawnAnimals, onPlot, ex: () => EX, autoSimulate, TW: TRACK_WORDS, NPC_DEFS, readiness, renderHUD, FASHION, HAIR_ITEMS, SPA_ITEMS, spaPreview, chibiSVG, petSVG, hairPreview, fullLook, step: (sec) => { let t = performance.now(); for (let i = 0; i < sec * 20; i++) { t += 50; update(0.05, t); } draw(t); }});
+if (['127.0.0.1', 'localhost'].includes(location.hostname)) window.__vc = () => ({S, P, ANIMS, NPCS, MAPS, view, approach, changeMap, talk, spawnAnimals, onPlot, ex: () => EX, autoSimulate, TW: TRACK_WORDS, NPC_DEFS, MP, readiness, renderHUD, FASHION, HAIR_ITEMS, SPA_ITEMS, spaPreview, chibiSVG, petSVG, hairPreview, fullLook, step: (sec) => { let t = performance.now(); for (let i = 0; i < sec * 20; i++) { t += 50; update(0.05, t); } draw(t); }});
 try { window.claude && window.claude.hot && window.claude.hot.snapshot && window.claude.hot.snapshot(() => { if (P && S) { S.px = P.x; S.py = P.y; } return {S}; }); } catch (e) {}
 const HOT = window.claude && window.claude.hot;
 if (HOT && HOT.ready) HOT.ready(boot); else boot((HOT && HOT.data) || {});

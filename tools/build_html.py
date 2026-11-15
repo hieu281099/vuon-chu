@@ -6,7 +6,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC, DIST = ROOT / "src", ROOT / "dist"
-ORDER = ["gen_nemo.js", "data.js", "chibi.js", "scene.js", "engine.js", "world.js", "game.js", "farm_extra.js", "lottery.js", "post_bait.js", "npc_gear.js", "level.js", "salon.js", "spa.js", "cloud.js", "tests_data.js", "tests.js", "render.js", "minimap.js", "main.js"]
+ORDER = ["gen_nemo.js", "data.js", "chibi.js", "scene.js", "engine.js", "world.js", "game.js", "farm_extra.js", "lottery.js", "post_bait.js", "npc_gear.js", "level.js", "salon.js", "spa.js", "cloud.js", "mp.js", "tests_data.js", "tests.js", "render.js", "minimap.js", "main.js"]
 def src(f):
     t = (SRC / f).read_text(encoding="utf-8")
     if f == "data.js":  # merge the expanded vocabulary before the word index is built
