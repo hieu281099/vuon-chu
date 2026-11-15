@@ -72,7 +72,7 @@ function openSpa() {
 function spaPick(id) {
   const x = SPA[id]; if (!x || spaOwned(id) || (x.lvl || 1) > S.lvl || !salAfford(x)) return;
   const same = SPA_ITEMS.filter(y => y.id !== id && y.en !== x.en && (y.k === x.k || Math.random() < 0.3));
-  SPAS.buy = {id, opts: shuffle([x.en, ...shuffle(same).slice(0, 3).map(y => y.en)]), done: false}; spaRefresh(); speak('What is this called in English?', true);
+  SPAS.buy = {id, opts: shuffle([x.en, ...shuffle(same).slice(0, 3).map(y => y.en)]), done: false}; if (PLAY()) return spaAnswer(SPAS.buy.opts.indexOf(x.en)); spaRefresh(); speak('What is this called in English?', true);
 }
 function spaAnswer(i) {
   const B = SPAS.buy; if (!B || B.done) return; const x = SPA[B.id];

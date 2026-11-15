@@ -9,7 +9,7 @@
   color-scheme:light;
 }
 *{box-sizing:border-box}
-html,body{height:100%}
+html,body{height:100%;margin:0}
 body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.45;overflow:hidden;
   padding-left:max(0px,env(safe-area-inset-left,0px));padding-right:max(0px,env(safe-area-inset-right,0px))}
 button,input{font:inherit;color:inherit}
@@ -679,3 +679,43 @@ html,body{-webkit-tap-highlight-color:transparent}
 .tool>b{font-family:var(--display);font-size:16px}.tool p{margin:0;font-size:13px}.tool small{color:var(--muted);font-size:11.5px}.tool .btn{margin-top:auto;align-self:flex-start}.tool select{font-size:13px;padding:6px 8px}
 @media (max-width:600px){.mapbtns{top:calc(86px + env(safe-area-inset-top,0px));right:8px}.roundbtn{font-size:11px;padding:4px 9px 4px 6px}.tools{grid-template-columns:1fr}}
 @media (max-height:480px) and (orientation:landscape){.mapbtns{top:calc(48px + env(safe-area-inset-top,0px))}.roundbtn{font-size:11px;padding:3px 9px 3px 6px}.roundbtn svg{width:15px;height:15px}.tools{grid-template-columns:repeat(2,1fr)}}
+
+/* ---------- phone menu: dock folds into a Menu button (portrait phones and landscape phones) ---------- */
+.ph-only,.menubtn{display:none}
+.dk.ph-only.on{color:var(--violet)}
+@media (max-width:600px),(max-height:480px) and (orientation:landscape){
+  .menubtn{display:flex;position:absolute;left:max(10px,env(safe-area-inset-left,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:6;flex-direction:column;align-items:center;justify-content:center;gap:1px;width:54px;height:54px;border:0;border-radius:18px;background:var(--grad);color:#fff;font:inherit;font-size:10px;font-weight:800;box-shadow:0 8px 20px rgba(124,92,255,.45);cursor:pointer}
+  .menubtn[hidden]{display:none}
+  .menubtn svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round}
+  .menubtn .dot{position:absolute;top:5px;right:6px;width:10px;height:10px;border-radius:50%;background:var(--pink);border:2px solid #fff}
+  .menu-open .menubtn svg path{d:path("M6 6l12 12M18 6 6 18")}
+  .dock{display:none}
+  .menu-open .dock{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;left:max(10px,env(safe-area-inset-left,0px));right:auto;bottom:calc(72px + env(safe-area-inset-bottom,0px));transform:none;width:min(330px,calc(100vw - 20px));padding:10px;border-radius:22px;z-index:6;box-shadow:0 14px 40px rgba(0,0,0,.28);animation:menuIn .16s ease-out}
+  .menu-open .dock .dk,.menu-open .dock .dk.main{width:auto;flex:none;margin:0;padding:8px 2px 6px;font-size:11px;border-radius:14px;background:var(--surface-2);color:var(--ink,#2b2a40)}
+  .menu-open .dock .dk.main{background:var(--grad);color:#fff;box-shadow:none}
+  .menu-open .dock .dk svg{width:22px;height:22px}
+  .menu-open .dock .dk[hidden]{display:none}
+  .menu-open .dock .dk.ph-only{display:flex}
+  .menu-open .dock .dk.ph-only[hidden]{display:none}
+  .menu-open .dock .dk.ph-only.on{background:var(--violet);color:#fff}
+  .mapbtns .mbrow{display:none}
+  .chat{left:74px;right:max(10px,env(safe-area-inset-right,0px));width:auto;bottom:calc(16px + env(safe-area-inset-bottom,0px))}
+  .hint{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+  .maplabel{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+}
+@media (max-height:480px) and (orientation:landscape){
+  .menubtn{width:48px;height:48px;bottom:8px}
+  .menu-open .dock{grid-template-columns:repeat(5,1fr);width:min(400px,calc(100vw - 20px));bottom:62px}
+  .chat{left:auto;width:min(300px,42vw);bottom:10px}
+  .hint{bottom:calc(64px + env(safe-area-inset-bottom,0px))}
+}
+@keyframes menuIn{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}
+
+/* ---------- learn / play mode ---------- */
+.modepick{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.modeb{display:flex;flex-direction:column;gap:3px;text-align:left;padding:10px 12px;border-radius:14px;border:2px solid var(--line);background:var(--surface-2);font:inherit;cursor:pointer;color:inherit}
+.modeb b{font-size:14px}.modeb small{font-size:12px;color:var(--muted);line-height:1.35}
+.modeb[aria-pressed="true"]{border-color:var(--violet);background:rgba(124,92,255,.1)}
+.modewarn{margin:4px 0 8px;font-size:12px;font-weight:700;color:var(--bad)}
+.mode-play .dock .dk[data-act="study"],.mode-play .dock .dk[data-act="tests"]{display:none!important}
+@media (max-width:460px){.modepick{grid-template-columns:1fr}}

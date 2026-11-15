@@ -4,9 +4,9 @@
 //   lvl 1-3 -> A1, 4-7 -> A2, 8-12 -> B1, 13-18 -> B2, 19+ -> C1.   S.lvl is kept equal to the highest number the current level opens.
 const TIER_MAX = [3, 7, 12, 18, 99];
 const tierOf = n => (n || 1) <= 3 ? 0 : n <= 7 ? 1 : n <= 12 ? 2 : n <= 18 ? 3 : 4;
-const needTag = n => `Cần ${LEVELS[tierOf(n)]}`;
+const needTag = n => S && S.mode === 'play' ? `Cần cấp ${n}` : `Cần ${LEVELS[tierOf(n)]}`;
 const lvIdx = () => Math.max(0, LEVELS.indexOf((S && S.cefr) || 'A1'));
-function syncLvl() { S.lvl = TIER_MAX[lvIdx()]; }
+function syncLvl() { S.lvl = S.mode === 'play' ? playLvl(S.xp).l : TIER_MAX[lvIdx()]; }
 
 // how ready the player is for the next level: 70% from mastered words of the current level, 30% from recent practice
 // rules for leaving each level (index = current level): share of its words at 3 stars, answers needed, test length, pass mark
@@ -64,6 +64,13 @@ function promoteTo(lv, why) {
 }
 
 function openLevel() {
+  if (PLAY()) {
+    const p = playLvl(S.xp), pct = Math.round(p.r / p.need * 100);
+    return openModal(`<h2 class="ptitle">Cấp độ nhân vật</h2>
+      <div class="lvhero"><span class="lvbig">${p.l}</span><div><b>Cấp ${p.l}</b><small>Chế độ chỉ chơi: làm nông, câu cá, mua sắm để nhận kinh nghiệm và lên cấp.</small></div></div>
+      <h3 class="ph3">Tiến độ lên cấp ${p.l + 1}</h3><div class="lvprog"><i style="--w:${pct}%"></i><span>${p.r}/${p.need} XP</span></div>
+      <p class="note">Mỗi việc trong trại +5 XP, mỗi lần dùng tiện ích +10 XP. Cấp càng cao càng mở nhiều đồ, cây trồng và vật nuôi.</p>`, {label: 'Cấp độ'});
+  }
   const r = readiness(), cd = lvCooldown();
   const hist = (S.tests || []).filter(t => t.kind === 'levelup' || t.kind === 'placement').slice(0, 5);
   openModal(`<h2 class="ptitle">Trình độ tiếng Anh</h2>

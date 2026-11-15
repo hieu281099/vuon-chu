@@ -39,7 +39,7 @@ function mmDraw(cv, k, big) {
 function mmTick() {
   const cv = $('#minimap'); if (!cv || !S || !MAPS) return;
   const m = MAPS[S.map], wrap = $('#mmwrap'); if (!m || !wrap) return;
-  $('#mapbtns').hidden = $('#app').hidden; wrap.hidden = !MM_OPEN; $('#mmbtn').classList.toggle('on', MM_OPEN); $('#toolbtn').hidden = S.map !== 'farm'; { const n = Object.keys(MP.others).length; $('#mmname').textContent = m.vi + (MP_MAPS.includes(S.map) && mpOn() ? ` · ${n + 1} người` : ''); }
+  $('#mapbtns').hidden = $('#app').hidden; wrap.hidden = !MM_OPEN; $('#mmbtn').classList.toggle('on', MM_OPEN); $('#toolbtn').hidden = S.map !== 'farm'; $('#dk-tools').hidden = S.map !== 'farm'; $('#dk-mm').classList.toggle('on', MM_OPEN); $('#menubtn').hidden = $('#app').hidden; { const bd = $('#bb-bag .dot'); $('#menubtn .dot').hidden = !bd || bd.hidden; } { const n = Object.keys(MP.others).length; $('#mmname').textContent = m.vi + (MP_MAPS.includes(S.map) && mpOn() ? ` · ${n + 1} người` : ''); }
   if (MM_OPEN) mmDraw(cv, window.innerWidth < 600 ? 3 : 4, false);
   const bigCv = $('#mmbig'); if (bigCv) mmDraw(bigCv, Math.max(8, Math.floor(Math.min(window.innerWidth - 60, 720) / m.w)), true);
 }

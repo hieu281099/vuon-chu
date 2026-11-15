@@ -2,11 +2,12 @@
 function renderHUD() {
   if (!S) return;
   $('#hud-name').textContent = S.name || 'Bạn';
-  $('#hud-lvl').textContent = S.cefr || 'A1';
-  const rd = readiness(), pct = Math.round(rd.pct * 100); $('#hud-ring').classList.toggle('ready', !rd.max && rd.pct >= 1); $('#hud-xp').style.width = pct + '%'; $('#hud-ring').style.setProperty('--p', pct);
+  const play = PLAY(); document.documentElement.classList.toggle('mode-play', play);
+  $('#hud-lvl').textContent = play ? S.lvl : (S.cefr || 'A1');
+  const rd = play ? (p => ({pct: p.r / p.need, max: true}))(playLvl(S.xp)) : readiness(), pct = Math.round(rd.pct * 100); $('#hud-ring').classList.toggle('ready', !rd.max && rd.pct >= 1); $('#hud-xp').style.width = pct + '%'; $('#hud-ring').style.setProperty('--p', pct);
   $('#hud-em').textContent = S.em; $('#hud-di').textContent = S.di;
   $('#hud-coins').textContent = S.coins;
-  $('#hud-study').textContent = `${TRACKS[S.study.track].vi} · ${S.study.track === 'ielts' ? IELTS_BAND[S.study.level] : S.study.level}`;
+  $('#hud-study').textContent = play ? `Chỉ chơi · Cấp ${S.lvl}` : `${TRACKS[S.study.track].vi} · ${S.study.track === 'ielts' ? IELTS_BAND[S.study.level] : S.study.level}`;
   $('#hud-streak').textContent = S.streak;
   const au = autoActive(); $('#hud-auto').hidden = !au; if (au) $('#hud-auto-t').textContent = 'AUTO ' + Math.ceil((S.auto.until - Date.now()) / 3600e3) + 'h';
   const face = portraitSVG(fullLook(S.look)); if ($('#hud-face').getAttribute('src') !== face) $('#hud-face').src = face;
@@ -74,6 +75,12 @@ cv.addEventListener('pointerdown', e => {
   approach(tx, ty, 99, null);
 });
 
+/* ---------- phone menu: the dock folds into one button on small screens ---------- */
+function toggleMenu(on) {
+  const h = document.documentElement; on = on == null ? !h.classList.contains('menu-open') : on;
+  h.classList.toggle('menu-open', on); $('#menubtn').setAttribute('aria-expanded', on ? 'true' : 'false');
+}
+document.addEventListener('pointerdown', e => { if (document.documentElement.classList.contains('menu-open') && !e.target.closest('.dock,#menubtn')) toggleMenu(false); });
 /* ---------- clicks in UI ---------- */
 let resetArmed = 0;
 document.addEventListener('click', e => {
@@ -84,6 +91,8 @@ document.addEventListener('click', e => {
   if (d.tile != null) return tapTile(+d.tile);
   if (d.ph != null) return choosePhrase(+d.ph);
   if (d.buy != null) return shopAnswer(+d.buy);
+  if (d.act === 'menu') return toggleMenu();
+  if (t.closest('.dock')) toggleMenu(false);
   switch (d.act) {
     case 'close-bg': if (e.target === t && !CC) closeModal(); return;
     case 'close': LESSON = null; return closeModal();
@@ -149,6 +158,7 @@ document.addEventListener('click', e => {
     case 'dye': { const k = {top: 'topC', bottom: 'bottomC'}[WARD]; if (k) { S.look[k] = d.c; markDirty(); renderHUD(); openWardrobe(); } return; }
     case 'creator': return openCreator(false);
     case 'cc': CC.name = $('#cc-name') ? $('#cc-name').value : CC.name; CC.look[d.k] = d.k === 'skin' ? +d.v : (d.v === 'null' ? null : d.v); return renderCreator();
+    case 'cc-mode': CC.name = $('#cc-name').value; CC.mode = d.v; if (CC.mode === 'play' && CC.tab === 'study') CC.tab = 'body'; return renderCreator();
     case 'cc-lv': CC.name = $('#cc-name').value; CC.level = d.v; return renderCreator();
     case 'cc-tr': CC.name = $('#cc-name').value; CC.track = d.v; return renderCreator();
     case 'cc-done': return ccDone();
@@ -259,7 +269,8 @@ function normalize(d) {
   if (typeof s.bait !== 'number') s.bait = 5;   // every account gets 5 free baits once
   s.hair = Array.isArray(s.hair) ? s.hair : []; s.spa = Array.isArray(s.spa) ? s.spa : [];
   for (const h of HAIR_ITEMS) if (((h.f && s.look.hairF === h.f) || (h.b && s.look.hairB === h.b) || (h.c && s.look.hairC === h.c)) && !s.hair.includes(h.id)) s.hair.push(h.id);
-  s.lvl = TIER_MAX[Math.max(0, LEVELS.indexOf(s.cefr))];
+  if (s.mode !== 'play') s.mode = 'learn';   // older saves were all made for learning
+  s.lvl = s.mode === 'play' ? playLvl(s.xp).l : TIER_MAX[Math.max(0, LEVELS.indexOf(s.cefr))];
   s.auto = null;   // old hour-based Auto Farm passes are retired
   s.tests = Array.isArray(s.tests) ? s.tests : []; s.bestBand = s.bestBand || {}; s.road = s.road || {claimed: []}; s.ieltsCount = s.ieltsCount || 0;
   if (s.auto && !s.auto.log) s.auto.log = {};
@@ -302,7 +313,7 @@ async function boot(hotData) {
 try { if (localStorage.getItem('vc-portrait-ok')) document.documentElement.classList.add('portrait-ok'); } catch (e) {}
 document.getElementById('rot-skip').addEventListener('click', () => { document.documentElement.classList.add('portrait-ok'); try { localStorage.setItem('vc-portrait-ok', '1'); } catch (e) {} });
 window.addEventListener('pointerdown', function lockOnce() { window.removeEventListener('pointerdown', lockOnce); try { if (screen.orientation && screen.orientation.lock && (matchMedia('(display-mode: fullscreen)').matches || matchMedia('(display-mode: standalone)').matches)) screen.orientation.lock('landscape').catch(() => {}); } catch (e) {} }, {passive: true});
-if (['127.0.0.1', 'localhost'].includes(location.hostname)) window.__vc = () => ({S, P, ANIMS, NPCS, MAPS, view, approach, changeMap, talk, spawnAnimals, onPlot, ex: () => EX, autoSimulate, TW: TRACK_WORDS, NPC_DEFS, MP, readiness, renderHUD, FASHION, HAIR_ITEMS, SPA_ITEMS, spaPreview, chibiSVG, petSVG, hairPreview, fullLook, step: (sec) => { let t = performance.now(); for (let i = 0; i < sec * 20; i++) { t += 50; update(0.05, t); } draw(t); }});
+if (['127.0.0.1', 'localhost'].includes(location.hostname)) window.__vc = () => ({S, openCreator, openLevel, openFarmTools, startTool, shopPick, playLvl, toggleMenu, P, ANIMS, NPCS, MAPS, view, approach, changeMap, talk, spawnAnimals, onPlot, ex: () => EX, autoSimulate, TW: TRACK_WORDS, NPC_DEFS, MP, readiness, renderHUD, FASHION, HAIR_ITEMS, SPA_ITEMS, spaPreview, chibiSVG, petSVG, hairPreview, fullLook, step: (sec) => { let t = performance.now(); for (let i = 0; i < sec * 20; i++) { t += 50; update(0.05, t); } draw(t); }});
 try { window.claude && window.claude.hot && window.claude.hot.snapshot && window.claude.hot.snapshot(() => { if (P && S) { S.px = P.x; S.py = P.y; } return {S}; }); } catch (e) {}
 const HOT = window.claude && window.claude.hot;
 if (HOT && HOT.ready) HOT.ready(boot); else boot((HOT && HOT.data) || {});

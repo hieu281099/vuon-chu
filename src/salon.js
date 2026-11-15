@@ -120,7 +120,7 @@ function openSalon() {
 function hairPick(id) {
   const h = HAIR[id]; if (!h || (S.hair || []).includes(id) || (h.lvl || 1) > S.lvl || !salAfford(h)) return;
   const same = HAIR_ITEMS.filter(x => x.id !== id && hairKind(x) === hairKind(h) && x.en !== h.en);
-  SAL.buy = {id, opts: shuffle([h.en, ...shuffle(same).slice(0, 3).map(x => x.en)]), done: false}; salonRefresh(); speak('What is this called in English?', true);
+  SAL.buy = {id, opts: shuffle([h.en, ...shuffle(same).slice(0, 3).map(x => x.en)]), done: false}; if (PLAY()) return hairAnswer(SAL.buy.opts.indexOf(h.en)); salonRefresh(); speak('What is this called in English?', true);
 }
 function hairAnswer(i) {
   const B = SAL.buy; if (!B || B.done) return; const h = HAIR[B.id];

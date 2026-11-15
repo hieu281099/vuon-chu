@@ -161,8 +161,13 @@ function legSVG(L, x, dy, skin) {
   if (pants === 'pants' && L.bottom === 'bot_cargo') s += `<rect x="${x + 2}" y="${y + 5}" width="9" height="7" rx="1.5" fill="${shade(L.bottomC, -0.18)}"/>`;
   if (pants === 'aodai') s += `<rect x="${x}" y="${y}" width="13" height="15" fill="#FFFFFF"/>`;
   if (pants === 'shorts') s += `<path d="M${x} ${y + 6.5}C${x} ${y + 2.9} ${x + 2.9} ${y} ${x + 6.5} ${y}S${x + 13} ${y + 2.9} ${x + 13} ${y + 6.5}V${y + 11}H${x}Z" fill="${L.bottomC}"/>`;
-  const sh2 = L.shoes && FASH[L.shoes]; if (sh2) { const lv2 = (L.lv || {})[L.shoes] || 0; return s + glowWrap(lv2, shoeSVG(L.shoes, sh2.col, lv2, x, y)); }
-  s += `<rect x="${x}" y="${y + 15}" width="13" height="3" fill="#FFFFFF"/><path d="M${x} ${y + 18}H${x + 13}V${y + 21.5}C${x + 13} ${y + 25.1} ${x + 10.1} ${y + 28} ${x + 6.5} ${y + 28}S${x} ${y + 25.1} ${x} ${y + 21.5}Z" fill="${sh}"/>`;
+  const sh2 = L.shoes && FASH[L.shoes]; if (sh2) { const lv2 = (L.lv || {})[L.shoes] || 0; return s + glowWrap(lv2, shoeSVG(artId(L.shoes), sh2.col, lv2, x, y)); }
+  // a real foot: the shoe is wider than the leg, its toe points outwards, with a sole and a shine on the toe cap
+  const o = x < 66 ? -1 : 1, ix = o < 0 ? x + 13.5 : x - 0.5, ox = o < 0 ? x - 0.5 : x + 13.5, tx = o < 0 ? x - 4 : x + 17;
+  s += `<rect x="${x}" y="${y + 15}" width="13" height="3" fill="#FFFFFF"/>`
+    + `<path d="M${ox} ${y + 18}L${ix} ${y + 18}L${ix} ${y + 26.5}Q${ix} ${y + 29.5} ${ix + o * 3} ${y + 29.5}L${tx - o * 3} ${y + 29.5}Q${tx} ${y + 29.5} ${tx} ${y + 26.5}Q${tx} ${y + 22.5} ${ox} ${y + 21}Z" fill="${sh}"/>`
+    + `<path d="M${ix + o * 1.5} ${y + 28.8}L${tx - o * 1.5} ${y + 28.8}" stroke="${shade(sh, -0.4)}" stroke-width="1.8" stroke-linecap="round"/>`
+    + `<ellipse cx="${x + 6.5 - o * 0.5}" cy="${y + 24}" rx="3" ry="1.3" fill="#FFFFFF" opacity=".35"/>`;
   return s;
 }
 function skirtSVG(L) { if (DRESSES.includes(L.top)) return ''; if (BOTTOM_ART[L.bottom]) return BOTTOM_ART[L.bottom](L); const k = L.bottomC;
@@ -198,8 +203,8 @@ function chibiInner(L, f, dir) {
   ANIM_PH = f.ph || 0;
   const skin = SKIN_TONES[L.skin] || SKIN_TONES[0], lv = L.lv || {}, back = dir === 'u';
   const bob = f.bob || 0, face = f.face || L.face || 'smile';
-  const backItem = L.back ? tierWrap('back', lv[L.back] || 0, itemFx(L.back, lv[L.back] || 0, backSVG(L.back, FASH[L.back].col, lv[L.back] || 0, f.flap || 0, back)), f.flap) : '';
-  const handItem = f.tool ? handSVG(f.tool, '#fff', 0) : (L.hand ? tierWrap('hand', lv[L.hand] || 0, itemFx(L.hand, lv[L.hand] || 0, handSVG(L.hand, FASH[L.hand].col, lv[L.hand] || 0)), f.flap) : '');
+  const backItem = L.back ? tierWrap('back', lv[L.back] || 0, itemFx(artId(L.back), lv[L.back] || 0, backSVG(artId(L.back), FASH[L.back].col, lv[L.back] || 0, f.flap || 0, back)), f.flap) : '';
+  const handItem = f.tool ? handSVG(f.tool, '#fff', 0) : (L.hand ? tierWrap('hand', lv[L.hand] || 0, itemFx(artId(L.hand), lv[L.hand] || 0, handSVG(artId(L.hand), FASH[L.hand].col, lv[L.hand] || 0)), f.flap) : '');
   let s = '';
   if (!back) s += backItem;
   if (L.hairB && !back) s += `<g transform="translate(0 ${bob})">${tpl(NEMO.hairB[L.hairB], L.hairC)}</g>`;
@@ -210,13 +215,13 @@ function chibiInner(L, f, dir) {
   const tool = f.tool ? handItem : '';
   s += armSVG(L, 44, f.arms ? f.arms[0] : 0, skin, back ? tool : '');
   s += `<path d="M55 113H90V132C90 135.3 87.3 138 84 138H61C57.7 138 55 135.3 55 132V113Z" fill="${skin.b}"/>` + topSVG(L, f) + skirtSVG(L);
-  const acc = (k, fn) => L[k] && FASH[L[k]] ? tierWrap(k, lv[L[k]] || 0, itemFx(L[k], lv[L[k]] || 0, fn(L[k], FASH[L[k]].col, lv[L[k]] || 0)), f.flap) : '';
+  const acc = (k, fn) => L[k] && FASH[L[k]] ? tierWrap(k, lv[L[k]] || 0, itemFx(artId(L[k]), lv[L[k]] || 0, fn(artId(L[k]), FASH[L[k]].col, lv[L[k]] || 0)), f.flap) : '';
   if (!back) {
-    if (L.bag && HANDBAGS.includes(L.bag)) s += `<g transform="rotate(${f.arms ? f.arms[0] : 0} 50 116)">${acc('bag', bagSVG)}</g>`;
+    if (L.bag && HANDBAGS.includes(artId(L.bag))) s += `<g transform="rotate(${f.arms ? f.arms[0] : 0} 50 116)">${acc('bag', bagSVG)}</g>`;
   }
   if (L.back && !back) s += backStraps(L.back, FASH[L.back].col);
   s += armSVG(L, 89, f.arms ? f.arms[1] : 0, skin, back ? '' : tool);
-  if (!back && L.bag && !HANDBAGS.includes(L.bag)) s += acc('bag', bagSVG);
+  if (!back && L.bag && !HANDBAGS.includes(artId(L.bag))) s += acc('bag', bagSVG);
   s += headSVG(L, skin, back);
   if (!back) {
     s += `<g transform="translate(72.5 118) scale(1.25) translate(-72.5 -118)">${acc('neck', neckSVG)}</g>`;
@@ -224,13 +229,13 @@ function chibiInner(L, f, dir) {
     s += featsSVG(L, skin, 'face');
     s += acc('deco', decoSVG);
     if (L.beard) s += tpl(NEMO.beards[L.beard], L.hairC);
-    if (L.face2) s += tierWrap('face', lv[L.face2] || 0, itemFx(L.face2, lv[L.face2] || 0, faceItemSVG(L.face2, FASH[L.face2].col, lv[L.face2] || 0)), f.flap);
+    if (L.face2) s += tierWrap('face', lv[L.face2] || 0, itemFx(artId(L.face2), lv[L.face2] || 0, faceItemSVG(artId(L.face2), FASH[L.face2].col, lv[L.face2] || 0)), f.flap);
     s += acc('mouth', mouthSVG);
   }
   if (L.hairF && L.hairF !== 'none') s += tpl(NEMO.hairF[L.hairF], L.hairC);
   if (!back) s += acc('ear', earSVG) + featsSVG(L, skin, 'hair');
   if (L.hairB && back) s += tpl(NEMO.hairB[L.hairB], L.hairC);
-  if (L.hat) s += tierWrap('hat', lv[L.hat] || 0, itemFx(L.hat, lv[L.hat] || 0, hatSVG(L.hat, FASH[L.hat].col, lv[L.hat] || 0)), f.flap) + hatAccent(lv[L.hat] || 0);
+  if (L.hat) s += tierWrap('hat', lv[L.hat] || 0, itemFx(artId(L.hat), lv[L.hat] || 0, hatSVG(artId(L.hat), FASH[L.hat].col, lv[L.hat] || 0)), f.flap) + hatAccent(lv[L.hat] || 0);
   // held item on top of everything, following the arm's swing and leaning away from the head
   if (handItem && !f.tool) {
     const fit = HAND_FIT[L.hand] || HAND_FIT._, ax = back ? 44 : 89, rot = f.arms ? f.arms[back ? 0 : 1] : 0, lean = (back ? -1 : 1) * fit[1];
@@ -296,7 +301,7 @@ function drawChibi(g, L, frame, dir, x, y, pxScale, id) {
 
 /* ---------- pets ---------- */
 function petSVG(id, lv, frame) {
-  const P = FASH[id], c = P.col, t = lv ? tierFill(lv, '#FF6FB5') : '#FF6FB5', hop = frame % 2 ? -3 : 0;
+  const P = FASH[id], c = P.col, t = lv ? tierFill(lv, '#FF6FB5') : '#FF6FB5', hop = frame % 2 ? -3 : 0; id = artId(id);
   const eyes = (x1, x2, y) => `<circle cx="${x1}" cy="${y}" r="3" fill="#1F1B24"/><circle cx="${x2}" cy="${y}" r="3" fill="#1F1B24"/><circle cx="${x1 + 1}" cy="${y - 1}" r="1" fill="#fff"/><circle cx="${x2 + 1}" cy="${y - 1}" r="1" fill="#fff"/>`;
   const bow = `<path d="M30 ${44 + hop} l-7 -5 v10z M30 ${44 + hop} l7 -5 v10z" fill="${t}"/><circle cx="30" cy="${44 + hop}" r="2.5" fill="${shade(t === 'url(#rb)' ? '#FFC83D' : t, -0.2)}"/>`;
   const crown = lv >= 6 ? `<path d="M20 ${8 + hop} l3 -9 l7 6 l7 -6 l3 9z" fill="url(#rb)"/>` : '';
@@ -322,7 +327,7 @@ function petImage(id, lv, frame) {
 
 /* ---------- auras (canvas particles) ---------- */
 function drawAura(g, id, lv, x, y, t) {
-  const base = FASH[id].col, col = id === 'aura_dragon' ? `hsl(${10 + (t / 20) % 40} 100% 60%)` : id === 'aura_galaxy' || id === 'aura_rainbow' ? `hsl(${(t / 6) % 360} 90% 70%)` : lv ? (TIER[lv] === 'rainbow' ? `hsl(${(t / 8) % 360} 90% 65%)` : TIER[lv]) : base;
+  const base = FASH[id].col; id = artId(id); const col = id === 'aura_dragon' ? `hsl(${10 + (t / 20) % 40} 100% 60%)` : id === 'aura_galaxy' || id === 'aura_rainbow' ? `hsl(${(t / 6) % 360} 90% 70%)` : lv ? (TIER[lv] === 'rainbow' ? `hsl(${(t / 8) % 360} 90% 65%)` : TIER[lv]) : base;
   const n = 5 + lv * 2, r = 18 + lv;
   g.save(); g.globalAlpha = 0.35 + lv * 0.05; g.fillStyle = col; g.beginPath(); g.ellipse(x, y, r, r * 0.38, 0, 0, Math.PI * 2); g.fill(); g.globalAlpha = 1;
   if (lv >= 3) { g.strokeStyle = col; g.lineWidth = 1.2; g.globalAlpha = 0.7; g.beginPath(); g.ellipse(x, y, r * 1.35, r * 0.52, 0, 0, Math.PI * 2); g.stroke(); g.globalAlpha = 1; }

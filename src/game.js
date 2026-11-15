@@ -7,6 +7,10 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const fmt = s => { s = Math.max(0, Math.ceil(s)); if (s < 60) return s + ' giây'; if (s < 3600) { const m = Math.floor(s / 60), r = s % 60; return r && m < 10 ? `${m} phút ${r} giây` : `${m} phút`; } const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60); return m ? `${h} giờ ${m} phút` : `${h} giờ`; };
 const wordRe = en => new RegExp(`\\b${en.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
 const need = l => 60 + (l - 1) * 45;
+// Two ways to play, picked once when the account is made: 'learn' (English level is the character level, actions need an answer)
+// or 'play' (no questions; the level comes from XP like a normal farm game).
+const PLAY = () => !!S && S.mode === 'play';
+function playLvl(xp) { let l = 1, r = xp || 0; while (r >= need(l) && l < 60) { r -= need(l); l++; } return {l, r, need: need(l)}; }
 
 const L_ = o => Object.assign({}, DEFAULT_LOOK, o);
 const NPC_DEFS = [
@@ -202,6 +206,12 @@ function pickType(w, forced) {
   return rand(t);
 }
 function startQuiz(opt) {
+  // play mode: the action just happens, no question
+  if (PLAY() && !opt.next) {
+    const msg = opt.onResult ? (opt.onResult(true) || '') : ''; addXP(5); sfx('ok');
+    if (opt.onClose) opt.onClose();
+    if (msg) toast(msg); renderHUD(); markDirty(); return;
+  }
   const w = opt.word || pickWord(); lastWord = w.key;
   let type = pickType(w, opt.type);
   if (opt.timer && type === 'spell') type = 'vi2en';
@@ -278,6 +288,7 @@ function finish(ok, timeout) {
 /* ===================== PROGRESSION ===================== */
 function addXP(n) {
   S.xp += n;
+  if (PLAY()) { const l = playLvl(S.xp).l; if (l > S.lvl) { S.lvl = l; toast(`Lên <b>cấp ${l}</b>! Mở thêm đồ, cây trồng và vật nuôi mới.`, 3500); sfx('coin'); queueFx({kind: 'spark', who: 'player'}); } }
   // the character has no XP level any more: the English level (S.cefr) is its level
 }
 const unlockedCrops = () => CROPS.filter(c => c.lvl <= S.lvl && !c.rare);
@@ -523,7 +534,9 @@ function buyHTML() {
 }
 function shopPick(id) {
   const f = FASH[id]; if (!f || S.owned.includes(id) || (f.lvl || 1) > S.lvl || !canAfford(f)) return;
-  BUY = {id, opts: shuffle([f.en, ...shuffle(FASHION.filter(x => x.id !== id && x.en !== f.en)).slice(0, 3).map(x => x.en)]), done: false}; refreshNpc(); speak('What is this in English?', true);
+  BUY = {id, opts: shuffle([f.en, ...shuffle(FASHION.filter(x => x.id !== id && x.en !== f.en)).slice(0, 3).map(x => x.en)]), done: false};
+  if (PLAY()) return shopAnswer(BUY.opts.indexOf(f.en));
+  refreshNpc(); speak('What is this in English?', true);
 }
 function shopAnswer(i) {
   if (!BUY || BUY.done) return; const f = FASH[BUY.id];
@@ -749,11 +762,11 @@ function openHelp() {
 /* ===================== CHARACTER CREATOR ===================== */
 let CC = null;
 function openCreator(first) {
-  CC = {name: S.name || '', look: fullLook(S.look), level: S.study.level, track: S.study.track, gender: S.gender || null, first, tab: 'body'};
+  CC = {name: S.name || '', look: fullLook(S.look), level: S.study.level, track: S.study.track, gender: S.gender || null, first, tab: 'body', mode: S.mode === 'play' ? 'play' : 'learn'};
   renderCreator();
 }
 function renderCreator() {
-  const L = CC.look, tabs = [['body', 'Dáng người'], ['hair', 'Tóc'], ['face', 'Khuôn mặt'], ['study', 'Học tập']].filter(t => CC.first || t[0] !== 'study');
+  const L = CC.look, tabs = [['body', 'Dáng người'], ['hair', 'Tóc'], ['face', 'Khuôn mặt'], ['study', 'Học tập']].filter(t => (CC.first && CC.mode !== 'play') || t[0] !== 'study');
   const sw = (k, list) => `<div class="swatches">${list.map(c => `<button class="sw" style="background:${c}" data-act="cc" data-k="${k}" data-v="${c}" aria-pressed="${L[k] === c}" aria-label="${c}"></button>`).join('')}</div>`;
   const chips = (k, list, vi) => `<div class="chips">${list.map(v => `<button class="chip" data-act="cc" data-k="${k}" data-v="${v}" aria-pressed="${String(L[k]) === String(v)}">${esc(vi(v))}</button>`).join('')}</div>`;
   let body = '';
@@ -766,6 +779,7 @@ function renderCreator() {
   const html = `<h2 class="ptitle">${CC.first ? 'Tạo nhân vật' : 'Sửa ngoại hình'}</h2>${CC.first ? '<p class="psub">Chọn tên, ngoại hình và trình độ tiếng Anh trước khi vào làng.</p>' : ''}
     <div class="ward"><div class="ward-prev"><div class="stagebox"><img class="pv hero" id="cc-prev" src="${portraitSVG(L, {full: true})}" alt="Xem trước nhân vật"></div></div><div class="ward-main">
       <label class="lbl" for="cc-name">Tên nhân vật</label><input id="cc-name" class="field" maxlength="14" placeholder="Ví dụ: Hiếu" value="${esc(CC.name)}">
+      ${CC.first ? `<span class="lbl">Bạn muốn chơi thế nào?</span><div class="modepick">${[['learn', 'Vừa chơi vừa học tiếng Anh', 'Cấp nhân vật là trình độ tiếng Anh. Thu hoạch, mua đồ… cần trả lời câu hỏi.'], ['play', 'Chỉ chơi', 'Không có câu hỏi. Làm nông, câu cá, mua sắm để lên cấp.']].map(([v, t, s]) => `<button class="modeb" data-act="cc-mode" data-v="${v}" aria-pressed="${CC.mode === v}"><b>${t}</b><small>${s}</small></button>`).join('')}</div><p class="modewarn">Chỉ chọn được một lần khi tạo tài khoản, sau này không đổi được.</p>` : ''}
       <div class="seg">${tabs.map(([k, l]) => `<button class="segb" data-act="cc-tab" data-t="${k}" aria-pressed="${CC.tab === k}">${l}</button>`).join('')}</div>${body}
     </div></div><div class="row-btns end"><button class="btn big" data-act="cc-done">${CC.first ? 'Vào làng' : 'Lưu'}</button></div>`;
   const keep = $('#modal .panel') ? $('#modal .panel').scrollTop : 0;
@@ -778,6 +792,8 @@ function ccDone() {
   S.name = nm; S.look = Object.assign({}, CC.look, {lv: S.look.lv || {}}); if (CC.gender) S.gender = CC.gender;
   const first = CC.first; S.created = true;
   if (CC.look.top === 'top_dress' && !S.owned.includes('top_dress')) S.owned.push('top_dress');
+  if (first) S.mode = CC.mode === 'play' ? 'play' : 'learn';
+  if (first && S.mode === 'play') { S.lvl = playLvl(S.xp).l; CC.level = 'A1'; }
   if (first) { S.study.level = CC.level; S.study.track = CC.track; S.study.unlocked = LEVELS.slice(0, LEVELS.indexOf(CC.level) + 1); S.orders = [genOrder(['carrot']), genOrder(['radish', 'carrot']), genOrder(['egg'])]; }
   const picked = CC.level; CC = null; closeModal(); saveNow(true);
   if (first && picked !== 'A1') setTimeout(() => openModal(`<h2 class="ptitle">Được công nhận ${picked}?</h2><p class="psub">Cấp độ của nhân vật chính là trình độ tiếng Anh. Bạn bắt đầu ở <b>A1</b>. Làm bài kiểm tra xếp lớp 24 câu để được công nhận ngay ${picked} và mở khoá đồ, cây trồng, vật nuôi theo trình độ.</p><div class="row-btns"><button class="btn gold" data-act="t-place">Làm bài xếp lớp</button><button class="btn ghost" data-act="close">Để sau</button></div>`, {label: 'Xếp lớp'}), 4800);
