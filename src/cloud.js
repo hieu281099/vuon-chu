@@ -172,6 +172,7 @@ async function switchToAccount(isNew) {
     renderHUD();
   } catch (e) { toast('Chưa tải được tài khoản: ' + authErr(e)); }
 }
+function genderHTML() { return `<div class="acct"><b>Giới tính</b><div class="chips">${[['m', 'Nam'], ['f', 'Nữ']].map(([v, l]) => `<button class="chip" data-act="soc-setg" data-v="${v}" aria-pressed="${S.gender === v}">${l}</button>`).join('')}</div><p class="note">Dùng cho tương tác giữa người chơi (hôn má chỉ giữa nam và nữ).</p></div>`; }
 function acctHTML() {
   if (Store.mode === 'supa') return `<div class="acct"><b>Tài khoản: ${esc(SB.sess.username)}</b><p class="note">Tiến độ tự đồng bộ giữa web và app Android. ${Store.offline ? '<b>Đang ngoại tuyến</b>, sẽ gửi lên khi có mạng.' : ''}</p><p class="note" id="savebadge" data-state="ok"></p><div class="row-btns"><button class="btn ghost sm" data-act="sync">Đồng bộ ngay</button><button class="btn ghost sm danger" data-act="logout">Đăng xuất</button></div></div>`;
   const where = Store.mode === 'cloud' ? 'Bạn đang lưu bằng tài khoản Claude (chỉ có trên link Claude).' : 'Bạn đang chơi thử, tiến độ chỉ lưu trên máy này.';

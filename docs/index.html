@@ -661,6 +661,14 @@ html,body{-webkit-tap-highlight-color:transparent}
 .pcard{display:flex;gap:16px;align-items:center;flex-wrap:wrap}.pcard .pv.big{background:linear-gradient(160deg,#dbeafe,#fce7f3)}
 .pcard>div{flex:1 1 240px}
 
+/* ---------- interaction invites and gifts ---------- */
+.invite{position:fixed;left:50%;top:calc(70px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:80;display:flex;gap:10px;align-items:center;background:#fff;border-radius:18px;padding:10px 14px;box-shadow:0 14px 40px rgba(30,20,80,.35);max-width:min(420px,calc(100% - 20px));font-size:14px;border:2px solid var(--pink)}
+.invite[hidden]{display:none}
+.invite img{width:48px;height:48px;border-radius:14px;background:linear-gradient(160deg,#dbeafe,#fce7f3);flex:none}
+.invite .row-btns{margin-top:6px}
+.gifts{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px;max-height:260px;overflow:auto}
+@media (max-height:480px) and (orientation:landscape){.invite{top:calc(48px + env(safe-area-inset-top,0px))}.gifts{max-height:150px}}
+
 </style>
 
 <div id="rotate" class="rotate" role="dialog" aria-label="Xoay ngang điện thoại"><div class="rotcard">
@@ -1996,7 +2004,10 @@ const FRAMES = {
   water: {arms: [0, -55], tool: 'tool_can', bob: 0}, water2: {arms: [0, -75], tool: 'tool_can', bob: 1},
   hoe: {arms: [0, -120], tool: 'tool_hoe', bob: -1}, hoe2: {arms: [0, -30], tool: 'tool_hoe', bob: 2},
   fish: {arms: [0, -40], tool: 'tool_rod'},
-  cheer: {arms: [150, -150], legs: [-2, -2], bob: -6, face: 'laughs', flap: 16}, wave: {arms: [0, -150], face: 'willing'}
+  cheer: {arms: [150, -150], legs: [-2, -2], bob: -6, face: 'laughs', flap: 16}, wave: {arms: [0, -150], face: 'willing'},
+  hug: {arms: [70, -70], bob: -1, face: 'cute', flap: 10, ph: 1}, kiss: {arms: [20, -40], bob: -2, face: 'love', flap: 8, ph: 2},
+  punch1: {arms: [10, -110], legs: [-3, 0], bob: -1, face: 'tempered', flap: 14, ph: 0}, punch2: {arms: [-40, -20], legs: [0, -3], face: 'tempered', flap: -6, ph: 2},
+  dizzy: {arms: [30, -30], legs: [-2, 2], bob: 2, face: 'sleepy', flap: 0, ph: 3}
 };
 const CHIBI_K = 0.36;           // native world px per chibi unit (character ~57 px tall)
 const CHIBI_CACHE = new Map();
@@ -3221,7 +3232,7 @@ async function openBoard() {
 }
 function openSettings() {
   openModal(`<h2 class="ptitle">Cài đặt</h2>
-    ${acctHTML()}
+    ${acctHTML()}${genderHTML()}
     <div class="row-btns"><button class="btn ghost" data-act="sound">${S.sound ? 'Tắt âm thanh' : 'Bật âm thanh'}</button><button class="btn ghost" data-act="credits">Ghi công hình ảnh</button><button class="btn ghost" data-act="help">Cách chơi</button></div>
     <div class="row-btns"><button class="btn ghost danger" data-act="reset" id="reset-btn">Chơi lại từ đầu</button></div>`, {label: 'Cài đặt'});
   setSaveBadge('ok');
@@ -3263,7 +3274,7 @@ function openHelp() {
 /* ===================== CHARACTER CREATOR ===================== */
 let CC = null;
 function openCreator(first) {
-  CC = {name: S.name || '', look: fullLook(S.look), level: S.study.level, track: S.study.track, first, tab: 'body'};
+  CC = {name: S.name || '', look: fullLook(S.look), level: S.study.level, track: S.study.track, gender: S.gender || null, first, tab: 'body'};
   renderCreator();
 }
 function renderCreator() {
@@ -3272,7 +3283,7 @@ function renderCreator() {
   const chips = (k, list, vi) => `<div class="chips">${list.map(v => `<button class="chip" data-act="cc" data-k="${k}" data-v="${v}" aria-pressed="${String(L[k]) === String(v)}">${esc(vi(v))}</button>`).join('')}</div>`;
   let body = '';
   if (CC.tab === 'body') body = `<span class="lbl">Màu da</span><div class="swatches">${SKIN_TONES.map((t, i) => (i < BASE_SKINS || spaOwned('sk_' + t.id)) ? `<button class="sw" style="background:${t.b}" data-act="cc" data-k="skin" data-v="${i}" aria-pressed="${L.skin === i}" aria-label="Màu da ${i + 1}"></button>` : '').join('')}</div>
-    <span class="lbl">Kiểu áo</span>${chips('top', ['top_tee', 'top_dress'], v => FASH[v].vi)}<span class="lbl">Màu áo</span>${sw('topC', CLOTH_COLS)}<span class="lbl">Màu quần</span>${sw('bottomC', CLOTH_COLS)}`;
+    <span class="lbl">Giới tính</span><div class="chips">${[['m', 'Nam'], ['f', 'Nữ']].map(([v, l]) => `<button class="chip" data-act="cc-g" data-v="${v}" aria-pressed="${CC.gender === v}">${l}</button>`).join('')}</div><span class="lbl">Kiểu áo</span>${chips('top', ['top_tee', 'top_dress'], v => FASH[v].vi)}<span class="lbl">Màu áo</span>${sw('topC', CLOTH_COLS)}<span class="lbl">Màu quần</span>${sw('bottomC', CLOTH_COLS)}`;
   if (CC.tab === 'hair') body = `<span class="lbl">Tóc phía trước</span>${chips('hairF', Object.keys(NEMO.hairF).filter(v => v !== 'none').concat('none').filter(ownsHairF), v => HAIR_F_VI[v] || (HAIR_ITEMS.find(h => h.f === v) || {}).vi || v)}<span class="lbl">Tóc phía sau</span>${chips('hairB', [null, ...Object.keys(NEMO.hairB)].filter(ownsHairB), v => HAIR_B_VI[v] || (HAIR_ITEMS.find(h => h.b === v) || {}).vi || v)}<span class="lbl">Màu tóc</span>${sw('hairC', [...HAIR_COLS, ...ownedDyes()])}<p class="note">Kiểu tóc và màu nhuộm đẹp, hiếm có ở <b>Tiệm tóc</b> trong Làng. <button class="linkbtn" data-act="salon">Đến tiệm tóc</button></p>`;
   if (CC.tab === 'face') body = `<span class="lbl">Biểu cảm</span>${chips('face', FACES, v => FACE_VI[v])}<span class="lbl">Râu</span>${chips('beard', [null, 'short', 'middle', 'long'], v => ({null: 'Không', short: 'Ria mép', middle: 'Râu quai nón', long: 'Râu dài'})[v])}`;
   if (CC.tab === 'study') body = `<span class="lbl">Trình độ tiếng Anh hiện tại</span><div class="chips">${['A1','A2','B1','B2'].map(lv => `<button class="chip" data-act="cc-lv" data-v="${lv}" aria-pressed="${CC.level === lv}">${lv} · ${LEVEL_VI[lv]}</button>`).join('')}</div>
@@ -3289,7 +3300,7 @@ function renderCreator() {
 function ccDone() {
   const nm = ($('#cc-name').value || '').trim().slice(0, 14);
   if (!nm) { toast('Hãy đặt tên cho nhân vật.'); $('#cc-name').focus(); return; }
-  S.name = nm; S.look = Object.assign({}, CC.look, {lv: S.look.lv || {}});
+  S.name = nm; S.look = Object.assign({}, CC.look, {lv: S.look.lv || {}}); if (CC.gender) S.gender = CC.gender;
   const first = CC.first; S.created = true;
   if (CC.look.top === 'top_dress' && !S.owned.includes('top_dress')) S.owned.push('top_dress');
   if (first) { S.study.level = CC.level; S.study.track = CC.track; S.study.unlocked = LEVELS.slice(0, LEVELS.indexOf(CC.level) + 1); S.orders = [genOrder(['carrot']), genOrder(['radish', 'carrot']), genOrder(['egg'])]; }
@@ -4023,6 +4034,7 @@ async function switchToAccount(isNew) {
     renderHUD();
   } catch (e) { toast('Chưa tải được tài khoản: ' + authErr(e)); }
 }
+function genderHTML() { return `<div class="acct"><b>Giới tính</b><div class="chips">${[['m', 'Nam'], ['f', 'Nữ']].map(([v, l]) => `<button class="chip" data-act="soc-setg" data-v="${v}" aria-pressed="${S.gender === v}">${l}</button>`).join('')}</div><p class="note">Dùng cho tương tác giữa người chơi (hôn má chỉ giữa nam và nữ).</p></div>`; }
 function acctHTML() {
   if (Store.mode === 'supa') return `<div class="acct"><b>Tài khoản: ${esc(SB.sess.username)}</b><p class="note">Tiến độ tự đồng bộ giữa web và app Android. ${Store.offline ? '<b>Đang ngoại tuyến</b>, sẽ gửi lên khi có mạng.' : ''}</p><p class="note" id="savebadge" data-state="ok"></p><div class="row-btns"><button class="btn ghost sm" data-act="sync">Đồng bộ ngay</button><button class="btn ghost sm danger" data-act="logout">Đăng xuất</button></div></div>`;
   const where = Store.mode === 'cloud' ? 'Bạn đang lưu bằng tài khoản Claude (chỉ có trên link Claude).' : 'Bạn đang chơi thử, tiến độ chỉ lưu trên máy này.';
@@ -4047,7 +4059,7 @@ function mpConnect() {
   ws.onerror = () => {};
 }
 function mpMe() {
-  return {uid: Store.uid, name: (S.name || SB.sess.username).slice(0, 16), user: SB.sess.username, look: S.look, cefr: S.cefr || 'A1', track: S.study.track, x: Math.round(P.x), y: Math.round(P.y), dir: P.dir};
+  return {uid: Store.uid, name: (S.name || SB.sess.username).slice(0, 16), user: SB.sess.username, look: S.look, cefr: S.cefr || 'A1', track: S.study.track, gender: S.gender || null, x: Math.round(P.x), y: Math.round(P.y), dir: P.dir};
 }
 // join the channel of the current map (leaving the previous one)
 function mpJoin() {
@@ -4058,12 +4070,12 @@ function mpJoin() {
   MP.topic = want; MP.joined = false; MP.others = {};
   if (want) MP.joinRef = mpSend(want, 'phx_join', {config: {broadcast: {self: false, ack: false}, presence: {key: Store.uid}, private: false}});
 }
-function mpTrack() { if (MP.joined) { MP.lookKey = JSON.stringify(S.look) + S.name + S.cefr; mpSend(MP.topic, 'presence', {type: 'presence', event: 'track', payload: mpMe()}); } }
+function mpTrack() { if (MP.joined) { MP.lookKey = JSON.stringify(S.look) + S.name + S.cefr + S.gender; mpSend(MP.topic, 'presence', {type: 'presence', event: 'track', payload: mpMe()}); } }
 function mpCast(event, payload) { if (MP.joined) mpSend(MP.topic, 'broadcast', {type: 'broadcast', event, payload: Object.assign({uid: Store.uid}, payload)}); }
 function mpUpsert(m) {
   if (!m || !m.uid || m.uid === Store.uid) return;
   const o = MP.others[m.uid] || (MP.others[m.uid] = {uid: m.uid, x: m.x, y: m.y, tx: m.x, ty: m.y, dir: m.dir || 'd', phase: 0, moving: false});
-  Object.assign(o, {name: cleanText(m.name) || 'Người chơi', user: m.user, cefr: m.cefr || 'A1', track: m.track, look: fullLook(m.look || {}), seen: Date.now()});
+  Object.assign(o, {name: cleanText(m.name) || 'Người chơi', user: m.user, cefr: m.cefr || 'A1', track: m.track, gender: m.gender || null, look: fullLook(m.look || {}), seen: Date.now()});
   if (typeof m.x === 'number') { o.tx = m.x; o.ty = m.y; }
 }
 function mpOnMsg(msg) {
@@ -4081,6 +4093,7 @@ function mpOnMsg(msg) {
   if (ev === 'mv' && o) { o.tx = d.x; o.ty = d.y; o.dir = d.dir || o.dir; o.seen = Date.now(); }
   if (ev === 'say' && o) { o.say = {text: cleanText(d.text), t: performance.now()}; }
   if (ev === 'emote' && o) { o.emote = performance.now(); o.say = {text: cleanText(d.text || 'Hi!'), t: performance.now()}; }
+  if (['req', 'res', 'act', 'gift', 'gift_ok'].includes(ev)) return mpSocial(ev, d, o);
   if ((ev === 'wave' || ev === 'like') && d.to === Store.uid) {
     const who = o ? o.name : cleanText(d.name);
     if (o) o.emote = performance.now();
@@ -4095,7 +4108,7 @@ setInterval(() => {
   if (!MP.joined) return;
   const now = Date.now(), moved = Math.hypot(P.x - MP.sent.x, P.y - MP.sent.y) > 2 || P.dir !== MP.sent.dir;
   if (moved || now - MP.sent.t > 4000) { mpCast('mv', {x: Math.round(P.x), y: Math.round(P.y), dir: P.dir}); MP.sent = {x: P.x, y: P.y, dir: P.dir, t: now}; }
-  if (JSON.stringify(S.look) + S.name + S.cefr !== MP.lookKey) mpTrack();
+  if (JSON.stringify(S.look) + S.name + S.cefr + S.gender !== MP.lookKey) mpTrack();
 }, 150);
 // other players in this area, smoothly following their latest position
 function mpList() {
@@ -4117,11 +4130,159 @@ function openPlayer(o) {
   openModal(`<div class="pcard"><img class="pv big" src="${portraitSVG(L, {full: true, hand: true})}" alt=""><div>
     <h2 class="ptitle">${esc(o.name)}</h2><p class="psub">@${esc(o.user || '')} · Trình độ <b>${esc(o.cefr)}</b>${o.track && TRACKS[o.track] ? ' · ' + esc(TRACKS[o.track].vi) : ''}</p>
     <div class="row-btns"><button class="btn" data-act="mp-wave" data-id="${o.uid}">Vẫy tay chào</button><button class="btn gold" data-act="mp-like" data-id="${o.uid}">Khen bộ đồ</button><button class="btn ghost" data-act="mp-go" data-id="${o.uid}">Đi tới</button></div>
+    ${socialButtons(o)}
     <p class="note">Nói chuyện bằng ô "Nói tiếng Anh…" ở góc dưới: mọi người trong khu đều thấy bong bóng chat của bạn.</p></div></div>`, {label: 'Người chơi', wide: true});
 }
 function mpWave(uid) { const o = MP.others[uid]; if (!o) return; P.emote = performance.now(); P.say = {text: `Hi, ${o.name}!`, t: performance.now()}; mpCast('wave', {to: uid, name: S.name}); mpCast('emote', {text: `Hi, ${o.name}!`}); closeModal(); }
 function mpLike(uid) { const o = MP.others[uid]; if (!o) return; mpCast('like', {to: uid, name: S.name}); toast(`Đã khen bộ đồ của <b>${esc(o.name)}</b>.`); closeModal(); }
 function mpGo(uid) { const o = MP.others[uid]; if (!o) return; closeModal(); const [tx, ty] = tileOf(o.x, o.y); approach(tx, ty, 1.4, null, true); }
+
+/* ===================== SOCIAL ACTIONS between players: hug, high-five, kiss, pillow fight, gifts ===================== */
+// Every action needs the other player to accept (an invite card pops up on their screen, 15 s).
+// Kiss is only offered between a boy and a girl, as the player asked; everything else works for anyone.
+const SOCIAL = {
+  hug:     {vi: 'Ôm', en: 'a hug', ask: 'muốn ôm bạn', dur: 2600},
+  high5:   {vi: 'Đập tay', en: 'a high five', ask: 'muốn đập tay với bạn', dur: 1800},
+  kiss:    {vi: 'Hôn má', en: 'a kiss', ask: 'muốn hôn má bạn', dur: 2800},
+  fight:   {vi: 'Đánh gối', en: 'a pillow fight', ask: 'rủ bạn đánh gối', dur: 3200}
+};
+const GENDER_VI = {m: 'Nam', f: 'Nữ'};
+const SOC = {pending: {}, invite: null, lastReq: 0, gifts: {}};
+const canKiss = o => S.gender && o.gender && S.gender !== o.gender;
+
+// ---- the player card gets the action buttons
+function socialButtons(o) {
+  const b = (k, extra = '') => `<button class="btn ${k === 'fight' ? 'ghost' : ''}" data-act="soc-req" data-k="${k}" data-id="${o.uid}" ${extra}>${SOCIAL[k].vi}</button>`;
+  const kiss = !S.gender ? `<button class="btn ghost" data-act="soc-gender">Hôn má (chọn giới tính trước)</button>`
+    : canKiss(o) ? b('kiss') : '';
+  return `<h3 class="ph3">Tương tác</h3><div class="row-btns">${b('hug')}${b('high5')}${kiss}${b('fight')}<button class="btn gold" data-act="soc-gift" data-id="${o.uid}">Tặng quà</button></div>
+    <p class="note">Người kia cần bấm đồng ý thì mới diễn ra.${o.gender ? ` ${esc(o.name)} là ${GENDER_VI[o.gender]}.` : ''}</p>`;
+}
+function socRequest(kind, uid) {
+  const o = MP.others[uid]; if (!o || !SOCIAL[kind]) return;
+  if (kind === 'kiss' && !canKiss(o)) return;
+  if (Date.now() - SOC.lastReq < 4000) { toast('Đợi một chút rồi mời tiếp nhé.'); return; }
+  SOC.lastReq = Date.now();
+  const rid = Math.random().toString(36).slice(2, 9); SOC.pending[rid] = {kind, uid, t: Date.now()};
+  mpCast('req', {to: uid, rid, kind, name: S.name, gender: S.gender || null});
+  closeModal(); toast(`Đã gửi lời mời <b>${SOCIAL[kind].vi.toLowerCase()}</b> tới ${esc(o.name)}. Chờ người ấy đồng ý…`);
+  setTimeout(() => { if (SOC.pending[rid]) { delete SOC.pending[rid]; toast(`${esc(o.name)} chưa trả lời lời mời.`); } }, 16000);
+}
+// ---- invite card on the receiver's screen
+function showInvite(d) {
+  const o = MP.others[d.uid]; if (!o) return;
+  if (d.kind === 'kiss' && !canKiss(o)) return mpCast('res', {to: d.uid, rid: d.rid, ok: false});
+  SOC.invite = d; clearTimeout(SOC.inviteT);
+  let el = $('#invite'); if (!el) { el = document.createElement('div'); el.id = 'invite'; el.className = 'invite'; document.body.appendChild(el); }
+  el.hidden = false;
+  el.innerHTML = `<img src="${portraitSVG(o.look)}" alt=""><div><b>${esc(o.name)}</b> ${SOCIAL[d.kind].ask}.<div class="row-btns"><button class="btn sm" data-act="soc-yes">Đồng ý</button><button class="btn ghost sm" data-act="soc-no">Từ chối</button></div></div>`;
+  sfx('pop');
+  SOC.inviteT = setTimeout(() => socAnswer(false), 15000);
+}
+function socAnswer(ok) {
+  const d = SOC.invite; SOC.invite = null; clearTimeout(SOC.inviteT); const el = $('#invite'); if (el) el.hidden = true;
+  if (!d) return;
+  mpCast('res', {to: d.uid, rid: d.rid, ok});
+  if (ok) { const winner = d.kind === 'fight' ? (Math.random() < 0.5 ? d.uid : Store.uid) : null; mpCast('act', {a: d.uid, b: Store.uid, kind: d.kind, winner}); startPair(d.uid, Store.uid, d.kind, winner); }
+}
+// ---- both players (and everyone nearby) play the animation
+function pairEnt(uid) { return uid === Store.uid ? P : MP.others[uid]; }
+function startPair(a, b, kind, winner) {
+  const A = pairEnt(a), B = pairEnt(b); if (!A || !B) return;
+  const t0 = performance.now();
+  A.pair = {kind, t0, other: b, winner}; B.pair = {kind, t0, other: a, winner};
+  // the one who asked steps up next to the other and they face each other
+  if (a === Store.uid) { const side = P.x < B.x ? -1 : 1; P.path = []; P.x = B.x + side * 30; P.y = B.y; }
+  if (A !== P) { /* remote: its own client moves it */ }
+  const faceEach = (X, Y) => { X.dir = X.x <= Y.x ? 'r' : 'l'; };
+  setTimeout(() => { faceEach(A, B); faceEach(B, A); }, 60);
+  if (a === Store.uid || b === Store.uid) {
+    const other = a === Store.uid ? B : A, nm = other.name || S.name;
+    const line = {hug: 'Big hug!', high5: 'High five!', kiss: 'Mwah!', fight: 'Pillow fight!'}[kind];
+    P.say = {text: line, t: t0}; speak(line, true);
+    setTimeout(() => {
+      if (kind === 'fight') { const won = winner === Store.uid; if (won) { S.fightWins = (S.fightWins || 0) + 1; markDirty(); } toast(won ? `Bạn thắng trận đánh gối với <b>${esc(nm)}</b>!` : `<b>${esc(nm)}</b> thắng trận đánh gối này!`); sfx(won ? 'level' : 'pop'); }
+      else { S.social = S.social || {}; S.social[kind] = (S.social[kind] || 0) + 1; markDirty(); }
+    }, SOCIAL[kind].dur - 300);
+  }
+}
+// frame for a character that is in an interaction
+function pairFrame(ent, tnow) {
+  const p = ent && ent.pair; if (!p) return null;
+  const k = tnow - p.t0, D = SOCIAL[p.kind].dur; if (k > D) { ent.pair = null; return null; }
+  if (p.kind === 'hug') return 'hug';
+  if (p.kind === 'kiss') return 'kiss';
+  if (p.kind === 'high5') return k % 600 < 300 ? 'wave' : 'cheer';
+  if (p.kind === 'fight') { if (k > D - 700) return p.winner === (ent === P ? Store.uid : ent.uid) ? 'cheer' : 'dizzy'; return Math.floor(k / 180) % 2 ? 'punch1' : 'punch2'; }
+  return null;
+}
+// effects between the pair (screen space)
+function drawPairFx(sx, sy, s, tnow) {
+  const seen = new Set();
+  for (const e of [P, ...Object.values(MP.others)]) {
+    const p = e && e.pair; if (!p) continue;
+    const other = p.other === Store.uid ? P : MP.others[p.other]; if (!other) continue;
+    const key = [e === P ? Store.uid : e.uid, p.other].sort().join('|'); if (seen.has(key)) continue; seen.add(key);
+    const k = (tnow - p.t0) / SOCIAL[p.kind].dur; if (k > 1) continue;
+    const mx = sx((e.x + other.x) / 2), my = sy((e.y + other.y) / 2 - 40);
+    ctx.save(); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    if (p.kind === 'kiss' || p.kind === 'hug') {
+      for (let i = 0; i < 6; i++) { const t = (k * 2 + i / 6) % 1, x = mx + Math.sin(i * 2.1 + t * 6) * 14 * s, y = my - t * 40 * s, r = (3 + (i % 3)) * s;
+        ctx.globalAlpha = 1 - t; ctx.fillStyle = i % 2 ? '#FF3D8E' : '#FF8FC7'; ctx.beginPath(); ctx.moveTo(x, y + r); ctx.bezierCurveTo(x - 2 * r, y - r * .6, x - r * .6, y - 2 * r, x, y - r * .6); ctx.bezierCurveTo(x + r * .6, y - 2 * r, x + 2 * r, y - r * .6, x, y + r); ctx.fill(); }
+    }
+    if (p.kind === 'high5') { ctx.globalAlpha = 1 - k; ctx.fillStyle = '#FFE48A'; for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2; ctx.beginPath(); ctx.arc(mx + Math.cos(a) * (6 + k * 26) * s, my - 8 * s + Math.sin(a) * (6 + k * 26) * s, 2.2 * s, 0, Math.PI * 2); ctx.fill(); } }
+    if (p.kind === 'fight' && k < 0.8) {
+      const words = ['BỤP!', 'POW!', 'BỐP!'], w = words[Math.floor(k * 9) % 3];
+      ctx.globalAlpha = 0.9; ctx.font = `900 ${Math.round(11 * s)}px Baloo 2, Nunito, sans-serif`; ctx.lineWidth = 4; ctx.strokeStyle = '#1E1B3A'; ctx.strokeText(w, mx + Math.sin(k * 40) * 8 * s, my - 6 * s); ctx.fillStyle = '#FFE48A'; ctx.fillText(w, mx + Math.sin(k * 40) * 8 * s, my - 6 * s);
+      ctx.fillStyle = '#FFFFFF'; for (let i = 0; i < 5; i++) { const a = k * 30 + i; ctx.globalAlpha = 0.8; ctx.beginPath(); ctx.ellipse(mx + Math.cos(a) * 16 * s, my + 8 * s + Math.sin(a) * 8 * s, 3 * s, 2 * s, a, 0, Math.PI * 2); ctx.fill(); }
+    }
+    ctx.restore();
+  }
+}
+// ---- gifts: the receiver adds the item and confirms; the sender only pays once the gift has arrived
+const GIFT_COINS = [20, 50, 100], GIFT_DAY_CAP = 300;
+let GIFT_TO = null;
+function openGift(uid) {
+  const o = MP.others[uid]; if (!o) return; GIFT_TO = uid;
+  const day = new Date().toISOString().slice(0, 10); if (!S.giftDay || S.giftDay.d !== day) S.giftDay = {d: day, coins: 0};
+  const items = Object.keys(S.inv).filter(id => S.inv[id] > 0 && ITEM(id)).slice(0, 18);
+  openModal(`<h2 class="ptitle">Tặng quà cho ${esc(o.name)}</h2><p class="psub">Chọn món trong túi hoặc tặng xu. Hôm nay bạn còn tặng được ${GIFT_DAY_CAP - S.giftDay.coins} xu.</p>
+    <h3 class="ph3">Nông sản và đồ trong túi</h3>${items.length ? `<div class="gifts">${items.map(id => `<button class="row-item" data-act="soc-give" data-k="item" data-v="${id}">${itemImg(id)}<span class="ri-main"><b>${esc(ITEM(id).en)}</b><small>${esc(ITEM(id).vi)} · có ${S.inv[id]}</small></span></button>`).join('')}</div>` : '<p class="empty">Túi đang trống.</p>'}
+    <h3 class="ph3">Xu</h3><div class="row-btns">${GIFT_COINS.map(n => `<button class="btn ghost" data-act="soc-give" data-k="coins" data-v="${n}" ${S.coins < n || S.giftDay.coins + n > GIFT_DAY_CAP ? 'disabled' : ''}>${coinIcon}${n}</button>`).join('')}</div>`, {label: 'Tặng quà', wide: true});
+}
+function sendGift(kind, v) {
+  const o = MP.others[GIFT_TO]; if (!o) return closeModal();
+  if (kind === 'item' && !(S.inv[v] > 0)) return;
+  if (kind === 'coins' && (S.coins < +v || S.giftDay.coins + +v > GIFT_DAY_CAP)) return;
+  const gid = Math.random().toString(36).slice(2, 9); SOC.gifts[gid] = {kind, v, to: o.uid, name: o.name};
+  mpCast('gift', {to: o.uid, gid, kind, v, name: S.name});
+  closeModal(); toast(`Đang gửi quà tới ${esc(o.name)}…`);
+  setTimeout(() => { if (SOC.gifts[gid]) { delete SOC.gifts[gid]; toast(`Chưa gửi được quà tới ${esc(o.name)}. Bạn chưa bị trừ gì.`); } }, 8000);
+}
+function giftLabel(kind, v) { return kind === 'coins' ? `${v} xu` : `1 ${ITEM(v) ? ITEM(v).en : v}`; }
+// broadcast events for social actions (called from mpOnMsg)
+function mpSocial(ev, d, o) {
+  if (d.to !== Store.uid && ev !== 'act') return;
+  if (ev === 'req') { if (o) o.gender = d.gender || o.gender; showInvite({uid: d.uid, rid: d.rid, kind: d.kind}); }
+  if (ev === 'res') { const p = SOC.pending[d.rid]; if (!p) return; delete SOC.pending[d.rid]; if (!d.ok) toast(`${esc(o ? o.name : 'Người ấy')} đã từ chối lời mời.`); }
+  if (ev === 'act') { if (d.a !== Store.uid && d.b !== Store.uid && !MP.others[d.a] && !MP.others[d.b]) return; startPair(d.a, d.b, d.kind, d.winner); }
+  if (ev === 'gift') {
+    if (d.kind === 'coins') { const n = Math.max(0, Math.min(100, +d.v || 0)); S.coins += n; }
+    else if (ITEM(d.v)) S.inv[d.v] = (S.inv[d.v] || 0) + 1; else return;
+    mpCast('gift_ok', {to: d.uid, gid: d.gid}); renderHUD(); markDirty(); saveNow();
+    sfx('coin'); toast(`🎁 <b>${esc(o ? o.name : d.name)}</b> tặng bạn <b>${esc(giftLabel(d.kind, d.v))}</b>!`, 5000);
+    if (o) o.say = {text: 'A gift for you!', t: performance.now()};
+  }
+  if (ev === 'gift_ok') {
+    const g = SOC.gifts[d.gid]; if (!g) return; delete SOC.gifts[d.gid];
+    if (g.kind === 'coins') { S.coins -= +g.v; S.giftDay.coins += +g.v; } else S.inv[g.v] = Math.max(0, (S.inv[g.v] || 0) - 1);
+    P.say = {text: 'This is for you!', t: performance.now()}; P.emote = performance.now();
+    renderHUD(); markDirty(); saveNow(); toast(`Đã tặng <b>${esc(giftLabel(g.kind, g.v))}</b> cho ${esc(g.name)}.`);
+  }
+}
+function askGender(then) {
+  openModal(`<h2 class="ptitle">Bạn là nam hay nữ?</h2><p class="psub">Dùng cho tương tác giữa người chơi. Bạn đổi lại được trong Cài đặt.</p><div class="row-btns"><button class="btn" data-act="soc-setg" data-v="m">Nam</button><button class="btn" data-act="soc-setg" data-v="f">Nữ</button></div>`, {label: 'Giới tính'});
+}
 
 /* ===================== TEST BANK (original material written for Vườn Chữ) ===================== */
 // Question shapes: {t:'mcq', q, options:[...], answer:index} | {t:'tfng', q, answer:'TRUE'|'FALSE'|'NOT GIVEN'}
@@ -4809,14 +4970,14 @@ function draw(tnow) {
   for (const o of OTHERS) {
     const ol = o.look;
     if (ol.pet && FASH[ol.pet]) { o.pet = o.pet || {x: o.x - 20, y: o.y}; o.pet.x += (o.x - 22 - o.pet.x) * 0.08; o.pet.y += (o.y + 2 - o.pet.y) * 0.08; ents.push({y: o.pet.y, d: () => drawPet(ol.pet, (ol.lv || {})[ol.pet] || 0, o.pet.x, o.pet.y, tnow, o.moving)}); }
-    ents.push({y: o.y, d: () => { if (ol.aura && FASH[ol.aura]) drawAura(ctx, ol.aura, (ol.lv || {})[ol.aura] || 0, o.x, o.y, tnow); shadow(o.x, o.y); drawChibi(ctx, ol, chibiFrame(o.moving, o.phase, tnow, null, o.emote, 'p-' + o.uid), o.dir, o.x, o.y, pxs, 'p-' + o.uid); }});
+    ents.push({y: o.y, d: () => { if (ol.aura && FASH[ol.aura]) drawAura(ctx, ol.aura, (ol.lv || {})[ol.aura] || 0, o.x, o.y, tnow); shadow(o.x, o.y); drawChibi(ctx, ol, pairFrame(o, tnow) || chibiFrame(o.moving, o.phase, tnow, null, o.emote, 'p-' + o.uid), o.dir, o.x, o.y, pxs, 'p-' + o.uid); }});
   }
   const L = fullLook(S.look);
   if (L.pet) { const tx = P.x + (P.dir === 'l' ? 24 : -24), ty = P.y + 2; P.pet = P.pet || {x: tx, y: ty}; P.pet.x += (tx - P.pet.x) * 0.07; P.pet.y += (ty - P.pet.y) * 0.07; ents.push({y: P.pet.y, d: () => drawPet(L.pet, (L.lv || {})[L.pet] || 0, P.pet.x, P.pet.y, tnow, P.moving)}); }
   ents.push({y: P.y + 0.1, d: () => {
     if (L.aura) drawAura(ctx, L.aura, (L.lv || {})[L.aura] || 0, P.x, P.y, tnow);
     shadow(P.x, P.y);
-    drawChibi(ctx, L, chibiFrame(P.moving, P.phase, tnow, P.act, P.emote, 'me'), P.dir, P.x, P.y, pxs, 'me');
+    drawChibi(ctx, L, pairFrame(P, tnow) || chibiFrame(P.moving, P.phase, tnow, P.act, P.emote, 'me'), P.dir, P.x, P.y, pxs, 'me');
     const a = P.act;
     if (a && a.kind === 'fish') { const dip = a.bit ? Math.sin(tnow / 60) * 2 + 2 : Math.sin(tnow / 400); const hx = P.x + (P.dir === 'l' ? -24 : 24), hy = P.y - 52; ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 0.7; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.quadraticCurveTo((hx + a.bx) / 2, Math.max(hy, a.by) + 6, a.bx, a.by); ctx.stroke(); ctx.fillStyle = '#ff4757'; ctx.beginPath(); ctx.arc(a.bx, a.by + dip - 2, 2.6, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(a.bx, a.by + dip - 4.5, 1.7, 0, Math.PI * 2); ctx.fill(); }
     if (Object.values(L.lv || {}).some(v => v >= 6)) { ctx.fillStyle = `hsl(${(tnow / 6) % 360} 95% 70%)`; for (let i = 0; i < 4; i++) { const ang = tnow / 700 + i * 1.57; ctx.beginPath(); ctx.arc(P.x + Math.cos(ang) * 20, P.y - 30 + Math.sin(ang * 1.3) * 18, 1.4, 0, Math.PI * 2); ctx.fill(); } }
@@ -4837,6 +4998,7 @@ function draw(tnow) {
   for (const n of NPCS) { nameTag(sx(n.x), sy(n.y - 68), n.def.name, '#10b981'); if (n.bubble) bubble(sx(n.x), sy(n.y - 78), n.bubble.text); }
   for (const o of OTHERS) { nameTag(sx(o.x), sy(o.y - 68), `${o.name} · ${o.cefr}`, '#3b82f6'); if (o.say && tnow - o.say.t < 5000) bubble(sx(o.x), sy(o.y - 78), o.say.text); }
   nameTag(sx(P.x), sy(P.y - 68), S.name || 'Bạn', '#7c5cff');
+  drawPairFx(sx, sy, s, tnow);
   if (P.say && tnow - P.say.t < 4000) bubble(sx(P.x), sy(P.y - 78), P.say.text);
   if (P.act && P.act.kind === 'fish' && P.act.bit) bubble(sx(P.act.bx), sy(P.act.by - 6), '!');
   for (const f of FX) {
@@ -5160,6 +5322,14 @@ document.addEventListener('click', e => {
     case 'help': return openHelp();
     case 'emote': { const tx = rand(['Hello!', 'Yay!', 'Hi there!']); P.emote = performance.now(); P.say = {text: tx, t: performance.now()}; mpCast('emote', {text: tx}); return; }
     case 'mp-wave': return mpWave(d.id);
+    case 'soc-req': return socRequest(d.k, d.id);
+    case 'soc-yes': return socAnswer(true);
+    case 'soc-no': return socAnswer(false);
+    case 'soc-gift': return openGift(d.id);
+    case 'soc-give': return sendGift(d.k, d.v);
+    case 'soc-gender': return askGender();
+    case 'soc-setg': S.gender = d.v; markDirty(); saveNow(); closeModal(); toast(`Đã chọn giới tính: <b>${GENDER_VI[d.v]}</b>.`); return;
+    case 'cc-g': CC.name = $('#cc-name').value; CC.gender = d.v; return renderCreator();
     case 'mp-card': { const o = MP.others[d.id]; return o ? openPlayer(o) : closeModal(); }
     case 'mp-like': return mpLike(d.id);
     case 'mp-go': return mpGo(d.id);

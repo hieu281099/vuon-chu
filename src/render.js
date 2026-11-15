@@ -120,14 +120,14 @@ function draw(tnow) {
   for (const o of OTHERS) {
     const ol = o.look;
     if (ol.pet && FASH[ol.pet]) { o.pet = o.pet || {x: o.x - 20, y: o.y}; o.pet.x += (o.x - 22 - o.pet.x) * 0.08; o.pet.y += (o.y + 2 - o.pet.y) * 0.08; ents.push({y: o.pet.y, d: () => drawPet(ol.pet, (ol.lv || {})[ol.pet] || 0, o.pet.x, o.pet.y, tnow, o.moving)}); }
-    ents.push({y: o.y, d: () => { if (ol.aura && FASH[ol.aura]) drawAura(ctx, ol.aura, (ol.lv || {})[ol.aura] || 0, o.x, o.y, tnow); shadow(o.x, o.y); drawChibi(ctx, ol, chibiFrame(o.moving, o.phase, tnow, null, o.emote, 'p-' + o.uid), o.dir, o.x, o.y, pxs, 'p-' + o.uid); }});
+    ents.push({y: o.y, d: () => { if (ol.aura && FASH[ol.aura]) drawAura(ctx, ol.aura, (ol.lv || {})[ol.aura] || 0, o.x, o.y, tnow); shadow(o.x, o.y); drawChibi(ctx, ol, pairFrame(o, tnow) || chibiFrame(o.moving, o.phase, tnow, null, o.emote, 'p-' + o.uid), o.dir, o.x, o.y, pxs, 'p-' + o.uid); }});
   }
   const L = fullLook(S.look);
   if (L.pet) { const tx = P.x + (P.dir === 'l' ? 24 : -24), ty = P.y + 2; P.pet = P.pet || {x: tx, y: ty}; P.pet.x += (tx - P.pet.x) * 0.07; P.pet.y += (ty - P.pet.y) * 0.07; ents.push({y: P.pet.y, d: () => drawPet(L.pet, (L.lv || {})[L.pet] || 0, P.pet.x, P.pet.y, tnow, P.moving)}); }
   ents.push({y: P.y + 0.1, d: () => {
     if (L.aura) drawAura(ctx, L.aura, (L.lv || {})[L.aura] || 0, P.x, P.y, tnow);
     shadow(P.x, P.y);
-    drawChibi(ctx, L, chibiFrame(P.moving, P.phase, tnow, P.act, P.emote, 'me'), P.dir, P.x, P.y, pxs, 'me');
+    drawChibi(ctx, L, pairFrame(P, tnow) || chibiFrame(P.moving, P.phase, tnow, P.act, P.emote, 'me'), P.dir, P.x, P.y, pxs, 'me');
     const a = P.act;
     if (a && a.kind === 'fish') { const dip = a.bit ? Math.sin(tnow / 60) * 2 + 2 : Math.sin(tnow / 400); const hx = P.x + (P.dir === 'l' ? -24 : 24), hy = P.y - 52; ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 0.7; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.quadraticCurveTo((hx + a.bx) / 2, Math.max(hy, a.by) + 6, a.bx, a.by); ctx.stroke(); ctx.fillStyle = '#ff4757'; ctx.beginPath(); ctx.arc(a.bx, a.by + dip - 2, 2.6, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(a.bx, a.by + dip - 4.5, 1.7, 0, Math.PI * 2); ctx.fill(); }
     if (Object.values(L.lv || {}).some(v => v >= 6)) { ctx.fillStyle = `hsl(${(tnow / 6) % 360} 95% 70%)`; for (let i = 0; i < 4; i++) { const ang = tnow / 700 + i * 1.57; ctx.beginPath(); ctx.arc(P.x + Math.cos(ang) * 20, P.y - 30 + Math.sin(ang * 1.3) * 18, 1.4, 0, Math.PI * 2); ctx.fill(); } }
@@ -148,6 +148,7 @@ function draw(tnow) {
   for (const n of NPCS) { nameTag(sx(n.x), sy(n.y - 68), n.def.name, '#10b981'); if (n.bubble) bubble(sx(n.x), sy(n.y - 78), n.bubble.text); }
   for (const o of OTHERS) { nameTag(sx(o.x), sy(o.y - 68), `${o.name} · ${o.cefr}`, '#3b82f6'); if (o.say && tnow - o.say.t < 5000) bubble(sx(o.x), sy(o.y - 78), o.say.text); }
   nameTag(sx(P.x), sy(P.y - 68), S.name || 'Bạn', '#7c5cff');
+  drawPairFx(sx, sy, s, tnow);
   if (P.say && tnow - P.say.t < 4000) bubble(sx(P.x), sy(P.y - 78), P.say.text);
   if (P.act && P.act.kind === 'fish' && P.act.bit) bubble(sx(P.act.bx), sy(P.act.by - 6), '!');
   for (const f of FX) {

@@ -16,7 +16,7 @@ function mpConnect() {
   ws.onerror = () => {};
 }
 function mpMe() {
-  return {uid: Store.uid, name: (S.name || SB.sess.username).slice(0, 16), user: SB.sess.username, look: S.look, cefr: S.cefr || 'A1', track: S.study.track, x: Math.round(P.x), y: Math.round(P.y), dir: P.dir};
+  return {uid: Store.uid, name: (S.name || SB.sess.username).slice(0, 16), user: SB.sess.username, look: S.look, cefr: S.cefr || 'A1', track: S.study.track, gender: S.gender || null, x: Math.round(P.x), y: Math.round(P.y), dir: P.dir};
 }
 // join the channel of the current map (leaving the previous one)
 function mpJoin() {
@@ -27,12 +27,12 @@ function mpJoin() {
   MP.topic = want; MP.joined = false; MP.others = {};
   if (want) MP.joinRef = mpSend(want, 'phx_join', {config: {broadcast: {self: false, ack: false}, presence: {key: Store.uid}, private: false}});
 }
-function mpTrack() { if (MP.joined) { MP.lookKey = JSON.stringify(S.look) + S.name + S.cefr; mpSend(MP.topic, 'presence', {type: 'presence', event: 'track', payload: mpMe()}); } }
+function mpTrack() { if (MP.joined) { MP.lookKey = JSON.stringify(S.look) + S.name + S.cefr + S.gender; mpSend(MP.topic, 'presence', {type: 'presence', event: 'track', payload: mpMe()}); } }
 function mpCast(event, payload) { if (MP.joined) mpSend(MP.topic, 'broadcast', {type: 'broadcast', event, payload: Object.assign({uid: Store.uid}, payload)}); }
 function mpUpsert(m) {
   if (!m || !m.uid || m.uid === Store.uid) return;
   const o = MP.others[m.uid] || (MP.others[m.uid] = {uid: m.uid, x: m.x, y: m.y, tx: m.x, ty: m.y, dir: m.dir || 'd', phase: 0, moving: false});
-  Object.assign(o, {name: cleanText(m.name) || 'Người chơi', user: m.user, cefr: m.cefr || 'A1', track: m.track, look: fullLook(m.look || {}), seen: Date.now()});
+  Object.assign(o, {name: cleanText(m.name) || 'Người chơi', user: m.user, cefr: m.cefr || 'A1', track: m.track, gender: m.gender || null, look: fullLook(m.look || {}), seen: Date.now()});
   if (typeof m.x === 'number') { o.tx = m.x; o.ty = m.y; }
 }
 function mpOnMsg(msg) {
@@ -50,6 +50,7 @@ function mpOnMsg(msg) {
   if (ev === 'mv' && o) { o.tx = d.x; o.ty = d.y; o.dir = d.dir || o.dir; o.seen = Date.now(); }
   if (ev === 'say' && o) { o.say = {text: cleanText(d.text), t: performance.now()}; }
   if (ev === 'emote' && o) { o.emote = performance.now(); o.say = {text: cleanText(d.text || 'Hi!'), t: performance.now()}; }
+  if (['req', 'res', 'act', 'gift', 'gift_ok'].includes(ev)) return mpSocial(ev, d, o);
   if ((ev === 'wave' || ev === 'like') && d.to === Store.uid) {
     const who = o ? o.name : cleanText(d.name);
     if (o) o.emote = performance.now();
@@ -64,7 +65,7 @@ setInterval(() => {
   if (!MP.joined) return;
   const now = Date.now(), moved = Math.hypot(P.x - MP.sent.x, P.y - MP.sent.y) > 2 || P.dir !== MP.sent.dir;
   if (moved || now - MP.sent.t > 4000) { mpCast('mv', {x: Math.round(P.x), y: Math.round(P.y), dir: P.dir}); MP.sent = {x: P.x, y: P.y, dir: P.dir, t: now}; }
-  if (JSON.stringify(S.look) + S.name + S.cefr !== MP.lookKey) mpTrack();
+  if (JSON.stringify(S.look) + S.name + S.cefr + S.gender !== MP.lookKey) mpTrack();
 }, 150);
 // other players in this area, smoothly following their latest position
 function mpList() {
@@ -86,6 +87,7 @@ function openPlayer(o) {
   openModal(`<div class="pcard"><img class="pv big" src="${portraitSVG(L, {full: true, hand: true})}" alt=""><div>
     <h2 class="ptitle">${esc(o.name)}</h2><p class="psub">@${esc(o.user || '')} · Trình độ <b>${esc(o.cefr)}</b>${o.track && TRACKS[o.track] ? ' · ' + esc(TRACKS[o.track].vi) : ''}</p>
     <div class="row-btns"><button class="btn" data-act="mp-wave" data-id="${o.uid}">Vẫy tay chào</button><button class="btn gold" data-act="mp-like" data-id="${o.uid}">Khen bộ đồ</button><button class="btn ghost" data-act="mp-go" data-id="${o.uid}">Đi tới</button></div>
+    ${socialButtons(o)}
     <p class="note">Nói chuyện bằng ô "Nói tiếng Anh…" ở góc dưới: mọi người trong khu đều thấy bong bóng chat của bạn.</p></div></div>`, {label: 'Người chơi', wide: true});
 }
 function mpWave(uid) { const o = MP.others[uid]; if (!o) return; P.emote = performance.now(); P.say = {text: `Hi, ${o.name}!`, t: performance.now()}; mpCast('wave', {to: uid, name: S.name}); mpCast('emote', {text: `Hi, ${o.name}!`}); closeModal(); }

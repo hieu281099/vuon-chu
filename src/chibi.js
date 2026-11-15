@@ -262,7 +262,10 @@ const FRAMES = {
   water: {arms: [0, -55], tool: 'tool_can', bob: 0}, water2: {arms: [0, -75], tool: 'tool_can', bob: 1},
   hoe: {arms: [0, -120], tool: 'tool_hoe', bob: -1}, hoe2: {arms: [0, -30], tool: 'tool_hoe', bob: 2},
   fish: {arms: [0, -40], tool: 'tool_rod'},
-  cheer: {arms: [150, -150], legs: [-2, -2], bob: -6, face: 'laughs', flap: 16}, wave: {arms: [0, -150], face: 'willing'}
+  cheer: {arms: [150, -150], legs: [-2, -2], bob: -6, face: 'laughs', flap: 16}, wave: {arms: [0, -150], face: 'willing'},
+  hug: {arms: [70, -70], bob: -1, face: 'cute', flap: 10, ph: 1}, kiss: {arms: [20, -40], bob: -2, face: 'love', flap: 8, ph: 2},
+  punch1: {arms: [10, -110], legs: [-3, 0], bob: -1, face: 'tempered', flap: 14, ph: 0}, punch2: {arms: [-40, -20], legs: [0, -3], face: 'tempered', flap: -6, ph: 2},
+  dizzy: {arms: [30, -30], legs: [-2, 2], bob: 2, face: 'sleepy', flap: 0, ph: 3}
 };
 const CHIBI_K = 0.36;           // native world px per chibi unit (character ~57 px tall)
 const CHIBI_CACHE = new Map();

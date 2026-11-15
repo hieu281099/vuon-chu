@@ -186,6 +186,14 @@ document.addEventListener('click', e => {
     case 'help': return openHelp();
     case 'emote': { const tx = rand(['Hello!', 'Yay!', 'Hi there!']); P.emote = performance.now(); P.say = {text: tx, t: performance.now()}; mpCast('emote', {text: tx}); return; }
     case 'mp-wave': return mpWave(d.id);
+    case 'soc-req': return socRequest(d.k, d.id);
+    case 'soc-yes': return socAnswer(true);
+    case 'soc-no': return socAnswer(false);
+    case 'soc-gift': return openGift(d.id);
+    case 'soc-give': return sendGift(d.k, d.v);
+    case 'soc-gender': return askGender();
+    case 'soc-setg': S.gender = d.v; markDirty(); saveNow(); closeModal(); toast(`Đã chọn giới tính: <b>${GENDER_VI[d.v]}</b>.`); return;
+    case 'cc-g': CC.name = $('#cc-name').value; CC.gender = d.v; return renderCreator();
     case 'mp-card': { const o = MP.others[d.id]; return o ? openPlayer(o) : closeModal(); }
     case 'mp-like': return mpLike(d.id);
     case 'mp-go': return mpGo(d.id);

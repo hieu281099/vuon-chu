@@ -707,7 +707,7 @@ async function openBoard() {
 }
 function openSettings() {
   openModal(`<h2 class="ptitle">Cài đặt</h2>
-    ${acctHTML()}
+    ${acctHTML()}${genderHTML()}
     <div class="row-btns"><button class="btn ghost" data-act="sound">${S.sound ? 'Tắt âm thanh' : 'Bật âm thanh'}</button><button class="btn ghost" data-act="credits">Ghi công hình ảnh</button><button class="btn ghost" data-act="help">Cách chơi</button></div>
     <div class="row-btns"><button class="btn ghost danger" data-act="reset" id="reset-btn">Chơi lại từ đầu</button></div>`, {label: 'Cài đặt'});
   setSaveBadge('ok');
@@ -749,7 +749,7 @@ function openHelp() {
 /* ===================== CHARACTER CREATOR ===================== */
 let CC = null;
 function openCreator(first) {
-  CC = {name: S.name || '', look: fullLook(S.look), level: S.study.level, track: S.study.track, first, tab: 'body'};
+  CC = {name: S.name || '', look: fullLook(S.look), level: S.study.level, track: S.study.track, gender: S.gender || null, first, tab: 'body'};
   renderCreator();
 }
 function renderCreator() {
@@ -758,7 +758,7 @@ function renderCreator() {
   const chips = (k, list, vi) => `<div class="chips">${list.map(v => `<button class="chip" data-act="cc" data-k="${k}" data-v="${v}" aria-pressed="${String(L[k]) === String(v)}">${esc(vi(v))}</button>`).join('')}</div>`;
   let body = '';
   if (CC.tab === 'body') body = `<span class="lbl">Màu da</span><div class="swatches">${SKIN_TONES.map((t, i) => (i < BASE_SKINS || spaOwned('sk_' + t.id)) ? `<button class="sw" style="background:${t.b}" data-act="cc" data-k="skin" data-v="${i}" aria-pressed="${L.skin === i}" aria-label="Màu da ${i + 1}"></button>` : '').join('')}</div>
-    <span class="lbl">Kiểu áo</span>${chips('top', ['top_tee', 'top_dress'], v => FASH[v].vi)}<span class="lbl">Màu áo</span>${sw('topC', CLOTH_COLS)}<span class="lbl">Màu quần</span>${sw('bottomC', CLOTH_COLS)}`;
+    <span class="lbl">Giới tính</span><div class="chips">${[['m', 'Nam'], ['f', 'Nữ']].map(([v, l]) => `<button class="chip" data-act="cc-g" data-v="${v}" aria-pressed="${CC.gender === v}">${l}</button>`).join('')}</div><span class="lbl">Kiểu áo</span>${chips('top', ['top_tee', 'top_dress'], v => FASH[v].vi)}<span class="lbl">Màu áo</span>${sw('topC', CLOTH_COLS)}<span class="lbl">Màu quần</span>${sw('bottomC', CLOTH_COLS)}`;
   if (CC.tab === 'hair') body = `<span class="lbl">Tóc phía trước</span>${chips('hairF', Object.keys(NEMO.hairF).filter(v => v !== 'none').concat('none').filter(ownsHairF), v => HAIR_F_VI[v] || (HAIR_ITEMS.find(h => h.f === v) || {}).vi || v)}<span class="lbl">Tóc phía sau</span>${chips('hairB', [null, ...Object.keys(NEMO.hairB)].filter(ownsHairB), v => HAIR_B_VI[v] || (HAIR_ITEMS.find(h => h.b === v) || {}).vi || v)}<span class="lbl">Màu tóc</span>${sw('hairC', [...HAIR_COLS, ...ownedDyes()])}<p class="note">Kiểu tóc và màu nhuộm đẹp, hiếm có ở <b>Tiệm tóc</b> trong Làng. <button class="linkbtn" data-act="salon">Đến tiệm tóc</button></p>`;
   if (CC.tab === 'face') body = `<span class="lbl">Biểu cảm</span>${chips('face', FACES, v => FACE_VI[v])}<span class="lbl">Râu</span>${chips('beard', [null, 'short', 'middle', 'long'], v => ({null: 'Không', short: 'Ria mép', middle: 'Râu quai nón', long: 'Râu dài'})[v])}`;
   if (CC.tab === 'study') body = `<span class="lbl">Trình độ tiếng Anh hiện tại</span><div class="chips">${['A1','A2','B1','B2'].map(lv => `<button class="chip" data-act="cc-lv" data-v="${lv}" aria-pressed="${CC.level === lv}">${lv} · ${LEVEL_VI[lv]}</button>`).join('')}</div>
@@ -775,7 +775,7 @@ function renderCreator() {
 function ccDone() {
   const nm = ($('#cc-name').value || '').trim().slice(0, 14);
   if (!nm) { toast('Hãy đặt tên cho nhân vật.'); $('#cc-name').focus(); return; }
-  S.name = nm; S.look = Object.assign({}, CC.look, {lv: S.look.lv || {}});
+  S.name = nm; S.look = Object.assign({}, CC.look, {lv: S.look.lv || {}}); if (CC.gender) S.gender = CC.gender;
   const first = CC.first; S.created = true;
   if (CC.look.top === 'top_dress' && !S.owned.includes('top_dress')) S.owned.push('top_dress');
   if (first) { S.study.level = CC.level; S.study.track = CC.track; S.study.unlocked = LEVELS.slice(0, LEVELS.indexOf(CC.level) + 1); S.orders = [genOrder(['carrot']), genOrder(['radish', 'carrot']), genOrder(['egg'])]; }
