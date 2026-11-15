@@ -652,6 +652,11 @@ textarea.field{resize:vertical;line-height:1.5}
   .hud-card{max-width:110px}
 }
 
+/* ---------- no tap flash / long-press menus on the playfield (Android WebView, iOS Safari) ---------- */
+html,body{-webkit-tap-highlight-color:transparent}
+*{-webkit-tap-highlight-color:transparent}
+#world,.stage{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;outline:none}
+
 </style>
 
 <div id="rotate" class="rotate" role="dialog" aria-label="Xoay ngang điện thoại"><div class="rotcard">
@@ -1997,14 +2002,17 @@ function chibiImage(L, frame, dir, px) {
   if (!e) {
     const im = new Image(); e = {im, ok: false}; CHIBI_CACHE.set(key, e);
     im.onload = () => { e.ok = true; }; im.src = svgURL(chibiSVG(L, FRAMES[frame] || {}, dir).replace(`width="${VB.w}" height="${VB.h}"`, `width="${px}" height="${Math.round(px * VB.h / VB.w)}"`));
-    if (CHIBI_CACHE.size > 900) { const first = CHIBI_CACHE.keys().next().value; CHIBI_CACHE.delete(first); }
+    if (CHIBI_CACHE.size > 1600) { const first = CHIBI_CACHE.keys().next().value; CHIBI_CACHE.delete(first); }
   }
   return e.ok ? e.im : null;
 }
 // draw with feet at (x, y) in the current world transform; pxScale = device px per world px
 const LAST_OK = new Map();
+const WARMED = new Set();
+function warmChibi(L, px) { const k = JSON.stringify(L) + '|' + px; if (WARMED.has(k)) return; WARMED.add(k); for (const fr of Object.keys(FRAMES)) for (const d of ['d', 'l']) chibiImage(L, fr, d, px); }
 function drawChibi(g, L, frame, dir, x, y, pxScale, id) {
   const w = VB.w * CHIBI_K, h = VB.h * CHIBI_K, px = Math.max(60, Math.round(w * pxScale));
+  if (id) warmChibi(L, px);
   let im = chibiImage(L, frame, dir === 'l' ? 'l' : 'd', px);
   if (!im && id) im = LAST_OK.get(id); else if (im && id) LAST_OK.set(id, im);
   if (!im) return false;
@@ -4790,9 +4798,10 @@ function chibiFrame(moving, phase, tnow, act, emote, id) {
   if ((tnow + seed) % 3600 < 140) return 'blink';
   return 'idle' + (Math.floor((tnow + seed) / 280) % 4);
 }
+const PET_LAST = {};
 function drawPet(id, lv, x, y, tnow, moving) {
   const frame = moving ? Math.floor(tnow / 180) % 2 : Math.floor(tnow / 600) % 2;
-  const im = petImage(id, lv, frame); if (!im) return;
+  let im = petImage(id, lv, frame); if (im) PET_LAST[id + lv] = im; else im = PET_LAST[id + lv]; if (!im) return;
   ctx.fillStyle = 'rgba(30,40,20,.18)'; ctx.beginPath(); ctx.ellipse(x, y, 8, 2.6, 0, 0, Math.PI * 2); ctx.fill();
   const float = id === 'pet_dragon' ? Math.sin(tnow / 300) * 3 - 6 : 0;
   ctx.drawImage(im, x - 13, y - 30 + float, 26, 31);

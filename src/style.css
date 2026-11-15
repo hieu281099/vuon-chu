@@ -645,3 +645,8 @@ textarea.field{resize:vertical;line-height:1.5}
   .mm{width:112px}
   .hud-card{max-width:110px}
 }
+
+/* ---------- no tap flash / long-press menus on the playfield (Android WebView, iOS Safari) ---------- */
+html,body{-webkit-tap-highlight-color:transparent}
+*{-webkit-tap-highlight-color:transparent}
+#world,.stage{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;outline:none}

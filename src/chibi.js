@@ -272,14 +272,17 @@ function chibiImage(L, frame, dir, px) {
   if (!e) {
     const im = new Image(); e = {im, ok: false}; CHIBI_CACHE.set(key, e);
     im.onload = () => { e.ok = true; }; im.src = svgURL(chibiSVG(L, FRAMES[frame] || {}, dir).replace(`width="${VB.w}" height="${VB.h}"`, `width="${px}" height="${Math.round(px * VB.h / VB.w)}"`));
-    if (CHIBI_CACHE.size > 900) { const first = CHIBI_CACHE.keys().next().value; CHIBI_CACHE.delete(first); }
+    if (CHIBI_CACHE.size > 1600) { const first = CHIBI_CACHE.keys().next().value; CHIBI_CACHE.delete(first); }
   }
   return e.ok ? e.im : null;
 }
 // draw with feet at (x, y) in the current world transform; pxScale = device px per world px
 const LAST_OK = new Map();
+const WARMED = new Set();
+function warmChibi(L, px) { const k = JSON.stringify(L) + '|' + px; if (WARMED.has(k)) return; WARMED.add(k); for (const fr of Object.keys(FRAMES)) for (const d of ['d', 'l']) chibiImage(L, fr, d, px); }
 function drawChibi(g, L, frame, dir, x, y, pxScale, id) {
   const w = VB.w * CHIBI_K, h = VB.h * CHIBI_K, px = Math.max(60, Math.round(w * pxScale));
+  if (id) warmChibi(L, px);
   let im = chibiImage(L, frame, dir === 'l' ? 'l' : 'd', px);
   if (!im && id) im = LAST_OK.get(id); else if (im && id) LAST_OK.set(id, im);
   if (!im) return false;

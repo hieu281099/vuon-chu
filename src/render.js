@@ -207,9 +207,10 @@ function chibiFrame(moving, phase, tnow, act, emote, id) {
   if ((tnow + seed) % 3600 < 140) return 'blink';
   return 'idle' + (Math.floor((tnow + seed) / 280) % 4);
 }
+const PET_LAST = {};
 function drawPet(id, lv, x, y, tnow, moving) {
   const frame = moving ? Math.floor(tnow / 180) % 2 : Math.floor(tnow / 600) % 2;
-  const im = petImage(id, lv, frame); if (!im) return;
+  let im = petImage(id, lv, frame); if (im) PET_LAST[id + lv] = im; else im = PET_LAST[id + lv]; if (!im) return;
   ctx.fillStyle = 'rgba(30,40,20,.18)'; ctx.beginPath(); ctx.ellipse(x, y, 8, 2.6, 0, 0, Math.PI * 2); ctx.fill();
   const float = id === 'pet_dragon' ? Math.sin(tnow / 300) * 3 - 6 : 0;
   ctx.drawImage(im, x - 13, y - 30 + float, 26, 31);
