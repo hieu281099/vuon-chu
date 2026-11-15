@@ -175,7 +175,9 @@ document.addEventListener('click', e => {
     case 'roadmap': return openRoadmap();
     case 'road-claim': return claimRoad(+d.v);
     case 't-place': return openExam(buildPlacement());
-    case 't-auto': return openExam(buildAutoTest());
+    case 't-auto': case 'farmtools': return openFarmTools();
+    case 'tool-go': return startTool(d.k);
+    case 'mm-toggle': MM_OPEN = !MM_OPEN; try { localStorage.setItem('vc-mm', MM_OPEN ? '1' : ''); } catch (e) {} mmTick(); return;
     case 't-ielts': return openExam(buildMock(IELTS_MOCK, d.v.split(',')));
     case 't-toeic': return openExam(buildMock(TOEIC_MOCK, d.v.split(',')));
     case 't-ai': return aiTest(d.v);
@@ -228,7 +230,7 @@ document.addEventListener('visibilitychange', () => { if (document.hidden && S) 
 /* ---------- game tick (growth, animals) ---------- */
 function tick() {
   if (!S) return;
-  const now = Date.now(); if (autoTick(now)) { renderHUD(); markDirty(); }
+  const now = Date.now();   // Auto Farm runs per turn now (farm tools), not on a timer
   const dt = now - S.last;
   for (const p of S.plots) { if (!p.u || !p.c || p.weed || p.p >= 1) continue; const c = CROP[p.c], grow = Math.max(0, Math.min(now, p.w) - S.last);
     if (grow > 0) { p.p = Math.min(1, p.p + grow / (c.time * 1000)); if (dt < 5000 && !p.hw && p.p > 0.15 && p.p < 0.85 && Math.random() < (dt / 1000) / 80) { p.weed = true; p.hw = true; } } }
@@ -258,6 +260,7 @@ function normalize(d) {
   s.hair = Array.isArray(s.hair) ? s.hair : []; s.spa = Array.isArray(s.spa) ? s.spa : [];
   for (const h of HAIR_ITEMS) if (((h.f && s.look.hairF === h.f) || (h.b && s.look.hairB === h.b) || (h.c && s.look.hairC === h.c)) && !s.hair.includes(h.id)) s.hair.push(h.id);
   s.lvl = TIER_MAX[Math.max(0, LEVELS.indexOf(s.cefr))];
+  s.auto = null;   // old hour-based Auto Farm passes are retired
   s.tests = Array.isArray(s.tests) ? s.tests : []; s.bestBand = s.bestBand || {}; s.road = s.road || {claimed: []}; s.ieltsCount = s.ieltsCount || 0;
   if (s.auto && !s.auto.log) s.auto.log = {};
   return s;

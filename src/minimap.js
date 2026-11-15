@@ -3,6 +3,7 @@ const MM_TER = {g: '#8FD16A', d: '#EBD3A0', c: '#F3E7D2', w: '#5AB7F0', s: '#F3E
 const ROLE_VI = {shop: 'Quần áo', market: 'Chợ', seeds: 'Hạt giống', forge: 'Lò rèn', teacher: 'Trường học', ielts: 'IELTS', salon: 'Tiệm tóc', spa: 'Spa', chat: 'Trò chuyện', home: 'Nhà', lottery: 'Vé số', bait: 'Mồi câu', post: 'Bưu điện'};
 const ROLE_COL = {shop: '#FF6FB5', market: '#FF8A3D', seeds: '#3DBE6C', forge: '#9B5CFF', teacher: '#4D8BFF', ielts: '#FFB020', salon: '#E25BD8', spa: '#2DD4BF', chat: '#8E8AA8', lottery: '#FF3552', bait: '#36A8AE', post: '#F29A1F'};
 const MM_CACHE = {};
+let MM_OPEN = false; try { MM_OPEN = localStorage.getItem('vc-mm') === '1'; } catch (e) {}
 // static layer of a map (terrain, buildings, trees, exits), drawn once per map at `k` px per tile
 function mmBase(m, k) {
   const key = m.id + '|' + k; if (MM_CACHE[key]) return MM_CACHE[key];
@@ -38,8 +39,8 @@ function mmDraw(cv, k, big) {
 function mmTick() {
   const cv = $('#minimap'); if (!cv || !S || !MAPS) return;
   const m = MAPS[S.map], wrap = $('#mmwrap'); if (!m || !wrap) return;
-  wrap.hidden = $('#app').hidden; { const n = Object.keys(MP.others).length; $('#mmname').textContent = m.vi + (MP_MAPS.includes(S.map) && mpOn() ? ` · ${n + 1} người` : ''); }
-  mmDraw(cv, window.innerWidth < 600 ? 3 : 4, false);
+  $('#mapbtns').hidden = $('#app').hidden; wrap.hidden = !MM_OPEN; $('#mmbtn').classList.toggle('on', MM_OPEN); $('#toolbtn').hidden = S.map !== 'farm'; { const n = Object.keys(MP.others).length; $('#mmname').textContent = m.vi + (MP_MAPS.includes(S.map) && mpOn() ? ` · ${n + 1} người` : ''); }
+  if (MM_OPEN) mmDraw(cv, window.innerWidth < 600 ? 3 : 4, false);
   const bigCv = $('#mmbig'); if (bigCv) mmDraw(bigCv, Math.max(8, Math.floor(Math.min(window.innerWidth - 60, 720) / m.w)), true);
 }
 setInterval(mmTick, 200);
