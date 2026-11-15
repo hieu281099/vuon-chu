@@ -120,7 +120,7 @@ setInterval(() => { if (!document.hidden) sbPull(true); }, 90000);
 let AUTH = {tab: 'login', resolve: null, inGame: false};
 function authHTML(msg) {
   const reg = AUTH.tab === 'register';
-  return `<div class="authcard"><div class="logo">Vườn <span>Chữ</span></div>
+  return `<div class="authcard"><img class="appicon" src="{{ICON}}" alt="" width="72" height="72"><div class="logo">Hello <span>Làng</span></div>
     <div class="seg auth-seg"><button class="segb" data-auth="tab" data-t="login" aria-pressed="${!reg}">Đăng nhập</button><button class="segb" data-auth="tab" data-t="register" aria-pressed="${reg}">Tạo tài khoản</button></div>
     <form id="authform" autocomplete="on">
       <label>Tên đăng nhập<input class="field" id="au-user" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="20" placeholder="vd: hieu_2k" required></label>
@@ -176,5 +176,5 @@ function genderHTML() { return `<div class="acct"><b>Giới tính</b><div class=
 function acctHTML() {
   if (Store.mode === 'supa') return `<div class="acct"><b>Tài khoản: ${esc(SB.sess.username)}</b><p class="note">Tiến độ tự đồng bộ giữa web và app Android. ${Store.offline ? '<b>Đang ngoại tuyến</b>, sẽ gửi lên khi có mạng.' : ''}</p><p class="note" id="savebadge" data-state="ok"></p><div class="row-btns"><button class="btn ghost sm" data-act="sync">Đồng bộ ngay</button><button class="btn ghost sm danger" data-act="logout">Đăng xuất</button></div></div>`;
   const where = Store.mode === 'cloud' ? 'Bạn đang lưu bằng tài khoản Claude (chỉ có trên link Claude).' : 'Bạn đang chơi thử, tiến độ chỉ lưu trên máy này.';
-  return `<div class="acct"><b>Tài khoản</b><p class="note">${where} Đăng nhập tài khoản Vườn Chữ để chơi chung tiến độ trên web và app.</p><p class="note" id="savebadge" data-state="ok"></p><div class="row-btns"><button class="btn sm" data-act="login">Đăng nhập</button><button class="btn ghost sm" data-act="register">Tạo tài khoản</button></div></div>`;
+  return `<div class="acct"><b>Tài khoản</b><p class="note">${where} Đăng nhập tài khoản Hello Làng để chơi chung tiến độ trên web và app.</p><p class="note" id="savebadge" data-state="ok"></p><div class="row-btns"><button class="btn sm" data-act="login">Đăng nhập</button><button class="btn ghost sm" data-act="register">Tạo tài khoản</button></div></div>`;
 }

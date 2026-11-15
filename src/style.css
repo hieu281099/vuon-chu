@@ -722,3 +722,10 @@ html,body{-webkit-tap-highlight-color:transparent}
 
 .sw.orig{position:relative;box-shadow:0 0 0 2px #fff,0 0 0 4px var(--gold)}
 .sw.orig::after{content:'gốc';position:absolute;left:50%;bottom:-15px;transform:translateX(-50%);font-size:9.5px;font-weight:800;color:var(--muted)}
+
+/* app icon on the loading and login cards */
+.appicon{display:block;width:80px;height:80px;margin:0 auto 10px;border-radius:22px;box-shadow:0 10px 26px rgba(255,140,60,.35);animation:iconHop 2.4s ease-in-out infinite}
+.authcard .appicon{width:64px;height:64px;border-radius:18px;margin-bottom:8px}
+@keyframes iconHop{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@media (prefers-reduced-motion:reduce){.appicon{animation:none}}
+@media (max-height:480px){.appicon{width:56px;height:56px;border-radius:16px;margin-bottom:6px}.authcard .appicon{width:44px;height:44px;border-radius:12px}}

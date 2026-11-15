@@ -16,7 +16,9 @@ def src(f):
     return t
 js = "(() => {\n'use strict';\n" + "\n".join(src(f) for f in ORDER) + "\n})();"
 css = (SRC / "style.css").read_text(encoding="utf-8")
-page = (SRC / "index.html").read_text(encoding="utf-8").replace("{{CSS}}", css).replace("{{JS}}", js)
+import base64
+ICON = "data:image/png;base64," + base64.b64encode((ROOT / "tools" / "icon-160.png").read_bytes()).decode()   # mascot on the loading and login cards
+page = (SRC / "index.html").read_text(encoding="utf-8").replace("{{CSS}}", css).replace("{{JS}}", js).replace("{{ICON}}", ICON)
 DIST.mkdir(exist_ok=True)
 (DIST / "index.html").write_text(page, encoding="utf-8")
 (DIST / "test.html").write_text('<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>' + page + "</body></html>", encoding="utf-8")
@@ -24,22 +26,22 @@ print("dist/index.html", len(page) // 1024, "KB")
 # GitHub Pages copy of the web version (served from /docs on main)
 (ROOT / "docs").mkdir(exist_ok=True)
 # installable on iPhone / Android home screens: manifest, Apple meta tags, offline service worker
-PWA_HEAD = ('<title>Vườn Chữ</title><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">'
-            '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Vườn Chữ">'
+PWA_HEAD = ('<title>Hello Làng</title><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">'
+            '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Hello Làng">'
             '<meta name="theme-color" content="#1b1640"><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icon-180.png">')
 PWA_SW = "<script>if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(function(){});</script>"
 docs = (DIST / "test.html").read_text(encoding="utf-8").replace("</head>", PWA_HEAD + "</head>", 1).replace("</body>", PWA_SW + "</body>", 1)
 (ROOT / "docs" / "index.html").write_text(docs, encoding="utf-8")
 import json, hashlib
 (ROOT / "docs" / "manifest.webmanifest").write_text(json.dumps({
-    "name": "Vườn Chữ", "short_name": "Vườn Chữ", "description": "Game nông trại học tiếng Anh",
+    "name": "Hello Làng", "short_name": "Hello Làng", "description": "Làng nông trại online: chơi cùng bạn bè, vừa chơi vừa học tiếng Anh",
     "start_url": "./", "scope": "./", "display": "fullscreen", "orientation": "landscape",
     "background_color": "#1b1640", "theme_color": "#1b1640", "lang": "vi",
-    "icons": [{"src": "icon-192.png", "sizes": "192x192", "type": "image/png"}, {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}]
+    "icons": [{"src": "icon-192.png", "sizes": "192x192", "type": "image/png"}, {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"}]
 }, ensure_ascii=False, indent=1), encoding="utf-8")
 ver = hashlib.md5(docs.encode("utf-8")).hexdigest()[:8]
 (ROOT / "docs" / "sw.js").write_text(f"""// offline cache for the game page; network first so updates arrive, cache when offline
-const C = 'vuonchu-{ver}', FILES = ['./', './index.html', './manifest.webmanifest', './icon-180.png', './icon-192.png', './icon-512.png'];
+const C = 'hellolang-{ver}', FILES = ['./', './index.html', './manifest.webmanifest', './icon-180.png', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', e => {{ e.waitUntil(caches.open(C).then(c => c.addAll(FILES))); self.skipWaiting(); }});
 self.addEventListener('activate', e => {{ e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== C).map(k => caches.delete(k))))); self.clients.claim(); }});
 self.addEventListener('fetch', e => {{

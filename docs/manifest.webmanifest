@@ -1,7 +1,7 @@
 {
- "name": "Vườn Chữ",
- "short_name": "Vườn Chữ",
- "description": "Game nông trại học tiếng Anh",
+ "name": "Hello Làng",
+ "short_name": "Hello Làng",
+ "description": "Làng nông trại online: chơi cùng bạn bè, vừa chơi vừa học tiếng Anh",
  "start_url": "./",
  "scope": "./",
  "display": "fullscreen",
@@ -19,7 +19,7 @@
    "src": "icon-512.png",
    "sizes": "512x512",
    "type": "image/png",
-   "purpose": "any maskable"
+   "purpose": "any"
   }
  ]
 }
